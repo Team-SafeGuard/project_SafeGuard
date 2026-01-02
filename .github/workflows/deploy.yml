@@ -67,8 +67,8 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          # Build AI
-          cd ai
+          # Build AI (YOLO)
+          cd ai/yolo
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_AI:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY_AI:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_AI:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_AI:latest
