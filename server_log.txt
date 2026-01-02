@@ -1,0 +1,406 @@
+[서버 로그] 백엔드 서버가 포트 5000에서 실행 중입니다.
+[서버 로그] http://localhost:5000
+[서버 로그] 이미지 수신 완료: uploads\1767330967968-15_20211007_13808-0-1400.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767330967968-15_20211007_13808-0-1400.jpg
+[AI �м� �α�] �н��� YOLO ���� �ε� ���Դϴ�...
+[AI �м� �α�] ��ü Ž�� �� �̹��� �м��� ���� ���Դϴ�...
+[AI �м� �α�] Ž���� ��ü�� �����ϴ�.
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "탐지 불가", "agency": "지자체 민원실 (수동 확인 필요)", "confidence": 0.0}
+[서버 로그] 이미지 수신 완료: uploads\1767331219846-34_20210702_6779-0-2200.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767331219846-34_20210702_6779-0-2200.jpg
+[AI �м� �α�] �н��� YOLO ���� �ε� ���Դϴ�...
+[AI �м� �α�] ��ü Ž�� �� �̹��� �м��� ���� ���Դϴ�...
+[AI �м� �α�] Ž���� ��ü�� �����ϴ�.
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "탐지 불가", "agency": "지자체 민원실 (수동 확인 필요)", "confidence": 0.0}
+[서버 로그] 이미지 수신 완료: uploads\1767331234321-34_20210702_11315-0-2200.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767331234321-34_20210702_11315-0-2200.jpg
+[AI �м� �α�] �н��� YOLO ���� �ε� ���Դϴ�...
+[AI �м� �α�] ��ü Ž�� �� �̹��� �м��� ���� ���Դϴ�...
+[AI �м� �α�] Ž���� ��ü�� �����ϴ�.
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "탐지 불가", "agency": "지자체 민원실 (수동 확인 필요)", "confidence": 0.0}
+[서버 로그] 이미지 수신 완료: uploads\1767331254901-33_20210706_6663-0-1300.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767331254901-33_20210706_6663-0-1300.jpg
+[AI �м� �α�] �н��� YOLO ���� �ε� ���Դϴ�...
+[AI �м� �α�] ��ü Ž�� �� �̹��� �м��� ���� ���Դϴ�...
+[AI �м� �α�] Ž���� ��ü�� �����ϴ�.
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "탐지 불가", "agency": "지자체 민원실 (수동 확인 필요)", "confidence": 0.0}
+[서버 로그] 이미지 수신 완료: uploads\1767331272537-33_20210704_7664-0-1300.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767331272537-33_20210704_7664-0-1300.jpg
+[AI �м� �α�] �н��� YOLO ���� �ε� ���Դϴ�...
+[AI �м� �α�] ��ü Ž�� �� �̹��� �м��� ���� ���Դϴ�...
+[AI �м� �α�] Ž���� ��ü�� �����ϴ�.
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "탐지 불가", "agency": "지자체 민원실 (수동 확인 필요)", "confidence": 0.0}
+[서버 로그] 이미지 수신 완료: uploads\1767331359185-9_20210701_12763-0-1300.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767331359185-9_20210701_12763-0-1300.jpg
+[AI �м� �α�] �н��� YOLO ���� �ε� ���Դϴ�...
+[AI �м� �α�] ��ü Ž�� �� �̹��� �м��� ���� ���Դϴ�...
+[AI �м� �α�] Ž���� ��ü ��: 0
+[AI �м� �α�] Ž���� ��ü�� �����ϴ�.
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "탐지 불가", "agency": "지자체 민원실 (수동 확인 필요)", "confidence": 0.0}
+[서버 로그] 이미지 수신 완료: uploads\1767331923126-9_20210701_12987-0-1000.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767331923126-9_20210701_12987-0-1000.jpg
+[AI �м� �α�] �н��� YOLO ���� �ε� ���Դϴ�...
+[AI �м� �α�] ��ü Ž�� �� �̹��� �м��� ���� ���Դϴ�...
+[AI �м� �α�] Ž���� ��ü ��: 0
+[AI �м� �α�] Ž���� ��ü�� �����ϴ�.
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "탐지 불가", "agency": "지자체 민원실 (수동 확인 필요)", "confidence": 0.0}
+[서버 로그] 이미지 수신 완료: uploads\1767332020404-9_20210701_6865-0-1300.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767332020404-9_20210701_6865-0-1300.jpg
+[AI �м� �α�] �н��� YOLO ���� �ε� ���Դϴ�...
+[AI �м� �α�] ��ü Ž�� �� �̹��� �м��� ���� ���Դϴ�...
+[AI �м� �α�] Ž���� ��ü ��: 0
+[AI �м� �α�] Ž���� ��ü�� �����ϴ�.
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "탐지 불가", "agency": "지자체 민원실 (수동 확인 필요)", "confidence": 0.0}
+[서버 로그] 이미지 수신 완료: uploads\1767334160831-9_20210701_6814-0-1000.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767334160831-9_20210701_6814-0-1000.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 1
+[AI �м� �α�]   - [DEBUG] ��ü: stop sign (�ŷڵ�: 27.6%)
+[AI �м� �α�] �м� �Ϸ�: ��Ÿ ��ü (��õ: stop sign)
+[AI �м� �α�] ��õ ó�� ���: ����ü �ο���
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "기타 물체", "agency": "지자체 민원실", "confidence": 0.2764628827571869}
+[서버 로그] 이미지 수신 완료: uploads\1767334177731-9_20210701_13008-0-1300.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767334177731-9_20210701_13008-0-1300.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 9
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 66.8%)
+[AI �м� �α�]   - [DEBUG] ��ü: bus (�ŷڵ�: 64.5%)
+[AI �м� �α�]   - [DEBUG] ��ü: bus (�ŷڵ�: 57.1%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 49.5%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 48.6%)
+[AI �м� �α�]   - [DEBUG] ��ü: bus (�ŷڵ�: 44.1%)
+[AI �м� �α�]   - [DEBUG] ��ü: bus (�ŷڵ�: 35.9%)
+[AI �м� �α�]   - [DEBUG] ��ü: umbrella (�ŷڵ�: 28.1%)
+[AI �м� �α�]   - [DEBUG] ��ü: bus (�ŷڵ�: 27.7%)
+[AI �м� �α�] �м� �Ϸ�: �ҹ������� �ǽ� ���� (��õ: car)
+[AI �м� �α�] ��õ ó�� ���: ����ü �����
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "불법주정차 의심 차량", "agency": "지자체 교통과", "confidence": 0.668308675289154}
+[서버 로그] 이미지 수신 완료: uploads\1767334195520-9_20210701_13264-0-1300.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767334195520-9_20210701_13264-0-1300.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 1
+[AI �м� �α�]   - [DEBUG] ��ü: traffic light (�ŷڵ�: 58.5%)
+[AI �м� �α�] �м� �Ϸ�: ��Ÿ ��ü (��õ: traffic light)
+[AI �м� �α�] ��õ ó�� ���: ����ü �ο���
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "기타 물체", "agency": "지자체 민원실", "confidence": 0.5854082703590393}
+[서버 로그] 이미지 수신 완료: uploads\1767334222219-21_20210701_12693-0-1300.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767334222219-21_20210701_12693-0-1300.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 1
+[AI �м� �α�]   - [DEBUG] ��ü: toilet (�ŷڵ�: 26.9%)
+[AI �м� �α�] �м� �Ϸ�: ��Ÿ ��ü (��õ: toilet)
+[AI �м� �α�] ��õ ó�� ���: ����ü �ο���
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "기타 물체", "agency": "지자체 민원실", "confidence": 0.26915520429611206}
+[서버 로그] 이미지 수신 완료: uploads\1767334242377-21_20210706_10055-0-0600.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767334242377-21_20210706_10055-0-0600.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 5
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 87.5%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 72.1%)
+[AI �м� �α�]   - [DEBUG] ��ü: train (�ŷڵ�: 67.9%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 37.0%)
+[AI �м� �α�]   - [DEBUG] ��ü: traffic light (�ŷڵ�: 35.8%)
+[AI �м� �α�] �м� �Ϸ�: �ҹ������� �ǽ� ���� (��õ: car)
+[AI �м� �α�] ��õ ó�� ���: ����ü �����
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "불법주정차 의심 차량", "agency": "지자체 교통과", "confidence": 0.8752251863479614}
+[서버 로그] 이미지 수신 완료: uploads\1767334266480-3_20210701_13009-0-1000.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767334266480-3_20210701_13009-0-1000.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 1
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 83.1%)
+[AI �м� �α�] �м� �Ϸ�: �ҹ������� �ǽ� ���� (��õ: car)
+[AI �м� �α�] ��õ ó�� ���: ����ü �����
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "불법주정차 의심 차량", "agency": "지자체 교통과", "confidence": 0.8306669592857361}
+[서버 로그] 이미지 수신 완료: uploads\1767334284357-3_20210710_7434-0-1000.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767334284357-3_20210710_7434-0-1000.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 7
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 87.5%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 70.5%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 55.0%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 50.9%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 42.6%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 39.8%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 36.1%)
+[AI �м� �α�] �м� �Ϸ�: �ҹ������� �ǽ� ���� (��õ: car)
+[AI �м� �α�] ��õ ó�� ���: ����ü �����
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "불법주정차 의심 차량", "agency": "지자체 교통과", "confidence": 0.8751714825630188}
+[서버 로그] 이미지 수신 완료: uploads\1767334306028-8_20210701_10931-0-0200.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767334306028-8_20210701_10931-0-0200.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 1
+[AI �м� �α�]   - [DEBUG] ��ü: toilet (�ŷڵ�: 42.4%)
+[AI �м� �α�] �м� �Ϸ�: ��Ÿ ��ü (��õ: toilet)
+[AI �м� �α�] ��õ ó�� ���: ����ü �ο���
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "기타 물체", "agency": "지자체 민원실", "confidence": 0.4242148697376251}
+[서버 로그] 이미지 수신 완료: uploads\1767334351682-5_20210701_6942-0-0600.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767334351682-5_20210701_6942-0-0600.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 10
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 73.4%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 70.2%)
+[AI �м� �α�]   - [DEBUG] ��ü: bus (�ŷڵ�: 59.7%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 55.7%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 46.9%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 46.0%)
+[AI �м� �α�]   - [DEBUG] ��ü: parking meter (�ŷڵ�: 31.1%)
+[AI �м� �α�]   - [DEBUG] ��ü: truck (�ŷڵ�: 29.1%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 28.9%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 27.7%)
+[AI �м� �α�] �м� �Ϸ�: �ҹ������� �ǽ� ���� (��õ: car)
+[AI �м� �α�] ��õ ó�� ���: ����ü �����
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "불법주정차 의심 차량", "agency": "지자체 교통과", "confidence": 0.7336643934249878}
+[서버 로그] 이미지 수신 완료: uploads\1767334371931-5_20210705_7571-0-1000.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767334371931-5_20210705_7571-0-1000.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 7
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 75.0%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 74.2%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 71.2%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 56.3%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 46.7%)
+[AI �м� �α�]   - [DEBUG] ��ü: person (�ŷڵ�: 30.7%)
+[AI �м� �α�]   - [DEBUG] ��ü: bus (�ŷڵ�: 25.3%)
+[AI �м� �α�] �м� �Ϸ�: �ҹ������� �ǽ� ���� (��õ: car)
+[AI �м� �α�] ��õ ó�� ���: ����ü �����
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "불법주정차 의심 차량", "agency": "지자체 교통과", "confidence": 0.7501468658447266}
+[서버 로그] 이미지 수신 완료: uploads\1767334405030-21_20210719_6536-0-1000.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767334405030-21_20210719_6536-0-1000.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 10
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 85.0%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 82.6%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 68.0%)
+[AI �м� �α�]   - [DEBUG] ��ü: truck (�ŷڵ�: 68.0%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 50.5%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 46.0%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 40.9%)
+[AI �м� �α�]   - [DEBUG] ��ü: person (�ŷڵ�: 28.8%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 27.2%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 26.3%)
+[AI �м� �α�] �м� �Ϸ�: �ҹ������� �ǽ� ���� (��õ: car)
+[AI �м� �α�] ��õ ó�� ���: ����ü �����
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "불법주정차 의심 차량", "agency": "지자체 교통과", "confidence": 0.8504105806350708}
+[서버 로그] 이미지 수신 완료: uploads\1767334461099-21_20210709_10897-0-1000.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767334461099-21_20210709_10897-0-1000.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 6
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 75.0%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 73.6%)
+[AI �м� �α�]   - [DEBUG] ��ü: traffic light (�ŷڵ�: 47.7%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 35.8%)
+[AI �м� �α�]   - [DEBUG] ��ü: traffic light (�ŷڵ�: 34.2%)
+[AI �м� �α�]   - [DEBUG] ��ü: truck (�ŷڵ�: 31.3%)
+[AI �м� �α�] �м� �Ϸ�: �ҹ������� �ǽ� ���� (��õ: car)
+[AI �м� �α�] ��õ ó�� ���: ����ü �����
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "불법주정차 의심 차량", "agency": "지자체 교통과", "confidence": 0.7501614689826965}
+[서버 로그] 이미지 수신 완료: uploads\1767334551528-444.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767334551528-444.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 3
+[AI �м� �α�]   - [DEBUG] ��ü: fire hydrant (�ŷڵ�: 66.0%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 55.3%)
+[AI �м� �α�]   - [DEBUG] ��ü: fire hydrant (�ŷڵ�: 43.0%)
+[AI �м� �α�] �м� �Ϸ�: ��Ÿ ��ü (��õ: fire hydrant)
+[AI �м� �α�] ��õ ó�� ���: ����ü �ο���
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "기타 물체", "agency": "지자체 민원실", "confidence": 0.6598238348960876}
+[서버 로그] 이미지 수신 완료: uploads\1767334595634-3333.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767334595634-3333.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 4
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 82.2%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 63.3%)
+[AI �м� �α�]   - [DEBUG] ��ü: person (�ŷڵ�: 32.1%)
+[AI �м� �α�]   - [DEBUG] ��ü: person (�ŷڵ�: 30.1%)
+[AI �м� �α�] �м� �Ϸ�: �ҹ������� �ǽ� ���� (��õ: car)
+[AI �м� �α�] ��õ ó�� ���: ����ü �����
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "불법주정차 의심 차량", "agency": "지자체 교통과", "confidence": 0.822306752204895}
+[서버 로그] 이미지 수신 완료: uploads\1767334612157-444.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767334612157-444.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 3
+[AI �м� �α�]   - [DEBUG] ��ü: fire hydrant (�ŷڵ�: 66.0%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 55.3%)
+[AI �м� �α�]   - [DEBUG] ��ü: fire hydrant (�ŷڵ�: 43.0%)
+[AI �м� �α�] �м� �Ϸ�: ��Ÿ ��ü (��õ: fire hydrant)
+[AI �м� �α�] ��õ ó�� ���: ����ü �ο���
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "기타 물체", "agency": "지자체 민원실", "confidence": 0.6598238348960876}
+[서버 에러] 민원 목록 조회 실패: ReferenceError: prisma is not defined
+    at file:///C:/Users/rkdwl/react-run/server/server.js:62:28
+    at Layer.handleRequest (C:\Users\rkdwl\react-run\node_modules\router\lib\layer.js:152:17)
+    at next (C:\Users\rkdwl\react-run\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (C:\Users\rkdwl\react-run\node_modules\router\lib\route.js:117:3)
+    at handle (C:\Users\rkdwl\react-run\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (C:\Users\rkdwl\react-run\node_modules\router\lib\layer.js:152:17)
+    at C:\Users\rkdwl\react-run\node_modules\router\index.js:295:15
+    at processParams (C:\Users\rkdwl\react-run\node_modules\router\index.js:582:12)
+    at next (C:\Users\rkdwl\react-run\node_modules\router\index.js:291:5)
+    at read (C:\Users\rkdwl\react-run\node_modules\body-parser\lib\read.js:54:5)
+[서버 에러] 민원 목록 조회 실패: ReferenceError: prisma is not defined
+    at file:///C:/Users/rkdwl/react-run/server/server.js:62:28
+    at Layer.handleRequest (C:\Users\rkdwl\react-run\node_modules\router\lib\layer.js:152:17)
+    at next (C:\Users\rkdwl\react-run\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (C:\Users\rkdwl\react-run\node_modules\router\lib\route.js:117:3)
+    at handle (C:\Users\rkdwl\react-run\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (C:\Users\rkdwl\react-run\node_modules\router\lib\layer.js:152:17)
+    at C:\Users\rkdwl\react-run\node_modules\router\index.js:295:15
+    at processParams (C:\Users\rkdwl\react-run\node_modules\router\index.js:582:12)
+    at next (C:\Users\rkdwl\react-run\node_modules\router\index.js:291:5)
+    at read (C:\Users\rkdwl\react-run\node_modules\body-parser\lib\read.js:54:5)
+[서버 에러] 민원 목록 조회 실패: ReferenceError: prisma is not defined
+    at file:///C:/Users/rkdwl/react-run/server/server.js:62:28
+    at Layer.handleRequest (C:\Users\rkdwl\react-run\node_modules\router\lib\layer.js:152:17)
+    at next (C:\Users\rkdwl\react-run\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (C:\Users\rkdwl\react-run\node_modules\router\lib\route.js:117:3)
+    at handle (C:\Users\rkdwl\react-run\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (C:\Users\rkdwl\react-run\node_modules\router\lib\layer.js:152:17)
+    at C:\Users\rkdwl\react-run\node_modules\router\index.js:295:15
+    at processParams (C:\Users\rkdwl\react-run\node_modules\router\index.js:582:12)
+    at next (C:\Users\rkdwl\react-run\node_modules\router\index.js:291:5)
+    at read (C:\Users\rkdwl\react-run\node_modules\body-parser\lib\read.js:54:5)
+[서버 에러] 민원 목록 조회 실패: ReferenceError: prisma is not defined
+    at file:///C:/Users/rkdwl/react-run/server/server.js:62:28
+    at Layer.handleRequest (C:\Users\rkdwl\react-run\node_modules\router\lib\layer.js:152:17)
+    at next (C:\Users\rkdwl\react-run\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (C:\Users\rkdwl\react-run\node_modules\router\lib\route.js:117:3)
+    at handle (C:\Users\rkdwl\react-run\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (C:\Users\rkdwl\react-run\node_modules\router\lib\layer.js:152:17)
+    at C:\Users\rkdwl\react-run\node_modules\router\index.js:295:15
+    at processParams (C:\Users\rkdwl\react-run\node_modules\router\index.js:582:12)
+    at next (C:\Users\rkdwl\react-run\node_modules\router\index.js:291:5)
+    at read (C:\Users\rkdwl\react-run\node_modules\body-parser\lib\read.js:54:5)
+[서버 에러] 민원 목록 조회 실패: ReferenceError: prisma is not defined
+    at file:///C:/Users/rkdwl/react-run/server/server.js:62:28
+    at Layer.handleRequest (C:\Users\rkdwl\react-run\node_modules\router\lib\layer.js:152:17)
+    at next (C:\Users\rkdwl\react-run\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (C:\Users\rkdwl\react-run\node_modules\router\lib\route.js:117:3)
+    at handle (C:\Users\rkdwl\react-run\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (C:\Users\rkdwl\react-run\node_modules\router\lib\layer.js:152:17)
+    at C:\Users\rkdwl\react-run\node_modules\router\index.js:295:15
+    at processParams (C:\Users\rkdwl\react-run\node_modules\router\index.js:582:12)
+    at next (C:\Users\rkdwl\react-run\node_modules\router\index.js:291:5)
+    at read (C:\Users\rkdwl\react-run\node_modules\body-parser\lib\read.js:54:5)
+[서버 에러] 민원 목록 조회 실패: ReferenceError: prisma is not defined
+    at file:///C:/Users/rkdwl/react-run/server/server.js:62:28
+    at Layer.handleRequest (C:\Users\rkdwl\react-run\node_modules\router\lib\layer.js:152:17)
+    at next (C:\Users\rkdwl\react-run\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (C:\Users\rkdwl\react-run\node_modules\router\lib\route.js:117:3)
+    at handle (C:\Users\rkdwl\react-run\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (C:\Users\rkdwl\react-run\node_modules\router\lib\layer.js:152:17)
+    at C:\Users\rkdwl\react-run\node_modules\router\index.js:295:15
+    at processParams (C:\Users\rkdwl\react-run\node_modules\router\index.js:582:12)
+    at next (C:\Users\rkdwl\react-run\node_modules\router\index.js:291:5)
+    at read (C:\Users\rkdwl\react-run\node_modules\body-parser\lib\read.js:54:5)
+[서버 로그] 이미지 수신 완료: uploads\1767337101557-3333.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767337101557-3333.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 4
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 82.2%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 63.3%)
+[AI �м� �α�]   - [DEBUG] ��ü: person (�ŷڵ�: 32.1%)
+[AI �м� �α�]   - [DEBUG] ��ü: person (�ŷڵ�: 30.1%)
+[AI �м� �α�] �м� �Ϸ�: �ҹ������� �ǽ� ���� (��õ: car)
+[AI �м� �α�] ��õ ó�� ���: ����ü �����
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "불법주정차 의심 차량", "agency": "지자체 교통과", "confidence": 0.822306752204895}
+[서버 로그] 이미지 수신 완료: uploads\1767337111207-444.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767337111207-444.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 3
+[AI �м� �α�]   - [DEBUG] ��ü: fire hydrant (�ŷڵ�: 66.0%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 55.3%)
+[AI �м� �α�]   - [DEBUG] ��ü: fire hydrant (�ŷڵ�: 43.0%)
+[AI �м� �α�] �м� �Ϸ�: ��Ÿ ��ü (��õ: fire hydrant)
+[AI �м� �α�] ��õ ó�� ���: ����ü �ο���
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "기타 물체", "agency": "지자체 민원실", "confidence": 0.6598238348960876}
+[서버 로그] 이미지 수신 완료: uploads\1767340601497-9_20210701_12878-0-1300.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767340601497-9_20210701_12878-0-1300.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 1
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 63.8%)
+[AI �м� �α�] �м� �Ϸ�: �ҹ������� �ǽ� ���� (��õ: car)
+[AI �м� �α�] ��õ ó�� ���: ����ü �����
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "불법주정차 의심 차량", "agency": "지자체 교통과", "confidence": 0.6384769082069397}
+[서버 로그] 이미지 수신 완료: uploads\1767342130575-1_20210701_6653-0-1300.jpg
+[서버 로그] AI 분석 프로세스를 시작합니다...
+[AI �м� �α�] �̹��� �м��� �����մϴ�. ��� ����: uploads\1767342130575-1_20210701_6653-0-1300.jpg
+[AI �м� �α�] ǥ�� YOLOv8 ��(COCO Pre-trained)�� �ε� ���Դϴ�...
+[AI �м� �α�] �̹��� �м��� ���� ���Դϴ� (Standard Model)...
+[AI �м� �α�] Ž���� ��ü ��: 3
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 77.8%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 45.8%)
+[AI �м� �α�]   - [DEBUG] ��ü: car (�ŷڵ�: 35.0%)
+[AI �м� �α�] �м� �Ϸ�: �ҹ������� �ǽ� ���� (��õ: car)
+[AI �м� �α�] ��õ ó�� ���: ����ü �����
+[서버 로그] AI 분석 프로세스 종료 (코드: 0)
+[서버 로그] 분석 성공: {"type": "불법주정차 의심 차량", "agency": "지자체 교통과", "confidence": 0.7776123285293579}
+^C

@@ -1,0 +1,19 @@
+Loading model: server/best.pt...
+Analyzing: large_dataset/images/val/13_20210717_9457-0-0600.jpg
+Analyzing: large_dataset/images/val/15_20210812_10092-0-1300.jpg
+Analyzing: large_dataset/images/val/17_20210804_6929-0-1300.jpg
+Analyzing: large_dataset/images/val/21_20210730_11301-0-0600.jpg
+Analyzing: large_dataset/images/val/35_20210801_10822-0-1000.jpg
+
+=== Performance Report ===
+File: 13_20210717_9457-0-0600.jpg
+  - No detections found (even at 10% confidence)
+File: 15_20210812_10092-0-1300.jpg
+  - No detections found (even at 10% confidence)
+File: 17_20210804_6929-0-1300.jpg
+  - No detections found (even at 10% confidence)
+File: 21_20210730_11301-0-0600.jpg
+  - No detections found (even at 10% confidence)
+File: 35_20210801_10822-0-1000.jpg
+  - No detections found (even at 10% confidence)
+==========================

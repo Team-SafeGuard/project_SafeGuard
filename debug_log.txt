@@ -1,0 +1,6 @@
+[AI ºÐ¼® ·Î±×] ÀÌ¹ÌÁö ºÐ¼®À» ½ÃÀÛÇÕ´Ï´Ù. ´ë»ó ÆÄÀÏ: large_dataset/images/val/17_20210804_6929-0-1300.jpg
+[AI ºÐ¼® ·Î±×] ÇÐ½ÀµÈ YOLO ¸ðµ¨À» ·Îµå ÁßÀÔ´Ï´Ù...
+[AI ºÐ¼® ·Î±×] °´Ã¼ Å½Áö ¹× ÀÌ¹ÌÁö ºÐ¼®À» ¼öÇà ÁßÀÔ´Ï´Ù...
+[AI ºÐ¼® ·Î±×] Å½ÁöµÈ °´Ã¼ ¼ö: 0
+[AI ºÐ¼® ·Î±×] Å½ÁöµÈ °´Ã¼°¡ ¾ø½À´Ï´Ù.
+{"type": "íƒì§€ ë¶ˆê°€", "agency": "ì§€ìžì²´ ë¯¼ì›ì‹¤ (ìˆ˜ë™ í™•ì¸ í•„ìš”)", "confidence": 0.0}

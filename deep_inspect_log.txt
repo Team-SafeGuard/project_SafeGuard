@@ -1,0 +1,8 @@
+--- Model: server/best.pt ---
+Size: 5.96 MB
+Classes (NC=5): {0: '보행방해물', 1: '현수막', 2: '불법주정차', 3: '공사현장', 4: '쓰레기'}
+Trained for -1 epochs
+Best Fitness: None
+
+--- Testing on large_dataset/images/val/17_20210804_6929-0-1300.jpg with confidence 0.01 ---
+Total objects seen at 1% threshold: 0

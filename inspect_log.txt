@@ -1,0 +1,5 @@
+--- Inspecting: server/best.pt ---
+File Size: 5.96 MB
+Model Names: {0: '보행방해물', 1: '현수막', 2: '불법주정차', 3: '공사현장', 4: '쓰레기'}
+Model Task: detect
+Training Args: {'task': 'detect', 'data': '/content/dataset/data.yaml', 'imgsz': 640, 'single_cls': False, 'model': 'server/best.pt'}

@@ -1,0 +1,7 @@
+Loading server/best.pt...
+Keys found: ['date', 'version', 'license', 'docs', 'epoch', 'best_fitness', 'model', 'ema', 'updates', 'optimizer', 'scaler', 'train_args', 'train_metrics', 'train_results', 'git']
+Epoch: -1
+Best Fitness: None
+Model weights detected in checkpoint.
+date: 2026-01-02T04:28:05.121698
+version: 8.3.245
