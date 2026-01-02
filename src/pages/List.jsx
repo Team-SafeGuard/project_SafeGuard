@@ -6,7 +6,7 @@ function List() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetch('http://localhost:5000/api/reports')
+        fetch('/api/reports')
             .then(res => res.json())
             .then(data => setReports(data))
             .catch(err => console.error('Failed to fetch reports:', err));

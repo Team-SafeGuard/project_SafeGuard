@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:17.7-alpine
+    container_name: safeguard-db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: safeguard
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_17:/var/lib/postgresql/data
+    networks:
+      - safeguard-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d safeguard" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: safeguard-backend
+    ports:
+      - "8080:8080"
+    environment:
+      spring.datasource.url: jdbc:postgresql://db:5432/safeguard
+      spring.datasource.username: user
+      spring.datasource.password: password
+      spring.jpa.hibernate.ddl-auto: update
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - safeguard-network
+
+  ai:
+    build: ./ai
+    container_name: safeguard-ai
+    ports:
+      - "5000:5000"
+    networks:
+      - safeguard-network
+
+  frontend:
+    build: .
+    container_name: safeguard-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - ai
+    networks:
+      - safeguard-network
+
+volumes:
+  postgres_data_17:
+
+
+networks:
+  safeguard-network:
+    driver: bridge
