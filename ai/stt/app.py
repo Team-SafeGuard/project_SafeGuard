@@ -213,15 +213,23 @@ async def upload_voice(file: UploadFile = File(...)):
         subprocess.run(normalize_cmd, check=True, capture_output=True)
 
         # 3. Whisper 엔진으로 음성 인식(STT) 수행
-        print("Whisper 변환 시작 (전처리된 파일 사용)...")
+        print("Whisper 변환 시작 (전처리 완료 및 Phase 3 최적화 적용)...")
         '''
-        Whisper 모델의 성능 향상을 위해 다음과 같은 설정을 적용했습니다:
-        - language="ko": 한국어로 설정하여 한국어 음성을 정확하게 인식할 수 있도록 합니다.
-        - fp16=torch.cuda.is_available(): GPU가 사용 가능한 경우 fp16 정밀도를 사용하여 성능을 향상시킵니다.
-        - device="cuda": GPU가 사용 가능한 경우 GPU를 사용하여 처리를 빠르게 합니다.
+        Whisper 모델의 성능 및 정확도 향상을 위해 Phase 3 최적화 설정을 적용했습니다:
+        - language="ko": 한국어 전용 인식
+        - fp16=torch.cuda.is_available(): GPU 가속 사용 여부
+        - initial_prompt: 민원 관련 키워드를 미리 제시하여 전문 용어(불법 주정차, 도로 파손 등) 인식률 향상
+        - beam_size=5: 빔 서치 크기를 조절하여 단어 선택의 정확도 보강
+        - condition_on_previous_text=False: 문장 간 독립성을 부여하여 환각(Hallucination) 현상 방지
         '''
-        # CPU 환경일 경우 fp16=False 설정하여 정밀도 조정 (성능 및 호환성 향상)
-        result_stt = model.transcribe(processed_path, language="ko", fp16=torch.cuda.is_available())
+        result_stt = model.transcribe(
+            processed_path, 
+            language="ko", 
+            fp16=torch.cuda.is_available(),
+            initial_prompt="행정 민원 신고 내용입니다. 불법 주정차, 도로 파손, 쓰레기 투기, 노점상 단속 등 민원 키워드를 중심으로 인식해 주세요.",
+            beam_size=5,
+            condition_on_previous_text=False
+        )
         text = result_stt["text"]
         print(f"인식 성공: {text}")
         
