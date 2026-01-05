@@ -2,6 +2,9 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
+# Ensure required directories exist to prevent startup crashes
+RUN mkdir -p static templates
+
 RUN apt-get update && apt-get install -y git ffmpeg build-essential
 
 # Install CPU-only PyTorch first to save space and time
