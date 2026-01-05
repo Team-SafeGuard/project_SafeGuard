@@ -1,90 +1,233 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { authAPI } from '../utils/api';
 
 function Login() {
+    const [userId, setUserId] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+
+        try {
+            const result = await authAPI.login({ userId, password });
+            alert(`환영합니다, ${result.user.name}님!`);
+            navigate('/');
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <div className="min-h-[calc(100vh-80px)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-            {/* Background Elements */}
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary-400/20 rounded-full blur-3xl opacity-60 animate-float" style={{ animationDelay: '0s' }}></div>
-            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary-400/20 rounded-full blur-3xl opacity-60 animate-float" style={{ animationDelay: '2s' }}></div>
+        <div style={{
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+        }}>
+            {/* 배경 장식 */}
+            <div style={{
+                position: 'absolute',
+                top: '10%',
+                left: '15%',
+                width: '300px',
+                height: '300px',
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.1)',
+                filter: 'blur(60px)'
+            }}></div>
+            <div style={{
+                position: 'absolute',
+                bottom: '20%',
+                right: '20%',
+                width: '400px',
+                height: '400px',
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.08)',
+                filter: 'blur(80px)'
+            }}></div>
 
-            <div className="max-w-md w-full space-y-8 relative z-10">
-                <div className="glass rounded-3xl p-10 shadow-2xl backdrop-blur-xl border border-white/40">
-                    <div className="flex flex-col items-center mb-8">
-                        <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl flex items-center justify-center shadow-lg mb-4 transform rotate-3">
-                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                        </div>
-                        <h2 className="text-3xl font-extrabold text-slate-800">
-                            로그인
-                        </h2>
-                        <p className="mt-2 text-sm text-slate-500">
-                            서비스 이용을 위해 로그인해주세요.
-                        </p>
+            <div style={{
+                width: '100%',
+                maxWidth: '440px',
+                backgroundColor: 'white',
+                borderRadius: '24px',
+                boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
+                overflow: 'hidden',
+                position: 'relative',
+                zIndex: 10
+            }}>
+                {/* 헤더 */}
+                <div style={{
+                    padding: '40px 40px 30px',
+                    textAlign: 'center',
+                    background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)'
+                }}>
+                    <div style={{
+                        width: '80px',
+                        height: '80px',
+                        background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+                        borderRadius: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 20px',
+                        boxShadow: '0 10px 30px rgba(124, 58, 237, 0.4)',
+                        transform: 'rotate(10deg)'
+                    }}>
+                        <span style={{ fontSize: '2.5rem' }}>🔐</span>
                     </div>
+                    <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#1e293b', margin: 0 }}>
+                        로그인
+                    </h1>
+                    <p style={{ color: '#64748b', marginTop: '8px', fontSize: '0.95rem' }}>
+                        모두의 민원 서비스에 오신 것을 환영합니다
+                    </p>
+                </div>
 
-                    <form className="mt-8 space-y-6">
-                        <div className="rounded-md space-y-4">
-                            <div>
-                                <label htmlFor="email-address" className="sr-only">아이디</label>
-                                <input
-                                    id="id"
-                                    name="id"
-                                    type="text"
-                                    required
-                                    className="appearance-none relative block w-full px-4 py-3 border border-slate-300 placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:z-10 sm:text-sm bg-white/50 transition-all"
-                                    placeholder="아이디를 입력하세요"
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="password" className="sr-only">비밀번호</label>
-                                <input
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    autoComplete="current-password"
-                                    required
-                                    className="appearance-none relative block w-full px-4 py-3 border border-slate-300 placeholder-slate-400 text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:z-10 sm:text-sm bg-white/50 transition-all"
-                                    placeholder="비밀번호를 입력하세요"
-                                />
-                            </div>
+                {/* 폼 */}
+                <div style={{ padding: '30px 40px 40px' }}>
+                    {error && (
+                        <div style={{
+                            padding: '14px 18px',
+                            backgroundColor: '#fef2f2',
+                            border: '1px solid #fecaca',
+                            borderRadius: '12px',
+                            color: '#dc2626',
+                            marginBottom: '20px',
+                            fontSize: '0.9rem',
+                            textAlign: 'center'
+                        }}>
+                            ⚠️ {error}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit}>
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{
+                                display: 'block',
+                                fontSize: '0.9rem',
+                                fontWeight: '600',
+                                color: '#374151',
+                                marginBottom: '8px'
+                            }}>
+                                아이디
+                            </label>
+                            <input
+                                type="text"
+                                value={userId}
+                                onChange={(e) => setUserId(e.target.value)}
+                                required
+                                placeholder="아이디를 입력하세요"
+                                style={{
+                                    width: '100%',
+                                    padding: '16px 18px',
+                                    border: '2px solid #e2e8f0',
+                                    borderRadius: '12px',
+                                    fontSize: '1rem',
+                                    outline: 'none',
+                                    transition: 'border-color 0.2s, box-shadow 0.2s',
+                                    boxSizing: 'border-box'
+                                }}
+                                onFocus={(e) => {
+                                    e.target.style.borderColor = '#7c3aed';
+                                    e.target.style.boxShadow = '0 0 0 4px rgba(124, 58, 237, 0.1)';
+                                }}
+                                onBlur={(e) => {
+                                    e.target.style.borderColor = '#e2e8f0';
+                                    e.target.style.boxShadow = 'none';
+                                }}
+                            />
                         </div>
 
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                                <input
-                                    id="remember-me"
-                                    name="remember-me"
-                                    type="checkbox"
-                                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                                />
-                                <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-600">
-                                    로그인 유지
-                                </label>
-                            </div>
-
-                            <div className="text-sm">
-                                <a href="#" className="font-medium text-primary-600 hover:text-primary-500 hover:underline">
-                                    비밀번호 찾기
-                                </a>
-                            </div>
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{
+                                display: 'block',
+                                fontSize: '0.9rem',
+                                fontWeight: '600',
+                                color: '#374151',
+                                marginBottom: '8px'
+                            }}>
+                                비밀번호
+                            </label>
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                placeholder="비밀번호를 입력하세요"
+                                style={{
+                                    width: '100%',
+                                    padding: '16px 18px',
+                                    border: '2px solid #e2e8f0',
+                                    borderRadius: '12px',
+                                    fontSize: '1rem',
+                                    outline: 'none',
+                                    transition: 'border-color 0.2s, box-shadow 0.2s',
+                                    boxSizing: 'border-box'
+                                }}
+                                onFocus={(e) => {
+                                    e.target.style.borderColor = '#7c3aed';
+                                    e.target.style.boxShadow = '0 0 0 4px rgba(124, 58, 237, 0.1)';
+                                }}
+                                onBlur={(e) => {
+                                    e.target.style.borderColor = '#e2e8f0';
+                                    e.target.style.boxShadow = 'none';
+                                }}
+                            />
                         </div>
 
-                        <div>
-                            <button
-                                type="submit"
-                                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-500 hover:to-secondary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-lg shadow-primary-500/30 transform transition hover:-translate-y-0.5"
-                            >
-                                <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                                    <svg className="h-5 w-5 text-primary-200 group-hover:text-primary-100 transition ease-in-out duration-150" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                                </span>
-                                로그인하기
-                            </button>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '24px'
+                        }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                <input type="checkbox" style={{ width: '18px', height: '18px', accentColor: '#7c3aed' }} />
+                                <span style={{ fontSize: '0.9rem', color: '#64748b' }}>로그인 유지</span>
+                            </label>
+                            <a href="#" style={{ fontSize: '0.9rem', color: '#7c3aed', fontWeight: '500' }}>
+                                비밀번호 찾기
+                            </a>
                         </div>
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            style={{
+                                width: '100%',
+                                padding: '18px',
+                                background: loading ? '#94a3b8' : 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '14px',
+                                fontSize: '1.1rem',
+                                fontWeight: '700',
+                                cursor: loading ? 'not-allowed' : 'pointer',
+                                boxShadow: '0 4px 14px rgba(124, 58, 237, 0.4)',
+                                transition: 'all 0.3s',
+                                marginBottom: '24px'
+                            }}
+                        >
+                            {loading ? '로그인 중...' : '🚀 로그인하기'}
+                        </button>
                     </form>
 
-                    <div className="mt-8 text-center text-sm text-slate-500">
-                        계정이 없으신가요?{' '}
-                        <Link to="/register" className="font-bold text-secondary-600 hover:text-secondary-500 hover:underline">
+                    <div style={{ textAlign: 'center' }}>
+                        <span style={{ color: '#64748b', fontSize: '0.95rem' }}>
+                            계정이 없으신가요?{' '}
+                        </span>
+                        <Link to="/register" style={{ color: '#7c3aed', fontWeight: '600', fontSize: '0.95rem' }}>
                             회원가입 하기
                         </Link>
                     </div>

@@ -1,18 +1,24 @@
+import 'dotenv/config';
 import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
 import { spawn } from 'child_process';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
-// import { PrismaClient } from '@prisma/client';
+
+// Routes
+import authRoutes from './routes/auth.js';
+import complaintsRoutes from './routes/complaints.js';
+import agenciesRoutes from './routes/agencies.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 5000;
-// const prisma = new PrismaClient({});
+const PORT = process.env.PORT || 5000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -25,52 +31,22 @@ const storage = multer.diskStorage({
         cb(null, `${Date.now()}-${file.originalname}`);
     }
 });
-
 const upload = multer({ storage });
 
-// uploads 폴더 생성 (없을 경우)
-import fs from 'fs';
+// uploads 폴더 생성
 if (!fs.existsSync('uploads')) {
     fs.mkdirSync('uploads');
 }
 
-// 헬퍼 함수: 기본 테스트 유저 가져오기/생성하기
-async function getOrCreateDefaultUser() {
-    // 이메일로 간단히 조회
-    const TEST_EMAIL = 'test_user@example.com';
-    let user = await prisma.user.findUnique({
-        where: { email: TEST_EMAIL }
-    });
+// 정적 파일 서빙 (업로드된 이미지)
+app.use('/uploads', express.static('uploads'));
 
-    if (!user) {
-        console.log('[서버 로그] 테스트 유저가 없어 새로 생성합니다.');
-        user = await prisma.user.create({
-            data: {
-                email: TEST_EMAIL,
-                password: 'password123', // 실제론 해싱해야 함
-                name: '테스트 유저',
-                role: 'USER'
-            }
-        });
-    }
-    return user;
-}
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/complaints', complaintsRoutes);
+app.use('/api/agencies', agenciesRoutes);
 
-// 민원 목록 API
-app.get('/api/reports', async (req, res) => {
-    try {
-        const complaints = await prisma.complaint.findMany({
-            orderBy: { createdAt: 'desc' },
-            include: { user: true } // 작성자 정보 포함
-        });
-        res.json(complaints);
-    } catch (error) {
-        console.error('[서버 에러] 민원 목록 조회 실패:', error);
-        res.status(500).json({ error: '민원 목록을 불러오지 못했습니다.' });
-    }
-});
-
-// 이미지 분석 API
+// 이미지 분석 API (기존 유지)
 app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: '이미지가 업로드되지 않았습니다.' });
@@ -81,8 +57,6 @@ app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
     console.log(`[서버 로그] AI 분석 프로세스를 시작합니다...`);
 
     const pythonCmd = process.platform === 'win32' ? 'py' : 'python';
-    // const pythonCmd = 'python3'; // Mac/Linux의 경우
-
     const pythonProcess = spawn(pythonCmd, [path.join(__dirname, 'analyze_image.py'), imagePath]);
 
     let resultData = '';
@@ -116,36 +90,41 @@ app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
 
             console.log(`[서버 로그] 분석 성공: ${jsonString}`);
 
-            // DB 저장 로직 (임시 비활성화)
-            /*
-            const user = await getOrCreateDefaultUser();
-            const savedComplaint = await prisma.complaint.create({
-                data: {
-                    imagePath: imagePath,
-                    description: 'AI 자동 분석 민원',
-                    analysisResult: resultJson,
-                    status: 'COMPLETED',
-                    userId: user.id
-                }
-            });
-            console.log(`[DB 저장] 민원 ID ${savedComplaint.id}번으로 저장 완료.`);
-            */
-
             res.json({
                 ...resultJson,
-                // db_id: savedComplaint.id,
-                message: '분석 결과입니다. (DB 저장은 현재 비활성화됨)'
+                imagePath: `/uploads/${path.basename(imagePath)}`,
+                message: '분석 완료'
             });
 
         } catch (e) {
             console.error(`[서버 로그] 결과 처리 중 오류: ${e.message}`);
-            // 분석은 성공했으나 저장이 실패했을 수도 있으니 500 에러 처리
             res.status(500).json({ error: '결과 처리 중 오류가 발생했습니다.' });
         }
     });
 });
 
+// 헬스 체크
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// 에러 핸들링 미들웨어
+app.use((err, req, res, next) => {
+    console.error('[서버 에러]', err);
+    res.status(500).json({ error: '서버 내부 오류가 발생했습니다.' });
+});
+
+// 서버 시작
 app.listen(PORT, () => {
     console.log(`[서버 로그] 백엔드 서버가 포트 ${PORT}에서 실행 중입니다.`);
     console.log(`[서버 로그] http://localhost:${PORT}`);
+    console.log(`[서버 로그] API 엔드포인트:`);
+    console.log(`  - POST /api/auth/register`);
+    console.log(`  - POST /api/auth/login`);
+    console.log(`  - GET  /api/auth/me`);
+    console.log(`  - GET  /api/complaints`);
+    console.log(`  - POST /api/complaints`);
+    console.log(`  - GET  /api/complaints/:id`);
+    console.log(`  - GET  /api/agencies`);
+    console.log(`  - POST /api/analyze-image`);
 });
