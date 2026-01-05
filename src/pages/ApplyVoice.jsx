@@ -1,7 +1,193 @@
 import React from 'react';
 
+
 function ApplyVoice() {
     const sidebarItemStyle = { marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '10px', color: '#555', fontSize: '0.9rem' };
+
+    const [isRecording, setIsRecording] = React.useState(false);
+    const [mediaRecorder, setMediaRecorder] = React.useState(null);
+    const [analysisResult, setAnalysisResult] = React.useState(null);
+    const [loading, setLoading] = React.useState(false);
+    const [error, setError] = React.useState(null);
+    const [realtimeText, setRealtimeText] = React.useState("");
+    const recognitionRef = React.useRef(null);
+    const fileInputRef = React.useRef(null);
+
+    const handleFileUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        setLoading(true);
+        setError(null);
+        setRealtimeText("동영상 파일 분석 중..."); // Show status in text area
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/upload_voice', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Server error: ${response.status} - ${errorText}`);
+            }
+
+            const data = await response.json();
+            setAnalysisResult(data);
+            if (data.original_text) {
+                setRealtimeText(data.original_text);
+            }
+        } catch (err) {
+            console.error("Upload failed", err);
+            setError(`파일 분석 실패: ${err.message}`);
+        } finally {
+            setLoading(false);
+            // Reset file input
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        }
+    };
+
+    const startRecording = async () => {
+        // ... (existing code)
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            console.error("getUserMedia not supported");
+            setError("이 브라우저는 음성 녹음을 지원하지 않습니다. (HTTPS 또는 localhost 환경인지 확인하세요)");
+            return;
+        }
+
+        // Reset real-time text
+        setRealtimeText("");
+
+        try {
+            console.log("Requesting microphone access...");
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            console.log("Microphone access granted");
+
+            // --- Web Speech API (Real-time Transcription) Setup ---
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'ko-KR'; // Korean
+                recognition.continuous = true;
+                recognition.interimResults = true;
+
+                recognition.onresult = (event) => {
+                    let interimTranscript = '';
+                    let finalTranscript = '';
+
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        if (event.results[i].isFinal) {
+                            finalTranscript += event.results[i][0].transcript;
+                        } else {
+                            interimTranscript += event.results[i][0].transcript;
+                        }
+                    }
+                    // Currently appending interim to whatever was there, or just showing latest fallback
+                    // A simple strategy is to just show recognized text.
+                    // For continuous updates, we might want to maintain a "finalized" part and "interim" part.
+                    // But here, let's just update with what we have.
+                    // Actually, event.results accumulates in continuous mode usually.
+
+                    let fullText = "";
+                    for (let i = 0; i < event.results.length; i++) {
+                        fullText += event.results[i][0].transcript;
+                    }
+                    setRealtimeText(fullText);
+                };
+
+                recognition.onerror = (event) => {
+                    console.error("Speech recognition error", event.error);
+                };
+
+                recognition.start();
+                recognitionRef.current = recognition;
+            } else {
+                console.warn("Web Speech API not supported in this browser.");
+            }
+            // -----------------------------------------------------
+
+            const recorder = new MediaRecorder(stream);
+
+            recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    chunksRef.current.push(e.data);
+                }
+            };
+
+            recorder.onstop = async () => {
+                console.log("Recording stopped, processing chunks...");
+                const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+                chunksRef.current = [];
+                console.log("Blob created, size:", blob.size);
+
+                // Upload to backend
+                const formData = new FormData();
+                formData.append('file', blob, 'recording.webm');
+
+                setLoading(true);
+                setError(null);
+
+                try {
+                    console.log("Uploading to backend...");
+                    const response = await fetch('http://127.0.0.1:8000/upload_voice', {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error("Server error response:", errorText);
+                        throw new Error(`Server error: ${response.status} - ${errorText}`);
+                    }
+
+                    const data = await response.json();
+                    console.log("Analysis result:", data);
+                    setAnalysisResult(data);
+                } catch (err) {
+                    console.error("Upload failed", err);
+                    setError(`분석 중 오류가 발생했습니다: ${err.message}`);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            recorder.start();
+            console.log("Recorder started", recorder.state);
+            setMediaRecorder(recorder);
+            setIsRecording(true);
+            setAnalysisResult(null); // Clear previous result
+        } catch (err) {
+            console.error("Error accessing microphone", err);
+            setError(`마이크 접근 실패: ${err.message}. 권한을 허용했는지 확인하세요.`);
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            setIsRecording(false);
+            mediaRecorder.stream.getTracks().forEach(track => track.stop()); // Stop stream
+        }
+
+        // Stop Speech Recognition
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+            recognitionRef.current = null;
+        }
+    };
+
+    const toggleRecording = () => {
+        if (isRecording) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+    };
 
     return (
         <div className="apply-voice-page" style={{ padding: '40px 0' }}>
@@ -20,19 +206,120 @@ function ApplyVoice() {
                         통합 민원 신청
                     </div>
                     <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <input type="text" placeholder="" style={{ width: '100%', padding: '12px', border: '1px solid #E0E0E0', borderRadius: '4px', marginBottom: '40px' }} />
+                        <input
+                            type="text"
+                            placeholder={analysisResult ? analysisResult.title : ""}
+                            value={analysisResult ? analysisResult.title : ""}
+                            readOnly
+                            style={{ width: '100%', padding: '12px', border: '1px solid #E0E0E0', borderRadius: '4px', marginBottom: '40px' }}
+                        />
 
-                        <div style={{ width: '120px', height: '120px', borderRadius: '50%', border: '4px solid var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '30px' }}>
-                            <svg width="60" height="60" viewBox="0 0 24 24" fill="var(--primary-color)">
+                        <style>
+                            {`
+                                @keyframes pulse {
+                                    0% { box-shadow: 0 0 0 0 rgba(255, 75, 75, 0.7); }
+                                    70% { box-shadow: 0 0 0 15px rgba(255, 75, 75, 0); }
+                                    100% { box-shadow: 0 0 0 0 rgba(255, 75, 75, 0); }
+                                }
+                                @keyframes blink {
+                                    50% { opacity: 0; }
+                                }
+                            `}
+                        </style>
+
+                        <div
+                            onClick={toggleRecording}
+                            style={{
+                                width: '120px',
+                                height: '120px',
+                                borderRadius: '50%',
+                                border: `4px solid ${isRecording ? '#FF4B4B' : 'var(--primary-color)'}`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginBottom: '20px',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                transform: isRecording ? 'scale(1.1)' : 'scale(1)',
+                                animation: isRecording ? 'pulse 1.5s infinite' : 'none'
+                            }}
+                        >
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill={isRecording ? '#FF4B4B' : 'var(--primary-color)'}>
                                 <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
                                 <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
                             </svg>
                         </div>
 
+                        {/* MP4 Upload Button */}
+                        <input
+                            type="file"
+                            accept="video/mp4"
+                            style={{ display: 'none' }}
+                            ref={fileInputRef}
+                            onChange={handleFileUpload}
+                        />
+                        <button
+                            onClick={() => fileInputRef.current.click()}
+                            disabled={isRecording || loading}
+                            style={{
+                                backgroundColor: '#6B7280',
+                                color: 'white',
+                                border: 'none',
+                                padding: '8px 16px',
+                                borderRadius: '4px',
+                                cursor: (isRecording || loading) ? 'not-allowed' : 'pointer',
+                                marginBottom: '20px',
+                                fontSize: '0.9rem',
+                                opacity: (isRecording || loading) ? 0.7 : 1
+                            }}
+                        >
+                            MP4 동영상 첨부
+                        </button>
+
+                        {isRecording && (
+                            <div style={{ color: '#FF4B4B', fontWeight: 'bold', marginBottom: '10px', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div style={{ width: '10px', height: '10px', backgroundColor: '#FF4B4B', borderRadius: '50%', animation: 'blink 1s infinite' }}></div>
+                                녹음 중... (클릭하여 중지)
+                            </div>
+                        )}
+
+                        {loading && (
+                            <div style={{ color: 'var(--primary-color)', fontWeight: 'bold', marginBottom: '10px' }}>
+                                분석 중...
+                            </div>
+                        )}
+
+                        {error && (
+                            <div style={{ color: 'red', marginBottom: '10px' }}>
+                                {error}
+                            </div>
+                        )}
+
                         <div style={{ width: '100%', backgroundColor: '#EEE', height: '30px', borderRadius: '15px', position: 'relative', overflow: 'hidden', marginBottom: '10px' }}>
-                            <div style={{ width: '30%', height: '100%', backgroundColor: '#FF4B4B' }}></div>
-                            <div style={{ position: 'absolute', top: '0', left: '10px', height: '100%', display: 'flex', alignItems: 'center', color: 'white', fontSize: '0.8rem' }}>0:30</div>
-                            <div style={{ position: 'absolute', top: '0', right: '10px', height: '100%', display: 'flex', alignItems: 'center', color: '#555', fontSize: '0.8rem' }}>5:00</div>
+                            <div style={{ width: isRecording ? '100%' : '0%', height: '100%', backgroundColor: '#FF4B4B', transition: 'width 1s linear' }}></div>
+                            <div style={{ position: 'absolute', top: '0', left: '10px', height: '100%', display: 'flex', alignItems: 'center', color: 'white', fontSize: '0.8rem' }}>
+                                {isRecording ? "Recording..." : "Ready"}
+                            </div>
+                        </div>
+
+                        {/* Real-time Transcription Display */}
+                        <div style={{ width: '100%', marginBottom: '20px' }}>
+                            <div style={{ fontSize: '0.85rem', color: '#555', marginBottom: '5px' }}>실시간 음성 인식 내용</div>
+                            <textarea
+                                value={realtimeText}
+                                readOnly
+                                placeholder="마이크 버튼을 누르고 말씀하시면 여기에 실시간으로 표시됩니다..."
+                                style={{
+                                    width: '100%',
+                                    minHeight: '80px',
+                                    padding: '10px',
+                                    border: '1px solid #E0E0E0',
+                                    borderRadius: '4px',
+                                    resize: 'vertical',
+                                    backgroundColor: '#FAFAFA',
+                                    color: '#333'
+                                }}
+                            />
                         </div>
 
                         <div style={{ width: '100%', marginBottom: '20px', marginTop: '30px' }}>
@@ -41,7 +328,14 @@ function ApplyVoice() {
                                 <button style={{ backgroundColor: 'var(--primary-color)', color: 'white', border: 'none', padding: '5px 15px', borderRadius: '4px', cursor: 'pointer' }}>위치 찾기</button>
                             </div>
                             <div style={{ width: '100%', height: '180px', backgroundColor: '#EEE', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                                <img src="https://via.placeholder.com/600x200?text=Map+Placeholder" alt="Map" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                {/* Display location if available, otherwise placeholder */}
+                                {analysisResult && analysisResult.location && analysisResult.location !== "위치 정보 없음" ? (
+                                    <div style={{ padding: '20px', textAlign: 'center' }}>
+                                        {analysisResult.location}
+                                    </div>
+                                ) : (
+                                    <img src="https://via.placeholder.com/600x200?text=Map+Placeholder" alt="Map" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                )}
                             </div>
                         </div>
 
@@ -62,19 +356,27 @@ function ApplyVoice() {
                         <h3 style={{ textAlign: 'center', color: '#4F46E5', marginBottom: '20px' }}>AI 분석결과</h3>
                         <div style={{ padding: '15px', backgroundColor: '#EEF2FF', borderRadius: '8px', marginBottom: '15px' }}>
                             <div style={{ fontSize: '0.8rem', color: '#6366F1', marginBottom: '5px' }}>민원 유형 AI 결과</div>
-                            <div style={{ fontWeight: 'bold', textAlign: 'center' }}>유형: <span style={{ color: '#4F46E5' }}>교통</span></div>
+                            <div style={{ fontWeight: 'bold', textAlign: 'center' }}>
+                                유형: <span style={{ color: '#4F46E5' }}>{analysisResult ? analysisResult.category : "-"}</span>
+                            </div>
                         </div>
                         <div style={{ padding: '15px', backgroundColor: '#EEF2FF', borderRadius: '8px', marginBottom: '15px' }}>
                             <div style={{ fontSize: '0.8rem', color: '#6366F1', marginBottom: '5px' }}>처리 기관 AI 분류 결과</div>
-                            <div style={{ fontWeight: 'bold', textAlign: 'center' }}>처리기관: <span style={{ color: '#4F46E5' }}>도로교통부</span></div>
+                            <div style={{ fontWeight: 'bold', textAlign: 'center' }}>
+                                처리기관: <span style={{ color: '#4F46E5' }}>{analysisResult ? analysisResult.agency : "-"}</span>
+                            </div>
                         </div>
                         <div style={{ padding: '15px', backgroundColor: '#EEF2FF', borderRadius: '8px' }}>
                             <div style={{ fontSize: '0.8rem', color: '#6366F1', marginBottom: '5px' }}>음성 인식 결과</div>
                             <div style={{ textAlign: 'center' }}>
                                 <div style={{ fontSize: '0.85rem', color: '#312E81', marginBottom: '5px' }}>발생지점</div>
-                                <div style={{ fontSize: '0.8rem', marginBottom: '10px' }}>서울 강남구 남부순환로365길 33</div>
+                                <div style={{ fontSize: '0.8rem', marginBottom: '10px' }}>
+                                    {analysisResult ? analysisResult.location : "-"}
+                                </div>
                                 <div style={{ fontSize: '0.85rem', color: '#312E81', marginBottom: '5px' }}>민원 내용</div>
-                                <div style={{ fontSize: '0.8rem' }}>공원 내 잡초 제거 요청</div>
+                                <div style={{ fontSize: '0.8rem' }}>
+                                    {analysisResult ? analysisResult.original_text : "-"}
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -40,7 +40,7 @@ services:
     build: ./ai/yolo
     container_name: safeguard-ai-yolo
     ports:
-      - "5000:5000"
+      - "5001:5000"
     networks:
       - safeguard-network
 
