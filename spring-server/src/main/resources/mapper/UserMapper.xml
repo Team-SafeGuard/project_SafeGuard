@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.civilcomplaint.mapper.UserMapper">
+    
+    <resultMap id="userResultMap" type="AppUser">
+        <id property="id" column="id"/>
+        <result property="email" column="email"/>
+        <result property="password" column="password"/>
+        <result property="name" column="name"/>
+        <result property="role" column="role"/>
+        <result property="createdAt" column="createdAt"/>
+        <result property="updatedAt" column="updatedAt"/>
+    </resultMap>
+    
+    <select id="findById" resultMap="userResultMap">
+        SELECT * FROM "User" WHERE id = #{id}
+    </select>
+    
+    <select id="findByEmail" resultMap="userResultMap">
+        SELECT * FROM "User" WHERE email = #{email}
+    </select>
+    
+    <select id="existsByEmail" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM "User" WHERE email = #{email})
+    </select>
+    
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO "User" (email, password, name, role, "createdAt", "updatedAt")
+        VALUES (#{email}, #{password}, #{name}, #{role}, NOW(), NOW())
+    </insert>
+    
+    <update id="update">
+        UPDATE "User" SET 
+            email = #{email},
+            password = #{password},
+            name = #{name},
+            role = #{role},
+            "updatedAt" = NOW()
+        WHERE id = #{id}
+    </update>
+    
+    <delete id="deleteById">
+        DELETE FROM "User" WHERE id = #{id}
+    </delete>
+    
+</mapper>

@@ -2,7 +2,7 @@ package com.civilcomplaint.service;
 
 import com.civilcomplaint.dto.request.ComplaintRequest;
 import com.civilcomplaint.entity.*;
-import com.civilcomplaint.repository.*;
+import com.civilcomplaint.mapper.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,15 +15,15 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ComplaintService {
-    private final ComplaintRepository complaintRepository;
-    private final UserRepository userRepository;
+    private final ComplaintMapper complaintMapper;
+    private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getComplaints(Integer userId) {
-        List<Complaint> complaints = complaintRepository.findAllByOrderByCreatedAtDesc();
+        List<Complaint> complaints = complaintMapper.findAll();
         return complaints.stream()
                 .map(c -> {
-                    String authorName = userRepository.findById(c.getUserId())
+                    String authorName = userMapper.findById(c.getUserId())
                             .map(AppUser::getName).orElse("Unknown");
                     Map<String, Object> m = new HashMap<>();
                     m.put("id", c.getId());
@@ -39,11 +39,11 @@ public class ComplaintService {
 
     @Transactional(readOnly = true)
     public Map<String, Object> getComplaintDetail(Integer id, Integer userId) {
-        Complaint c = complaintRepository.findById(id)
+        Complaint c = complaintMapper.findById(id)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
-        String authorName = userRepository.findById(c.getUserId()).map(AppUser::getName).orElse("Unknown");
-        String authorEmail = userRepository.findById(c.getUserId()).map(AppUser::getEmail).orElse("Unknown");
+        String authorName = userMapper.findById(c.getUserId()).map(AppUser::getName).orElse("Unknown");
+        String authorEmail = userMapper.findById(c.getUserId()).map(AppUser::getEmail).orElse("Unknown");
 
         Map<String, Object> result = new HashMap<>();
         result.put("id", c.getId());
@@ -65,19 +65,18 @@ public class ComplaintService {
                 .userId(userId)
                 .status("PENDING")
                 .build();
-        complaintRepository.save(c);
+        complaintMapper.insert(c);
         log.info("[Complaints] Created: #{} by user {}", c.getId(), userId);
 
         Map<String, Object> result = new HashMap<>();
         result.put("message", "Complaint submitted");
         result.put("id", c.getId());
-        result.put("createdAt", c.getCreatedAt() != null ? c.getCreatedAt().toString() : "");
         return result;
     }
 
     @Transactional
     public Map<String, Object> updateComplaint(Integer id, ComplaintRequest request, Integer userId) {
-        Complaint c = complaintRepository.findById(id)
+        Complaint c = complaintMapper.findById(id)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
         if (!c.getUserId().equals(userId))
             throw new RuntimeException("Not authorized");
@@ -88,7 +87,7 @@ public class ComplaintService {
             c.setAnalysisResult(request.getAnalysisResult());
         if (request.getStatus() != null)
             c.setStatus(request.getStatus());
-        complaintRepository.save(c);
+        complaintMapper.update(c);
 
         Map<String, Object> result = new HashMap<>();
         result.put("message", "Complaint updated");
@@ -97,11 +96,11 @@ public class ComplaintService {
 
     @Transactional
     public Map<String, Object> deleteComplaint(Integer id, Integer userId, String role) {
-        Complaint c = complaintRepository.findById(id)
+        Complaint c = complaintMapper.findById(id)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
         if (!c.getUserId().equals(userId) && "USER".equals(role))
             throw new RuntimeException("Not authorized");
-        complaintRepository.delete(c);
+        complaintMapper.deleteById(id);
 
         Map<String, Object> result = new HashMap<>();
         result.put("message", "Complaint deleted");

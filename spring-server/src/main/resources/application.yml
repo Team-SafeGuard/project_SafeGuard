@@ -1,35 +1,33 @@
-server:
-  port: 5000
-
 spring:
   application:
     name: civil-complaint-api
   datasource:
-    url: jdbc:postgresql://localhost:5433/civil_complaint_db
+    url: jdbc:postgresql://localhost:5432/safeguard_db
     username: postgres
-    password: 1234
+    password: "1234"
     driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: none
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-  servlet:
-    multipart:
-      enabled: true
-      max-file-size: 10MB
-      max-request-size: 10MB
 
+# MyBatis Configuration
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.civilcomplaint.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# JWT Configuration
 jwt:
-  secret: modu-minwon-super-secret-jwt-key-2024
-  expiration: 604800000
+  secret: "YourSuperSecretKeyForJWTTokenGenerationMustBe256BitsLong"
+  expiration: 86400000
 
+# File Upload
 file:
   upload-dir: ./uploads
 
+server:
+  port: 5000
+
 logging:
   level:
+    root: INFO
     com.civilcomplaint: DEBUG

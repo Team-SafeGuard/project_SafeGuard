@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.civilcomplaint.mapper.ComplaintMapper">
+    
+    <resultMap id="complaintResultMap" type="Complaint">
+        <id property="id" column="id"/>
+        <result property="imagePath" column="imagePath"/>
+        <result property="description" column="description"/>
+        <result property="analysisResult" column="analysisResult"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="createdAt"/>
+        <result property="updatedAt" column="updatedAt"/>
+        <result property="userId" column="userId"/>
+    </resultMap>
+    
+    <select id="findAll" resultMap="complaintResultMap">
+        SELECT * FROM "Complaint" ORDER BY "createdAt" DESC
+    </select>
+    
+    <select id="findByUserId" resultMap="complaintResultMap">
+        SELECT * FROM "Complaint" WHERE "userId" = #{userId} ORDER BY "createdAt" DESC
+    </select>
+    
+    <select id="findById" resultMap="complaintResultMap">
+        SELECT * FROM "Complaint" WHERE id = #{id}
+    </select>
+    
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO "Complaint" ("imagePath", description, "analysisResult", status, "createdAt", "updatedAt", "userId")
+        VALUES (#{imagePath}, #{description}, #{analysisResult}::json, #{status}, NOW(), NOW(), #{userId})
+    </insert>
+    
+    <update id="update">
+        UPDATE "Complaint" SET 
+            "imagePath" = #{imagePath},
+            description = #{description},
+            "analysisResult" = #{analysisResult}::json,
+            status = #{status},
+            "updatedAt" = NOW()
+        WHERE id = #{id}
+    </update>
+    
+    <delete id="deleteById">
+        DELETE FROM "Complaint" WHERE id = #{id}
+    </delete>
+    
+</mapper>
