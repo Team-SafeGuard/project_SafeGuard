@@ -1,0 +1,97 @@
+name: Deploy to Amazon ECS
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REPOSITORY_BACKEND: safeguard-backend
+  ECR_REPOSITORY_AI_YOLO: safeguard-ai-yolo
+  ECR_REPOSITORY_AI_STT: safeguard-ai-stt
+  ECR_REPOSITORY_FRONTEND: safeguard-frontend
+  ECS_SERVICE: safeguard-task-service-qhobrl5v
+  ECS_CLUSTER: safeguard-cluster
+  ECS_TASK_DEFINITION: safeguard-task
+  CONTAINER_NAME_BACKEND: safeguard-backend
+  CONTAINER_NAME_AI_YOLO: safeguard-ai-yolo
+
+  CONTAINER_NAME_FRONTEND: safeguard-frontend
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push Frontend image to Amazon ECR
+        id: build-frontend
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build Frontend
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest
+
+      - name: Build, tag, and push Backend image to Amazon ECR
+        id: build-backend
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build Backend
+          cd backend
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest
+
+      - name: Build, tag, and push AI YOLO image to Amazon ECR
+        id: build-ai-yolo
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build AI (YOLO)
+          cd ai/yolo
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_AI_YOLO:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY_AI_YOLO:latest .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_AI_YOLO:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_AI_YOLO:latest
+
+      - name: Build, tag, and push AI STT image to Amazon ECR
+        id: build-ai-stt
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build AI (STT)
+          cd ai/stt
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_AI_STT:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY_AI_STT:latest .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_AI_STT:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_AI_STT:latest
+
+      - name: Register Task Definition
+        id: register-task
+        run: |
+          aws ecs register-task-definition --cli-input-json file://task_definition_update_v3.json
+
+      - name: Force ECS Deployment
+        run: |
+          aws ecs update-service --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $ECS_TASK_DEFINITION --force-new-deployment

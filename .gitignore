@@ -37,6 +37,11 @@ dist-ssr
 *.sln
 *.sw?
 
+# Milvus Data
+milvus-data/
+milvus-etcd-data/
+milvus-minio-data/
+
 /src/generated/prisma
 # Env
 .env

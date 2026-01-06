@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
@@ -38,6 +37,13 @@ if (!fs.existsSync('uploads')) {
     fs.mkdirSync('uploads');
 }
 
+// 민원 목록 API (더미 데이터)
+app.get('/api/reports', (req, res) => {
+    res.json([
+        { id: 1, title: '도로 파손 신고', region: '서울시 강남구', date: '2025-12-30', interested: 5 },
+        { id: 2, title: '불법 주차 차량', region: '경기도 성남시', date: '2025-12-31', interested: 3 }
+    ]);
+});
 // 정적 파일 서빙 (업로드된 이미지)
 app.use('/uploads', express.static('uploads'));
 
@@ -56,6 +62,7 @@ app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
     console.log(`[서버 로그] 이미지 수신 완료: ${imagePath}`);
     console.log(`[서버 로그] AI 분석 프로세스를 시작합니다...`);
 
+    // Python 실행 명령 확인 (Windows에서는 'py', 그 외에는 'python'을 주로 사용)
     const pythonCmd = process.platform === 'win32' ? 'py' : 'python';
     const pythonProcess = spawn(pythonCmd, [path.join(__dirname, 'analyze_image.py'), imagePath]);
 
@@ -69,6 +76,7 @@ app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
     pythonProcess.stderr.on('data', (data) => {
         const output = data.toString();
         errorLog += output;
+        // 한글 로그는 서버 터미널에 출력
         process.stdout.write(output);
     });
 
@@ -81,6 +89,7 @@ app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
         }
 
         try {
+            // 결과 데이터에서 JSON만 추출 (혹시 모를 다른 로그가 섞여있을 수 있음)
             const jsonMatch = resultData.match(/\{[\s\S]*\}/);
             if (!jsonMatch) {
                 throw new Error('결과 데이터에서 JSON 형식을 찾을 수 없습니다.');
