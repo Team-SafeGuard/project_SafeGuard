@@ -11,7 +11,7 @@ env:
   ECR_REPOSITORY_AI_YOLO: safeguard-ai-yolo
   ECR_REPOSITORY_AI_STT: safeguard-ai-stt
   ECR_REPOSITORY_FRONTEND: safeguard-frontend
-  ECS_SERVICE: safeguard-service
+  ECS_SERVICE: safeguard-task-service-qhobrl5v
   ECS_CLUSTER: safeguard-cluster
   ECS_TASK_DEFINITION: safeguard-task
   CONTAINER_NAME_BACKEND: safeguard-backend
