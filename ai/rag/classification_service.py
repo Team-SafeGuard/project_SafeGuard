@@ -187,6 +187,17 @@ def classify_complaint(user_query: str) -> dict:
     agency_scores = Counter()
     source_details = []
 
+    # 1순위: 사용자 질의 핵심 키워드 (가장 강력한 힌트 추출)
+    query_hint_agency = "기타"
+    for key, agency in KEYWORD_TO_AGENCY.items():
+        if key in user_query:
+            query_hint_agency = agency
+            break
+    
+    # 질의에 명확한 의도가 있다면 기본 점수 부여 (기본 3.0점의 강력한 출발)
+    if query_hint_agency != "기타":
+        agency_scores[query_hint_agency] += 3.0
+
     # 2. 검색 결과 해석
     for r in results:
         raw_source = unicodedata.normalize("NFC", r.get("source", ""))
@@ -196,38 +207,32 @@ def classify_complaint(user_query: str) -> dict:
         weight = 1.0
 
         if rtype == "vector":
-            # Milvus COSINE similarity: 1.0 is best, 0.0 is worst.
             score_value = r.get("score", 0.0)
-            weight += score_value # Higher similarity -> higher weight
+            weight += score_value 
             score_label = "COSINE"
         else:
             score_value = r.get("bm25_score", 0.0)
-            # BM25 scores can be large, normalize it a bit for combination
             weight += min(1.0, score_value / 10.0)
             score_label = "BM25"
 
         matched_agency = "기타"
+        is_broad_law = False
 
-        # 1순위: 사용자 질의 핵심 키워드 (가장 강력한 힌트)
-        query_hint_agency = "기타"
-        for key, agency in KEYWORD_TO_AGENCY.items():
-            if key in user_query:
-                query_hint_agency = agency
-                # 질의에 핵심 키워드가 있으면 해당 기관 점수를 대폭 가산
+        # 범용 법령 판별 (모든 민원의 근거가 될 수 있는 법)
+        BROAD_LAWS = ["지방자치법", "재난 및 안전관리 기본법", "행정절차법", "행정업무의 효율적 운영", "민원 처리"]
+        for broad in BROAD_LAWS:
+            if broad in filename:
+                is_broad_law = True
                 break
 
-        # 2순위: 파일명 기반 매칭
+        # 파일명 기반 매칭
         for key, agency in KEYWORD_TO_AGENCY.items():
             if key in filename:
                 matched_agency = agency
-                weight += 0.5 # 파일명 일치는 강력한 근거
+                weight += 0.5 
                 break
-        
-        # 지방자치법 등 범용 법령에 대한 예외 처리
-        if "지방자치법" in filename:
-            matched_agency = "행정안전부"
 
-        # 3순위: 본문 기반 매칭
+        # 본문 기반 매칭
         if matched_agency == "기타":
             text_snippet = r.get("text", "")[:500]
             for key, agency in KEYWORD_TO_AGENCY.items():
@@ -235,12 +240,21 @@ def classify_complaint(user_query: str) -> dict:
                     matched_agency = agency
                     break
 
+        # [핵심 로직] 범용 법령이고 질의 힌트가 있다면, 힌트 기관으로 매칭 시도
+        if is_broad_law:
+            if query_hint_agency != "기타":
+                matched_agency = query_hint_agency
+                # 범용 법령의 영향력을 약간 낮춤
+                weight *= 0.8
+            else:
+                matched_agency = "행정안전부" # 힌트가 없으면 기본값
+
         # 최종 가중치 합산
         if matched_agency == "기타" and query_hint_agency != "기타":
             matched_agency = query_hint_agency
             weight += 0.2
         elif matched_agency != "기타" and matched_agency == query_hint_agency:
-            # 검색 결과와 질의 키워드가 일치하면 대폭 신뢰도 상승
+            # 검색 결과와 질의 키워드가 일치하면 추가 보너스
             weight += 1.0
 
         agency_scores[matched_agency] += weight
