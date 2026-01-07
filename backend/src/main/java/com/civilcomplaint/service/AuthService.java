@@ -28,17 +28,18 @@ public class AuthService {
                 }
                 AppUser user = AppUser.builder()
                                 .email(request.getEmail())
-                                .password(passwordEncoder.encode(request.getPassword()))
+                                .userId(request.getEmail())
+                                .pw(passwordEncoder.encode(request.getPassword()))
                                 .name(request.getName())
-                                .role("USER")
+                                .role(com.civilcomplaint.enums.UserRole.USER)
                                 .build();
                 userMapper.insert(user);
                 log.info("[Auth] Register success: {}", request.getEmail());
                 return UserResponse.builder()
-                                .id(user.getId())
+                                .userNo(user.getUserNo())
                                 .email(user.getEmail())
                                 .name(user.getName())
-                                .role(user.getRole())
+                                .role(user.getRole() != null ? user.getRole().name() : null)
                                 .build();
         }
 
@@ -46,33 +47,34 @@ public class AuthService {
         public LoginResponse login(LoginRequest request) {
                 AppUser user = userMapper.findByEmail(request.getEmail())
                                 .orElseThrow(() -> new RuntimeException("Invalid credentials"));
-                if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                if (!passwordEncoder.matches(request.getPassword(), user.getPw())) {
                         throw new RuntimeException("Invalid credentials");
                 }
-                String token = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole());
+                String token = jwtTokenProvider.generateToken(user.getUserNo(), user.getEmail(),
+                                user.getRole().name());
                 log.info("[Auth] Login success: {}", request.getEmail());
                 return LoginResponse.builder()
                                 .message("Login successful")
                                 .token(token)
                                 .user(UserResponse.builder()
-                                                .id(user.getId())
+                                                .userNo(user.getUserNo())
                                                 .email(user.getEmail())
                                                 .name(user.getName())
-                                                .role(user.getRole())
+                                                .role(user.getRole() != null ? user.getRole().name() : null)
                                                 .build())
                                 .build();
         }
 
         @Transactional(readOnly = true)
-        public UserResponse getUserInfo(Integer id) {
-                AppUser user = userMapper.findById(id)
+        public UserResponse getUserInfo(Long userNo) {
+                AppUser user = userMapper.findByUserNo(userNo)
                                 .orElseThrow(() -> new RuntimeException("User not found"));
                 return UserResponse.builder()
-                                .id(user.getId())
+                                .userNo(user.getUserNo())
                                 .email(user.getEmail())
                                 .name(user.getName())
-                                .role(user.getRole())
-                                .createdAt(user.getCreatedAt() != null ? user.getCreatedAt().toString() : null)
+                                .role(user.getRole() != null ? user.getRole().name() : null)
+                                .createdAt(user.getCreatedDate() != null ? user.getCreatedDate().toString() : null)
                                 .build();
         }
 }

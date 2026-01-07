@@ -6,7 +6,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class JwtUserDetails {
-    private Integer id;
+    private Long userNo;
     private String email;
     private String role;
 }

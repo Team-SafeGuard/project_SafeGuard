@@ -37,6 +37,6 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> me(@AuthenticationPrincipal JwtUserDetails user) {
-        return ResponseEntity.ok(authService.getUserInfo(user.getId()));
+        return ResponseEntity.ok(authService.getUserInfo(user.getUserNo()));
     }
 }

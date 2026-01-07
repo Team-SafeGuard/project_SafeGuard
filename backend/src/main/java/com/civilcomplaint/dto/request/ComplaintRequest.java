@@ -4,8 +4,10 @@ import lombok.Data;
 
 @Data
 public class ComplaintRequest {
+    private String title;
+    private String category;
+    private String description; // description은 content로 매핑됨
     private String imagePath;
-    private String description;
     private String analysisResult;
     private String status;
 }

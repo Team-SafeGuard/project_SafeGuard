@@ -18,10 +18,10 @@ public class JwtTokenProvider {
         this.expiration = expiration;
     }
 
-    public String generateToken(Integer id, String email, String role) {
+    public String generateToken(Long userNo, String email, String role) {
         Date now = new Date();
         return Jwts.builder()
-                .claim("id", id)
+                .claim("userNo", userNo)
                 .claim("email", email)
                 .claim("role", role)
                 .issuedAt(now)
@@ -30,8 +30,8 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public Integer getIdFromToken(String token) {
-        return parseToken(token).get("id", Integer.class);
+    public Long getIdFromToken(String token) {
+        return parseToken(token).get("userNo", Long.class);
     }
 
     public String getEmailFromToken(String token) {

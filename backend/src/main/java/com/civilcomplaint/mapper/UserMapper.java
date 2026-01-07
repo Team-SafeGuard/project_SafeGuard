@@ -8,7 +8,9 @@ import java.util.Optional;
 
 @Mapper
 public interface UserMapper {
-    Optional<AppUser> findById(@Param("id") Integer id);
+    Optional<AppUser> findByUserNo(@Param("userNo") Long userNo);
+
+    Optional<AppUser> findByUserId(@Param("userId") String userId);
 
     Optional<AppUser> findByEmail(@Param("email") String email);
 
@@ -18,5 +20,5 @@ public interface UserMapper {
 
     void update(AppUser user);
 
-    void deleteById(@Param("id") Integer id);
+    void deleteByUserNo(@Param("userNo") Long userNo);
 }

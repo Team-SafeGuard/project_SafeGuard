@@ -18,30 +18,32 @@ public class ComplaintController {
 
     @GetMapping
     public ResponseEntity<List<Map<String, Object>>> list(@AuthenticationPrincipal JwtUserDetails user) {
-        return ResponseEntity.ok(complaintService.getComplaints(user != null ? user.getId() : null));
+        return ResponseEntity.ok(complaintService.getComplaints(user != null ? user.getUserNo() : null));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> detail(@PathVariable Integer id,
+    @GetMapping("/{complaintNo}")
+    public ResponseEntity<Map<String, Object>> detail(@PathVariable Long complaintNo,
             @AuthenticationPrincipal JwtUserDetails user) {
-        return ResponseEntity.ok(complaintService.getComplaintDetail(id, user != null ? user.getId() : null));
+        return ResponseEntity
+                .ok(complaintService.getComplaintDetail(complaintNo, user != null ? user.getUserNo() : null));
     }
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> create(@RequestBody ComplaintRequest request,
             @AuthenticationPrincipal JwtUserDetails user) {
-        return ResponseEntity.ok(complaintService.createComplaint(request, user.getId()));
+        return ResponseEntity.ok(complaintService.createComplaint(request, user.getUserNo()));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> update(@PathVariable Integer id, @RequestBody ComplaintRequest request,
+    @PutMapping("/{complaintNo}")
+    public ResponseEntity<Map<String, Object>> update(@PathVariable Long complaintNo,
+            @RequestBody ComplaintRequest request,
             @AuthenticationPrincipal JwtUserDetails user) {
-        return ResponseEntity.ok(complaintService.updateComplaint(id, request, user.getId()));
+        return ResponseEntity.ok(complaintService.updateComplaint(complaintNo, request, user.getUserNo()));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> delete(@PathVariable Integer id,
+    @DeleteMapping("/{complaintNo}")
+    public ResponseEntity<Map<String, Object>> delete(@PathVariable Long complaintNo,
             @AuthenticationPrincipal JwtUserDetails user) {
-        return ResponseEntity.ok(complaintService.deleteComplaint(id, user.getId(), user.getRole()));
+        return ResponseEntity.ok(complaintService.deleteComplaint(complaintNo, user.getUserNo(), user.getRole()));
     }
 }

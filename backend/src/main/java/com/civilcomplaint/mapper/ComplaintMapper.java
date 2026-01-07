@@ -11,13 +11,13 @@ import java.util.Optional;
 public interface ComplaintMapper {
     List<Complaint> findAll();
 
-    List<Complaint> findByUserId(@Param("userId") Integer userId);
+    List<Complaint> findByUserNo(@Param("userNo") Long userNo);
 
-    Optional<Complaint> findById(@Param("id") Integer id);
+    Optional<Complaint> findByComplaintNo(@Param("complaintNo") Long complaintNo);
 
     void insert(Complaint complaint);
 
     void update(Complaint complaint);
 
-    void deleteById(@Param("id") Integer id);
+    void deleteByComplaintNo(@Param("complaintNo") Long complaintNo);
 }
