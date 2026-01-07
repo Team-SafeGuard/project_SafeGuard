@@ -304,6 +304,9 @@
     ],
     "cpu": "4096",
     "memory": "8192",
+    "ephemeralStorage": {
+        "sizeInGiB": 100
+    },
     "runtimePlatform": {
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
