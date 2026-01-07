@@ -303,7 +303,7 @@
         "FARGATE"
     ],
     "cpu": "4096",
-    "memory": "8192",
+    "memory": "30720",
     "ephemeralStorage": {
         "sizeInGiB": 100
     },
