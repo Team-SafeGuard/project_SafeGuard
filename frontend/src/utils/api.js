@@ -1,5 +1,5 @@
 // 프론트엔드에서 사용할 API 유틸리티
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = '/api';
 
 // 토큰 저장/조회
 export const getToken = () => localStorage.getItem('token');
@@ -26,7 +26,7 @@ const apiRequest = async (endpoint, options = {}) => {
     const data = await response.json();
 
     if (!response.ok) {
-        throw new Error(data.error || '요청 처리 중 오류가 발생했습니다.');
+        throw new Error(data.error || data.message || '요청 처리 중 오류가 발생했습니다.');
     }
 
     return data;
@@ -34,7 +34,7 @@ const apiRequest = async (endpoint, options = {}) => {
 
 // Auth API
 export const authAPI = {
-    register: (userData) => apiRequest('/auth/register', {
+    register: (userData) => apiRequest('/auth/signup', {
         method: 'POST',
         body: JSON.stringify(userData),
     }),
@@ -49,6 +49,26 @@ export const authAPI = {
         }
         return data;
     },
+
+    findId: (data) => apiRequest('/auth/find-id', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    }),
+
+    resetPassword: (data) => apiRequest('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    }),
+
+    verifyReset: (data) => apiRequest('/auth/verify-reset', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    }),
+
+    updatePassword: (data) => apiRequest('/auth/update-password', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    }),
 
     logout: () => {
         removeToken();

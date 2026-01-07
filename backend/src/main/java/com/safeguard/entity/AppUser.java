@@ -12,12 +12,12 @@ public class AppUser {
     private String userId;
     private String pw;
     private String name;
-
-    private LocalDate birthDate;          // DATE 권장
+    private LocalDate birthDate; // DATE 권장
     private String addr;
     private String phone;
+    private String email;
 
-    private OffsetDateTime createdDate;   // TIMESTAMPTZ
+    private OffsetDateTime createdDate; // TIMESTAMPTZ
     private UserRole role;
 
     // 기관 계정일 때만 값 있음(일반/관리자는 null)
