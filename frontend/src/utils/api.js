@@ -1,5 +1,5 @@
 // 프론트엔드에서 사용할 API 유틸리티
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'http://localhost:8090/api';
 
 // 토큰 저장/조회
 export const getToken = () => localStorage.getItem('token');
@@ -84,7 +84,15 @@ export const complaintsAPI = {
         method: 'POST',
     }),
 
-    getMapLocations: () => apiRequest('/complaints/map/locations'),
+//    getMapLocations: () => apiRequest('/complaints/map/locations'),
+    getMapItems: (params) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/gis/map-items${query ? `?${query}` : ''}`);
+    },
+      getComplaints: (params) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/gis/complaints${query ? `?${query}` : ''}`);
+    },
 };
 
 // Agencies API

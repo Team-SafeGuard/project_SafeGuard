@@ -44,4 +44,4 @@ milvus-minio-data/
 
 /src/generated/prisma
 # Env
-.env
+frontend/.env
