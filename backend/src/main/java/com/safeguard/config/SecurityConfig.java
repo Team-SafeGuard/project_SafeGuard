@@ -40,14 +40,10 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-<<<<<<< HEAD
-                        .requestMatchers("/api/auth/**", "/api/seed/**", "/api/complaints/**", "/error", "/api/check").permitAll()
-=======
-                        .requestMatchers("/api/auth/**", "/error", "/api/check", "/api/classify", "/api/**").permitAll() // Added
-                                                                                                                         // /api/classify
-                                                                                                                         // and
-                                                                                                                         // /api/**
->>>>>>> origin/main
+                        // Merged permissions from HEAD and origin/main
+                        .requestMatchers("/api/auth/**", "/api/seed/**", "/api/complaints/**", "/api/classify",
+                                "/api/check", "/api/**", "/error")
+                        .permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
                         UsernamePasswordAuthenticationFilter.class);
@@ -56,24 +52,15 @@ public class SecurityConfig {
     }
 
     @Bean
-<<<<<<< HEAD
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-=======
     public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
         org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
+        // Use Wildcard Pattern from origin/main (Safer for team dev)
         configuration.setAllowedOriginPatterns(java.util.List.of("*"));
-        configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(java.util.List.of("*"));
         configuration.setAllowCredentials(true);
 
         org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
->>>>>>> origin/main
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
