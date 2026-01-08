@@ -63,8 +63,8 @@ function ApplyVoice() {
                     setError('');
                     try {
                         const result = await sttAPI.transcribe(audioBlob);
-                        if (result && result.sttText) {
-                            setFormData(prev => ({ ...prev, content: result.sttText }));
+                        if (result && result.stt_text) {
+                            setFormData(prev => ({ ...prev, content: result.stt_text }));
                         }
                     } catch (err) {
                         setError('음성 인식에 실패했습니다: ' + err.message);

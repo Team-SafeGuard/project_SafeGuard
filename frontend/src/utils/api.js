@@ -150,7 +150,7 @@ export const sttAPI = {
         const formData = new FormData();
         formData.append('file', audioBlob, 'record.wav');
 
-        const response = await fetch(`${API_BASE}/stt/transcribe`, {
+        const response = await fetch(`${API_BASE}/stt/upload_voice`, {
             method: 'POST',
             body: formData,
             // 'Content-Type'은 FormData 전송 시 브라우저가 자동으로 boundry와 함께 설정하도록 비워둡니다.
