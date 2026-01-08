@@ -195,4 +195,25 @@
     <delete id="deleteAllComplaints">
         DELETE FROM complaint
     </delete>
+
+    <!-- From origin/main merge -->
+    <insert id="insertComplaint" useGeneratedKeys="true" keyProperty="complaintNo" keyColumn="complaint_no">
+        INSERT INTO complaint (
+            category, title, content, is_public, status, user_no, created_date, updated_date
+        ) VALUES (
+            #{category}, #{title}, #{content}, #{isPublic}, #{status}::complaint_status, #{userNo}, NOW(), NOW()
+        )
+    </insert>
+
+    <insert id="insertSpatialFeature">
+        INSERT INTO spatial_feature (
+            complaint_no, feature_type, addr_text, geom
+        ) VALUES (
+            #{complaintNo}, #{featureType}, #{addrText}, #{geom}
+        )
+    </insert>
+
+    <update id="insertComplaintAgency">
+        UPDATE complaint SET agency_no = #{agencyNo} WHERE complaint_no = #{complaintNo}
+    </update>
 </mapper>

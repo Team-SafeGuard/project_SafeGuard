@@ -1,14 +1,18 @@
 package com.safeguard.controller;
 
-<<<<<<< HEAD
 import com.safeguard.dto.ComplaintDTO;
 import com.safeguard.dto.UserDTO;
 import com.safeguard.enums.ComplaintStatus;
 import com.safeguard.enums.UserRole;
 import com.safeguard.mapper.ComplaintMapper;
+import com.safeguard.mapper.UserMapper;
+import com.safeguard.security.CustomUserDetails;
+import com.safeguard.service.ComplaintService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -23,8 +27,9 @@ import java.util.stream.Collectors;
 public class ComplaintController {
 
     private final ComplaintMapper complaintMapper;
-    private final com.safeguard.mapper.UserMapper userMapper;
-    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
+    private final ComplaintService complaintService;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getComplaints(
@@ -43,7 +48,7 @@ public class ComplaintController {
                 .getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser")) {
             String userId = auth.getName();
-            com.safeguard.dto.UserDTO currentUser = userMapper.findByUserId(userId).orElse(null);
+            UserDTO currentUser = userMapper.findByUserId(userId).orElse(null);
             if (currentUser != null && currentUser.getRole() == UserRole.AGENCY) {
                 agencyNo = currentUser.getAgencyNo();
             }
@@ -156,7 +161,7 @@ public class ComplaintController {
                 .getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser")) {
             String userId = auth.getName();
-            com.safeguard.dto.UserDTO currentUser = userMapper.findByUserId(userId).orElse(null);
+            UserDTO currentUser = userMapper.findByUserId(userId).orElse(null);
             if (currentUser != null && currentUser.getRole() == UserRole.AGENCY) {
                 agencyNo = currentUser.getAgencyNo();
             }
@@ -244,7 +249,7 @@ public class ComplaintController {
             } else {
                 userMapper.updatePassword(userId, passwordEncoder.encode(password));
                 // Assuming we want to update the agency as well if it's a seed update
-                com.safeguard.dto.UserDTO existing = userMapper.findByUserId(userId).orElse(null);
+                UserDTO existing = userMapper.findByUserId(userId).orElse(null);
                 if (existing != null) {
                     // Update role and agency in case they changed
                     // (Note: UserMapper needs an update method for this in a real app,
@@ -292,25 +297,6 @@ public class ComplaintController {
             return ResponseEntity.status(500).body("Failed to create manager: " + e.getMessage());
         }
     }
-=======
-import com.safeguard.security.CustomUserDetails;
-import com.safeguard.service.ComplaintService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.Map;
-
-@RestController
-@RequestMapping("/api/complaints")
-@RequiredArgsConstructor
-@Slf4j
-public class ComplaintController {
-
-    private final ComplaintService complaintService;
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> createComplaint(
@@ -328,5 +314,4 @@ public class ComplaintController {
 
         return ResponseEntity.ok(response);
     }
->>>>>>> origin/main
 }
