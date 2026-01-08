@@ -20,6 +20,8 @@
             "environment": [],
             "mountPoints": [],
             "volumesFrom": [],
+            "memory": 512,
+            "memoryReservation": 256,
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
@@ -47,6 +49,8 @@
             "environment": [],
             "mountPoints": [],
             "volumesFrom": [],
+            "memory": 2048,
+            "memoryReservation": 1024,
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
@@ -74,6 +78,8 @@
             "environment": [],
             "mountPoints": [],
             "volumesFrom": [],
+            "memory": 2048,
+            "memoryReservation": 1024,
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
@@ -110,10 +116,52 @@
                 {
                     "name": "SPRING_DATASOURCE_PASSWORD",
                     "value": "postgres"
+                },
+                {
+                    "name": "JAVA_TOOL_OPTIONS",
+                    "value": "-Xms256m -Xmx1024m"
                 }
             ],
             "mountPoints": [],
             "volumesFrom": [],
+            "memory": 2048,
+            "memoryReservation": 1024,
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/safeguard-task",
+                    "awslogs-create-group": "true",
+                    "awslogs-region": "ap-northeast-2",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            },
+            "systemControls": []
+        },
+        {
+            "name": "safeguard-ai-rag",
+            "image": "274799453401.dkr.ecr.ap-northeast-2.amazonaws.com/safeguard-ai-rag:latest",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "containerPort": 8001,
+                    "hostPort": 8001,
+                    "protocol": "tcp",
+                    "name": "ai-rag-8001-tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "MILVUS_HOST",
+                    "value": "3.35.198.117"
+                },
+                {
+                    "name": "MILVUS_PORT",
+                    "value": "19530"
+                }
+            ],
+            "memory": 1024,
+            "memoryReservation": 512,
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
@@ -129,8 +177,11 @@
     "requiresCompatibilities": [
         "FARGATE"
     ],
-    "cpu": "1024",
-    "memory": "3072",
+    "cpu": "4096",
+    "memory": "8192",
+    "ephemeralStorage": {
+        "sizeInGiB": 100
+    },
     "runtimePlatform": {
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"

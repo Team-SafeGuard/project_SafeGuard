@@ -20,18 +20,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from classification_service import classify_complaint
 from milvus_client import connect_milvus
+from logging_config import setup_logging
 import uvicorn
 import os
+
+# Initialize logging
+setup_logging()
 
 app = FastAPI()
 
 # CORS settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=["*"],  
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],  
+    allow_headers=["*"],  
 )
 
 class ComplaintInput(BaseModel):
@@ -40,6 +44,7 @@ class ComplaintInput(BaseModel):
 class ComplaintResponse(BaseModel):
     agency_code: int
     agency_name: str
+    category: str  
     reasoning: str = ""
     sources: list = []
     message: str = "Success"
@@ -88,6 +93,7 @@ async def classify_text(input_data: ComplaintInput):
         return ComplaintResponse(
             agency_code=result_data["agency_code"],
             agency_name=result_data["agency_name"],
+            category=result_data.get("category", "기타"), # Added category mapping
             reasoning=result_data.get("reasoning", ""),
             sources=result_data.get("sources", [])
         )

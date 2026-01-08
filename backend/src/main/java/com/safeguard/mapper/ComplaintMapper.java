@@ -1,5 +1,6 @@
 package com.safeguard.mapper;
 
+<<<<<<< HEAD
 import com.safeguard.dto.ComplaintDTO;
 import com.safeguard.enums.ComplaintStatus;
 import org.apache.ibatis.annotations.Mapper;
@@ -52,4 +53,18 @@ public interface ComplaintMapper {
     void deleteAllLikes();
 
     void deleteAllComplaints();
+=======
+import com.safeguard.entity.Complaint;
+import com.safeguard.entity.SpatialFeature;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+@Mapper
+public interface ComplaintMapper {
+    void insertComplaint(Complaint complaint);
+
+    void insertSpatialFeature(SpatialFeature spatialFeature);
+
+    void insertComplaintAgency(@Param("complaintNo") Long complaintNo, @Param("agencyNo") Long agencyNo);
+>>>>>>> origin/main
 }
