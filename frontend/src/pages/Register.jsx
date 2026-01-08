@@ -2,8 +2,57 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../utils/api';
 
+// Hardcoded Agency Data (Must match init.sql / database)
+const CENTRAL_AGENCIES = [
+    { id: 1, name: '경찰청' },
+    { id: 2, name: '국토교통부' },
+    { id: 3, name: '고용노동부' },
+    { id: 4, name: '국방부' },
+    { id: 5, name: '국민권익위원회' },
+    { id: 6, name: '식품의약품안전처' },
+    { id: 7, name: '대검찰청' },
+    { id: 8, name: '기획재정부' },
+    { id: 9, name: '행정안전부' },
+    { id: 10, name: '보건복지부' },
+    { id: 11, name: '과학기술정보통신부' },
+    { id: 12, name: '국세청' },
+    { id: 13, name: '기후에너지환경부' },
+    { id: 14, name: '법무부' },
+    { id: 15, name: '공정거래위원회' },
+    { id: 16, name: '교육부' },
+    { id: 17, name: '해양수산부' },
+    { id: 18, name: '농림축산식품부' },
+    { id: 19, name: '소방청' },
+    { id: 20, name: '인사혁신처' },
+    { id: 21, name: '기타' },
+];
+
+const LOCAL_AGENCIES = [
+    { id: 100, name: '서울특별시' },
+    { id: 101, name: '부산광역시' },
+    { id: 102, name: '대구광역시' },
+    { id: 103, name: '인천광역시' },
+    { id: 104, name: '광주광역시' },
+    { id: 105, name: '대전광역시' },
+    { id: 106, name: '울산광역시' },
+    { id: 107, name: '세종특별자치시' },
+    { id: 108, name: '경기도' },
+    { id: 109, name: '강원특별자치도' },
+    { id: 110, name: '충청북도' },
+    { id: 111, name: '충청남도' },
+    { id: 112, name: '전라북도' },
+    { id: 113, name: '전라남도' },
+    { id: 114, name: '경상북도' },
+    { id: 115, name: '경상남도' },
+    { id: 116, name: '제주특별자치도' },
+];
+
 function Register() {
     const navigate = useNavigate();
+
+    // User Type State: 'INDIVIDUAL' | 'AGENCY_CENTRAL' | 'AGENCY_LOCAL'
+    const [userType, setUserType] = useState('INDIVIDUAL');
+
     const [formData, setFormData] = useState({
         userId: '',
         password: '',
@@ -11,7 +60,8 @@ function Register() {
         name: '',
         birthDate: '',
         addr: '',
-        phone: ''
+        phone: '',
+        agencyNo: '' // Will be set if AGENCY
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -19,6 +69,13 @@ function Register() {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleUserTypeChange = (e) => {
+        const type = e.target.value;
+        setUserType(type);
+        // Reset agency selection when type changes
+        setFormData(prev => ({ ...prev, agencyNo: '' }));
     };
 
     const handleSubmit = async (e) => {
@@ -30,15 +87,33 @@ function Register() {
             return;
         }
 
+        // Validate Agency Selection
+        if ((userType === 'AGENCY_CENTRAL' || userType === 'AGENCY_LOCAL') && !formData.agencyNo) {
+            setError('소속 기관을 선택해주세요.');
+            return;
+        }
+
         setLoading(true);
 
         try {
             const { passwordConfirm, ...registerData } = formData;
+
+            // Clean up: If INDIVIDUAL, ensure agencyNo is null/undefined just in case
+            if (userType === 'INDIVIDUAL') {
+                delete registerData.agencyNo;
+            } else {
+                // Ensure agencyNo is Number
+                registerData.agencyNo = Number(registerData.agencyNo);
+            }
+
+            console.log("Registering:", registerData); // Debug log
+
             await authAPI.register(registerData);
             alert('회원가입이 완료되었습니다. 로그인해주세요.');
             navigate('/login');
         } catch (err) {
-            setError(err.message);
+            console.error(err);
+            setError(err.message || '회원가입 중 오류가 발생했습니다.');
         } finally {
             setLoading(false);
         }
@@ -63,6 +138,19 @@ function Register() {
         marginBottom: '8px'
     };
 
+    const radioLabelStyle = {
+        display: 'flex',
+        alignItems: 'center',
+        padding: '12px 16px',
+        borderRadius: '10px',
+        border: '2px solid #e2e8f0',
+        cursor: 'pointer',
+        fontWeight: '600',
+        fontSize: '0.95rem',
+        color: '#475569',
+        transition: 'all 0.2s'
+    };
+
     return (
         <div style={{
             minHeight: '100vh',
@@ -74,24 +162,14 @@ function Register() {
         }}>
             {/* 배경 장식 */}
             <div style={{
-                position: 'absolute',
-                top: '5%',
-                left: '10%',
-                width: '350px',
-                height: '350px',
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.1)',
-                filter: 'blur(60px)'
+                position: 'absolute', top: '5%', left: '10%',
+                width: '350px', height: '350px',
+                borderRadius: '50%', background: 'rgba(255,255,255,0.1)', filter: 'blur(60px)'
             }}></div>
             <div style={{
-                position: 'absolute',
-                bottom: '10%',
-                right: '15%',
-                width: '300px',
-                height: '300px',
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.08)',
-                filter: 'blur(80px)'
+                position: 'absolute', bottom: '10%', right: '15%',
+                width: '300px', height: '300px',
+                borderRadius: '50%', background: 'rgba(255,255,255,0.08)', filter: 'blur(80px)'
             }}></div>
 
             <div style={{
@@ -112,15 +190,11 @@ function Register() {
                     color: 'white'
                 }}>
                     <div style={{
-                        width: '80px',
-                        height: '80px',
+                        width: '80px', height: '80px',
                         background: 'rgba(255,255,255,0.2)',
                         borderRadius: '20px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '2.5rem',
-                        margin: '0 auto 20px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '2.5rem', margin: '0 auto 20px',
                         backdropFilter: 'blur(10px)'
                     }}>
                         👤
@@ -150,6 +224,92 @@ function Register() {
                         </div>
                     )}
 
+                    {/* 회원 유형 선택 (라디오 버튼) */}
+                    <div style={{ marginBottom: '24px' }}>
+                        <label style={labelStyle}>회원 유형 <span style={{ color: '#ef4444' }}>*</span></label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                            <label style={{
+                                ...radioLabelStyle,
+                                borderColor: userType === 'INDIVIDUAL' ? '#7c3aed' : '#e2e8f0',
+                                backgroundColor: userType === 'INDIVIDUAL' ? '#f5f3ff' : 'white',
+                                color: userType === 'INDIVIDUAL' ? '#7c3aed' : '#475569'
+                            }}>
+                                <input
+                                    type="radio"
+                                    value="INDIVIDUAL"
+                                    checked={userType === 'INDIVIDUAL'}
+                                    onChange={handleUserTypeChange}
+                                    style={{ marginRight: '8px' }}
+                                />
+                                개인
+                            </label>
+
+                            <label style={{
+                                ...radioLabelStyle,
+                                borderColor: userType === 'AGENCY_CENTRAL' ? '#7c3aed' : '#e2e8f0',
+                                backgroundColor: userType === 'AGENCY_CENTRAL' ? '#f5f3ff' : 'white',
+                                color: userType === 'AGENCY_CENTRAL' ? '#7c3aed' : '#475569'
+                            }}>
+                                <input
+                                    type="radio"
+                                    value="AGENCY_CENTRAL"
+                                    checked={userType === 'AGENCY_CENTRAL'}
+                                    onChange={handleUserTypeChange}
+                                    style={{ marginRight: '8px' }}
+                                />
+                                중앙행정
+                            </label>
+
+                            <label style={{
+                                ...radioLabelStyle,
+                                borderColor: userType === 'AGENCY_LOCAL' ? '#7c3aed' : '#e2e8f0',
+                                backgroundColor: userType === 'AGENCY_LOCAL' ? '#f5f3ff' : 'white',
+                                color: userType === 'AGENCY_LOCAL' ? '#7c3aed' : '#475569'
+                            }}>
+                                <input
+                                    type="radio"
+                                    value="AGENCY_LOCAL"
+                                    checked={userType === 'AGENCY_LOCAL'}
+                                    onChange={handleUserTypeChange}
+                                    style={{ marginRight: '8px' }}
+                                />
+                                지자체
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* 기관 선택 (Dropdown) - 조건부 렌더링 */}
+                    {userType !== 'INDIVIDUAL' && (
+                        <div style={{ marginBottom: '20px', animation: 'fadeIn 0.3s ease-in-out' }}>
+                            <label style={labelStyle}>
+                                {userType === 'AGENCY_CENTRAL' ? '중앙행정기관 선택' : '광역자치단체 선택'} <span style={{ color: '#ef4444' }}>*</span>
+                            </label>
+                            <select
+                                name="agencyNo"
+                                value={formData.agencyNo}
+                                onChange={handleChange}
+                                required
+                                style={{
+                                    ...inputStyle,
+                                    backgroundColor: 'white',
+                                    backgroundImage: 'none', // Remove default arrow in some browsers if desired, here keeping standard
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <option value="">소속 기관을 선택하세요</option>
+                                {userType === 'AGENCY_CENTRAL' ? (
+                                    CENTRAL_AGENCIES.map(agency => (
+                                        <option key={agency.id} value={agency.id}>{agency.name}</option>
+                                    ))
+                                ) : (
+                                    LOCAL_AGENCIES.map(agency => (
+                                        <option key={agency.id} value={agency.id}>{agency.name}</option>
+                                    ))
+                                )}
+                            </select>
+                        </div>
+                    )}
+
                     {/* 아이디 */}
                     <div style={{ marginBottom: '20px' }}>
                         <label style={labelStyle}>아이디 <span style={{ color: '#ef4444' }}>*</span></label>
@@ -161,17 +321,8 @@ function Register() {
                             required
                             placeholder="사용할 아이디를 입력하세요"
                             style={inputStyle}
-                            onFocus={(e) => {
-                                e.target.style.borderColor = '#7c3aed';
-                                e.target.style.boxShadow = '0 0 0 4px rgba(124, 58, 237, 0.1)';
-                            }}
-                            onBlur={(e) => {
-                                e.target.style.borderColor = '#e2e8f0';
-                                e.target.style.boxShadow = 'none';
-                            }}
                         />
                     </div>
-
 
                     {/* 비밀번호 */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
@@ -185,14 +336,6 @@ function Register() {
                                 required
                                 placeholder="비밀번호"
                                 style={inputStyle}
-                                onFocus={(e) => {
-                                    e.target.style.borderColor = '#7c3aed';
-                                    e.target.style.boxShadow = '0 0 0 4px rgba(124, 58, 237, 0.1)';
-                                }}
-                                onBlur={(e) => {
-                                    e.target.style.borderColor = '#e2e8f0';
-                                    e.target.style.boxShadow = 'none';
-                                }}
                             />
                         </div>
                         <div>
@@ -205,14 +348,6 @@ function Register() {
                                 required
                                 placeholder="비밀번호 확인"
                                 style={inputStyle}
-                                onFocus={(e) => {
-                                    e.target.style.borderColor = '#7c3aed';
-                                    e.target.style.boxShadow = '0 0 0 4px rgba(124, 58, 237, 0.1)';
-                                }}
-                                onBlur={(e) => {
-                                    e.target.style.borderColor = '#e2e8f0';
-                                    e.target.style.boxShadow = 'none';
-                                }}
                             />
                         </div>
                     </div>
@@ -229,14 +364,6 @@ function Register() {
                                 required
                                 placeholder="이름"
                                 style={inputStyle}
-                                onFocus={(e) => {
-                                    e.target.style.borderColor = '#7c3aed';
-                                    e.target.style.boxShadow = '0 0 0 4px rgba(124, 58, 237, 0.1)';
-                                }}
-                                onBlur={(e) => {
-                                    e.target.style.borderColor = '#e2e8f0';
-                                    e.target.style.boxShadow = 'none';
-                                }}
                             />
                         </div>
                         <div>
@@ -248,14 +375,6 @@ function Register() {
                                 onChange={handleChange}
                                 required
                                 style={inputStyle}
-                                onFocus={(e) => {
-                                    e.target.style.borderColor = '#7c3aed';
-                                    e.target.style.boxShadow = '0 0 0 4px rgba(124, 58, 237, 0.1)';
-                                }}
-                                onBlur={(e) => {
-                                    e.target.style.borderColor = '#e2e8f0';
-                                    e.target.style.boxShadow = 'none';
-                                }}
                             />
                         </div>
                     </div>
@@ -271,14 +390,6 @@ function Register() {
                             required
                             placeholder="예: 서울시 강남구"
                             style={inputStyle}
-                            onFocus={(e) => {
-                                e.target.style.borderColor = '#7c3aed';
-                                e.target.style.boxShadow = '0 0 0 4px rgba(124, 58, 237, 0.1)';
-                            }}
-                            onBlur={(e) => {
-                                e.target.style.borderColor = '#e2e8f0';
-                                e.target.style.boxShadow = 'none';
-                            }}
                         />
                     </div>
 
@@ -293,14 +404,6 @@ function Register() {
                             required
                             placeholder="예: 01012345678"
                             style={inputStyle}
-                            onFocus={(e) => {
-                                e.target.style.borderColor = '#7c3aed';
-                                e.target.style.boxShadow = '0 0 0 4px rgba(124, 58, 237, 0.1)';
-                            }}
-                            onBlur={(e) => {
-                                e.target.style.borderColor = '#e2e8f0';
-                                e.target.style.boxShadow = 'none';
-                            }}
                         />
                     </div>
 
@@ -338,9 +441,7 @@ function Register() {
                                 fontWeight: '600',
                                 textAlign: 'center',
                                 textDecoration: 'none',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
                             }}
                         >
                             취소
