@@ -7,6 +7,7 @@ function Detail() {
     const [report, setReport] = useState(null);
     const [user, setUser] = useState(null);
     const [answerText, setAnswerText] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
     const navigate = useNavigate();
 
     const fetchDetail = async () => {
@@ -52,6 +53,7 @@ function Detail() {
         try {
             await complaintsAPI.updateAnswer(id, answerText);
             setReport(prev => ({ ...prev, answer: answerText }));
+            setIsEditing(false); // Exit edit mode
             alert('답변이 등록되었습니다.');
         } catch (err) {
             alert(err.message);
@@ -122,152 +124,283 @@ function Detail() {
     };
 
     return (
-        <div className="detail-page" style={{ padding: '60px 0' }}>
-            <div className="container" style={{ backgroundColor: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-                <div style={{ marginBottom: '10px', fontSize: '0.85rem', color: '#777' }}>민원목록 &gt; 민원 상세 보기</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <h2 style={{ fontSize: '2.2rem', color: 'var(--primary-dark)', marginBottom: '30px' }}>{report.title}</h2>
-                    <button
-                        onClick={handleLike}
-                        style={{
-                            padding: '10px 20px',
-                            backgroundColor: report.liked ? '#fff1f2' : 'white',
-                            color: report.liked ? '#e11d48' : '#64748b',
-                            border: report.liked ? '1px solid #fda4af' : '1px solid #e2e8f0',
-                            borderRadius: '12px',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            transition: 'all 0.2s',
-                            boxShadow: report.liked ? 'none' : '0 2px 5px rgba(0,0,0,0.05)',
-                            minWidth: '100px',
-                            justifyContent: 'center'
-                        }}
-                    >
-                        {report.liked ? '❤️' : '🤍'} {report.likeCount || 0}
-                    </button>
+        <div className="detail-page" style={{ padding: '40px 0', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+            <div className="container" style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px' }}>
+                {/* Header Navigation */}
+                <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem', color: '#64748b' }}>
+                    <span style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>홈</span>
+                    <span>&gt;</span>
+                    <span style={{ cursor: 'pointer' }} onClick={() => navigate('/list')}>민원 목록</span>
+                    <span>&gt;</span>
+                    <span style={{ color: 'var(--primary-color)', fontWeight: '600' }}>상세 보기</span>
                 </div>
 
-                {/* Info Table */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0', border: '1px solid #EEE', marginBottom: '40px' }}>
-                    <div style={{ display: 'flex', borderBottom: '1px solid #EEE' }}><div style={{ width: '120px', backgroundColor: '#F8FAFC', padding: '12px', fontWeight: 'bold' }}>신고번호</div><div style={{ padding: '12px' }}>{report.complaintNo}</div></div>
-                    <div style={{ display: 'flex', borderBottom: '1px solid #EEE' }}><div style={{ width: '120px', backgroundColor: '#F8FAFC', padding: '12px', fontWeight: 'bold' }}>신고유형</div><div style={{ padding: '12px' }}>{report.category}</div></div>
-                    <div style={{ display: 'flex', borderBottom: '1px solid #EEE' }}><div style={{ width: '120px', backgroundColor: '#F8FAFC', padding: '12px', fontWeight: 'bold' }}>지역</div><div style={{ padding: '12px' }}>{report.address}</div></div>
-                    <div style={{ display: 'flex', borderBottom: '1px solid #EEE' }}><div style={{ width: '120px', backgroundColor: '#F8FAFC', padding: '12px', fontWeight: 'bold' }}>작성자</div><div style={{ padding: '12px' }}>{report.authorName}</div></div>
-                    <div style={{ display: 'flex' }}><div style={{ width: '120px', backgroundColor: '#F8FAFC', padding: '12px', fontWeight: 'bold' }}>신고일</div><div style={{ padding: '12px' }}>{formatDate(report.createdDate)}</div></div>
-                    <div style={{ display: 'flex' }}><div style={{ width: '120px', backgroundColor: '#F8FAFC', padding: '12px', fontWeight: 'bold' }}>처리상태</div><div style={{ padding: '12px', color: '#3F51B5', fontWeight: 'bold' }}>{statusMap[report.status] || report.status}</div></div>
-                </div>
+                {/* Main Content Card */}
+                <div style={{ backgroundColor: 'white', borderRadius: '24px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', overflow: 'hidden' }}>
 
-                {/* Content Section */}
-                <h3 style={{ marginBottom: '20px', borderBottom: '2px solid var(--primary-color)', paddingBottom: '10px' }}>민원 내용</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '30px', marginBottom: '50px' }}>
-                    <div style={{ width: '100%', aspectRatio: '4/3', backgroundColor: '#f1f5f9', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {report.imagePath ? (
-                            <img src={report.imagePath} alt="ReportAttachment" style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: '8px' }} onError={(e) => {
-                                e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
-                            }} />
-                        ) : '이미지 없음'}
+                    {/* Title Header */}
+                    <div style={{ padding: '40px 40px 30px', borderBottom: '1px solid #f1f5f9' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                            <span style={{
+                                padding: '6px 14px',
+                                borderRadius: '999px',
+                                backgroundColor: report.status === 'COMPLETED' ? '#dcfce7' : '#e0e7ff',
+                                color: report.status === 'COMPLETED' ? '#166534' : '#4338ca',
+                                fontSize: '0.85rem',
+                                fontWeight: '700'
+                            }}>
+                                {statusMap[report.status] || report.status}
+                            </span>
+                            <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>No. {report.complaintNo}</span>
+                        </div>
+
+                        <h2 style={{ fontSize: '2rem', fontWeight: '800', color: '#1e293b', marginBottom: '20px', lineHeight: '1.3' }}>
+                            {report.title}
+                        </h2>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                            <div style={{ display: 'flex', gap: '24px', color: '#64748b', fontSize: '0.95rem' }}>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <span>👤</span> {report.authorName}
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <span>📅</span> {formatDate(report.createdDate)}
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <span>📂</span> {report.category}
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <span>📍</span> {report.address}
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleLike}
+                                style={{
+                                    padding: '10px 20px',
+                                    backgroundColor: report.liked ? '#fff1f2' : '#f8fafc',
+                                    color: report.liked ? '#e11d48' : '#64748b',
+                                    border: report.liked ? '1px solid #fda4af' : '1px solid #e2e8f0',
+                                    borderRadius: '12px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    transition: 'all 0.2s',
+                                    fontSize: '0.95rem'
+                                }}
+                            >
+                                <span style={{ fontSize: '1.1rem' }}>{report.liked ? '❤️' : '🤍'}</span>
+                                <span>공감 {report.likeCount || 0}</span>
+                            </button>
+                        </div>
                     </div>
-                    <div style={{ lineHeight: '1.8', whiteSpace: 'pre-wrap' }}>{report.content}</div>
-                </div>
 
-                {/* Manager Answer Section */}
-                <h3 style={{ marginBottom: '20px', borderBottom: '2px solid var(--primary-color)', paddingBottom: '10px' }}>담당자 답변</h3>
-                <div style={{ marginBottom: '50px', backgroundColor: '#f8fafc', padding: '20px', borderRadius: '12px' }}>
-                    {user && user.role === 'AGENCY' ? (
-                        <div>
-                            <textarea
-                                value={answerText}
-                                onChange={(e) => setAnswerText(e.target.value)}
-                                placeholder="답변 내용을 입력하세요..."
-                                style={{ width: '100%', minHeight: '100px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '10px' }}
-                            />
-                            <div style={{ textAlign: 'right' }}>
-                                <button
-                                    onClick={handleAnswerSubmit}
-                                    style={{ padding: '8px 20px', backgroundColor: 'var(--primary-color)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
-                                >
-                                    답변 등록
-                                </button>
+                    {/* Body Content */}
+                    <div style={{ padding: '40px' }}>
+                        {/* Progress Bar */}
+                        <div style={{ marginBottom: '60px', padding: '0 20px' }}>
+                            <div style={{ position: 'relative', maxWidth: '600px', margin: '0 auto' }}>
+                                {/* Progress Line Background */}
+                                <div style={{ position: 'absolute', top: '24px', left: '0', right: '0', height: '4px', backgroundColor: '#e2e8f0', borderRadius: '4px', zIndex: 0 }} />
+                                {/* Active Progress Line */}
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '24px',
+                                    left: '0',
+                                    height: '4px',
+                                    width: `${progressPercent}%`,
+                                    background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+                                    borderRadius: '4px',
+                                    zIndex: 0,
+                                    transition: 'width 0.5s ease-out'
+                                }} />
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
+                                    {steps.map((step, index) => {
+                                        const isActive = index <= currentIndex;
+                                        const isCurrent = index === currentIndex;
+                                        return (
+                                            <div
+                                                key={step.key}
+                                                style={{ textAlign: 'center', cursor: user && user.role === 'AGENCY' ? 'pointer' : 'default' }}
+                                                onClick={() => user && user.role === 'AGENCY' && handleStatusChange(step.key)}
+                                            >
+                                                <div style={{
+                                                    width: '52px',
+                                                    height: '52px',
+                                                    borderRadius: '50%',
+                                                    backgroundColor: isActive ? 'white' : '#f1f5f9',
+                                                    border: isActive ? '2px solid #6366f1' : '2px solid #e2e8f0',
+                                                    color: isActive ? '#6366f1' : '#94a3b8',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontSize: '1.5rem',
+                                                    margin: '0 auto 12px',
+                                                    boxShadow: isCurrent ? '0 0 0 4px rgba(99, 102, 241, 0.2)' : 'none',
+                                                    transition: 'all 0.3s ease'
+                                                }}>
+                                                    {step.icon}
+                                                </div>
+                                                <div style={{ fontSize: '0.9rem', fontWeight: isActive ? '700' : '500', color: isActive ? '#1e293b' : '#94a3b8' }}>
+                                                    {step.label}
+                                                </div>
+                                                {user && user.role === 'AGENCY' && !isCurrent && (
+                                                    <div style={{ fontSize: '0.75rem', color: '#6366f1', marginTop: '4px' }}>변경하기</div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
-                    ) : (
-                        <div style={{ whiteSpace: 'pre-wrap', color: report.answer ? '#333' : '#94a3b8' }}>
-                            {report.answer || '아직 답변이 등록되지 않았습니다.'}
-                        </div>
-                    )}
-                </div>
 
-                {/* Workflow Section */}
-                <h3 style={{ marginBottom: '16px' }}>민원 처리 현황</h3>
-                <div style={{
-                    backgroundColor: '#f8fafc',
-                    borderRadius: '20px',
-                    padding: '28px 24px',
-                    marginBottom: '50px'
-                }}>
-                    <div style={{ position: 'relative', maxWidth: '520px', margin: '0 auto 24px' }}>
-                        <div style={{
-                            position: 'absolute',
-                            top: '28px',
-                            left: '28px',
-                            right: '28px',
-                            height: '8px',
-                            borderRadius: '999px',
-                            backgroundColor: '#e2e8f0'
-                        }} />
-                        <div style={{
-                            position: 'absolute',
-                            top: '28px',
-                            left: '28px',
-                            height: '8px',
-                            borderRadius: '999px',
-                            width: `calc(${progressPercent}% - 0px)`,
-                            background: 'linear-gradient(90deg, #6366f1 0%, #22c55e 100%)',
-                            transition: 'width 0.3s ease'
-                        }} />
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            position: 'relative',
-                            zIndex: 2
-                        }}>
-                            {steps.map((step, index) => (
-                                <div key={step.key} style={{ textAlign: 'center' }}>
-                                    <div style={getStepStyle(index)}>{step.icon}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', maxWidth: '520px', margin: '0 auto' }}>
-                        {steps.map((step, index) => (
-                            <div key={step.key}
-                                onClick={() => user && user.role === 'AGENCY' && handleStatusChange(step.key)}
-                                style={{
-                                    textAlign: 'center',
-                                    flex: 1,
-                                    color: index <= currentIndex ? '#1f2937' : '#94a3b8',
-                                    fontWeight: index <= currentIndex ? '700' : '600',
-                                    cursor: user && user.role === 'AGENCY' ? 'pointer' : 'default'
-                                }}>
-                                {step.label}
-                                {user && user.role === 'AGENCY' && index !== currentIndex && (
-                                    <div style={{ fontSize: '0.8rem', color: 'var(--primary-color)', marginTop: '4px' }}>(변경)</div>
+                        {/* Complaint Content Grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '40px', marginBottom: '60px' }}>
+                            <div style={{ width: '100%', aspectRatio: '4/3', backgroundColor: '#f8fafc', borderRadius: '16px', overflow: 'hidden', border: '1px solid #f1f5f9' }}>
+                                {report.imagePath ? (
+                                    <img src={report.imagePath} alt="현장 사진" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+                                        <span style={{ fontSize: '2rem', marginBottom: '10px' }}>📷</span>
+                                        <span>등록된 이미지가 없습니다</span>
+                                    </div>
                                 )}
                             </div>
-                        ))}
-                    </div>
-                </div>
 
-                <div style={{ textAlign: 'center', marginTop: '50px' }}>
-                    <button
-                        onClick={() => navigate(-1)}
-                        style={{ padding: '12px 40px', backgroundColor: 'white', color: 'var(--primary-color)', border: '2px solid var(--primary-color)', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
-                    >
-                        목 록
-                    </button>
+                            <div>
+                                <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '16px', color: '#1e293b', paddingLeft: '12px', borderLeft: '4px solid #6366f1' }}>민원 내용</h3>
+                                <div style={{
+                                    backgroundColor: '#f8fafc',
+                                    padding: '24px',
+                                    borderRadius: '16px',
+                                    lineHeight: '1.8',
+                                    color: '#334155',
+                                    whiteSpace: 'pre-wrap',
+                                    fontSize: '1.05rem',
+                                    minHeight: '200px'
+                                }}>
+                                    {report.content}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Answer Section */}
+                        <div>
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '16px', color: '#1e293b', paddingLeft: '12px', borderLeft: '4px solid #22c55e' }}>담당자 답변</h3>
+
+                            {user && user.role === 'AGENCY' ? (
+                                (!report.answer || isEditing) ? (
+                                    <div style={{ backgroundColor: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                                        <div style={{ marginBottom: '12px', fontWeight: '600', color: '#475569' }}>답변 작성</div>
+                                        <textarea
+                                            value={answerText}
+                                            onChange={(e) => setAnswerText(e.target.value)}
+                                            placeholder="민원 처리 결과 및 안내 사항을 자세히 적어주세요."
+                                            style={{
+                                                width: '100%',
+                                                minHeight: '200px',
+                                                padding: '16px',
+                                                borderRadius: '12px',
+                                                border: '1px solid #cbd5e1',
+                                                fontSize: '1rem',
+                                                lineHeight: '1.6',
+                                                resize: 'vertical',
+                                                marginBottom: '16px',
+                                                fontFamily: 'inherit'
+                                            }}
+                                        />
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                                            {report.answer && (
+                                                <button
+                                                    onClick={() => {
+                                                        setIsEditing(false);
+                                                        setAnswerText(report.answer);
+                                                    }}
+                                                    style={{ padding: '10px 24px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: 'white', color: '#475569', fontWeight: '600', cursor: 'pointer' }}
+                                                >
+                                                    취소
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={handleAnswerSubmit}
+                                                style={{ padding: '10px 24px', borderRadius: '8px', border: 'none', backgroundColor: '#6366f1', color: 'white', fontWeight: '600', cursor: 'pointer', boxShadow: '0 2px 4px rgba(99, 102, 241, 0.3)' }}
+                                            >
+                                                {report.answer ? '수정 완료' : '답변 등록'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div style={{ position: 'relative', backgroundColor: '#f0fdf4', padding: '32px', borderRadius: '16px', border: '1px solid #bbf7d0' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+                                            <span style={{ backgroundColor: '#16a34a', color: 'white', padding: '4px 12px', borderRadius: '999px', fontSize: '0.85rem', fontWeight: 'bold' }}>답변 완료</span>
+                                            <button
+                                                onClick={() => setIsEditing(true)}
+                                                style={{ border: 'none', background: 'none', color: '#64748b', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.9rem' }}
+                                            >
+                                                수정하기
+                                            </button>
+                                        </div>
+                                        <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8', color: '#1e293b', fontSize: '1.05rem' }}>
+                                            {report.answer}
+                                        </div>
+                                        <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px dashed #bbf7d0', fontSize: '0.9rem', color: '#64748b' }}>
+                                            담당자: {user?.name || '관리자'} | 처리일시: {formatDate(new Date().toISOString())} {/* 실제로는 답변 시간을 DB에 저장해야 함 */}
+                                        </div>
+                                    </div>
+                                )
+                            ) : (
+                                <div style={{
+                                    backgroundColor: report.answer ? '#f0fdf4' : '#f8fafc',
+                                    padding: '40px',
+                                    borderRadius: '16px',
+                                    border: report.answer ? '1px solid #bbf7d0' : '1px dashed #cbd5e1',
+                                    textAlign: report.answer ? 'left' : 'center'
+                                }}>
+                                    {report.answer ? (
+                                        <>
+                                            <div style={{ marginBottom: '16px' }}>
+                                                <span style={{ backgroundColor: '#16a34a', color: 'white', padding: '6px 16px', borderRadius: '999px', fontSize: '0.9rem', fontWeight: 'bold' }}>SafeGuard 공식 답변</span>
+                                            </div>
+                                            <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8', color: '#1e293b', fontSize: '1.1rem' }}>
+                                                {report.answer}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div style={{ color: '#94a3b8' }}>
+                                            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⏳</div>
+                                            <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>아직 답변이 등록되지 않았습니다.</p>
+                                            <p style={{ fontSize: '0.9rem' }}>담당자가 내용을 확인 후 빠른 시일 내에 답변해 드리겠습니다.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* List Button */}
+                        <div style={{ marginTop: '60px', textAlign: 'center' }}>
+                            <button
+                                onClick={() => navigate('/list')}
+                                style={{
+                                    padding: '14px 48px',
+                                    backgroundColor: 'white',
+                                    color: '#475569',
+                                    border: '1px solid #cbd5e1',
+                                    borderRadius: '12px',
+                                    fontWeight: '700',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    fontSize: '1rem'
+                                }}
+                                onMouseOver={(e) => { e.target.style.backgroundColor = '#f8fafc'; e.target.style.borderColor = '#94a3b8'; }}
+                                onMouseOut={(e) => { e.target.style.backgroundColor = 'white'; e.target.style.borderColor = '#cbd5e1'; }}
+                            >
+                                ≡ 목록으로 돌아가기
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
