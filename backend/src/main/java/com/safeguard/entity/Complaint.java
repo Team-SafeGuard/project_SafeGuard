@@ -12,6 +12,7 @@ public class Complaint {
     private String category;
     private String title;
     private String content;
+    private String answer;
 
     private ComplaintStatus status;
     private Boolean isPublic;
@@ -21,4 +22,5 @@ public class Complaint {
     private OffsetDateTime completedDate;
 
     private Long userNo;
+    private Long agencyNo;
 }

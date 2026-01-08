@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.safeguard.mapper.AgencyMapper">
+
+    <resultMap id="AgencyResultMap" type="com.safeguard.entity.Agency">
+        <id property="agencyNo" column="agency_no"/>
+        <result property="agencyType" column="agency_type"/>
+        <result property="agencyName" column="agency_name"/>
+        <result property="regionCode" column="region_code"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <insert id="insertAgency" useGeneratedKeys="true" keyProperty="agencyNo" keyColumn="agency_no">
+        INSERT INTO agency (agency_type, agency_name, region_code)
+        VALUES (#{agencyType}, #{agencyName}, #{regionCode})
+    </insert>
+
+    <select id="findAll" resultMap="AgencyResultMap">
+        SELECT * FROM agency ORDER BY agency_no ASC
+    </select>
+
+    <select id="findByNo" resultMap="AgencyResultMap">
+        SELECT * FROM agency WHERE agency_no = #{agencyNo}
+    </select>
+
+    <select id="existsByNameAndRegion" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM agency WHERE agency_name = #{agencyName} 
+        <choose>
+            <when test="regionCode != null">AND region_code = #{regionCode}</when>
+            <otherwise>AND region_code IS NULL</otherwise>
+        </choose>
+        )
+    </select>
+
+</mapper>

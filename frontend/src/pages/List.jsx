@@ -1,23 +1,56 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { complaintsAPI } from '../utils/api';
 
 function List() {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
+
+    // URL 파라미터에서 초기값 읽기
+    const page = parseInt(searchParams.get('page') || '1');
+    const search = searchParams.get('search') || '';
+    const category = searchParams.get('category') || '전체';
+    const sort = searchParams.get('sort') || 'complaint_no';
+    const order = searchParams.get('order') || 'ASC';
+    const statusParams = searchParams.get('status') || '전체';
+    const regionParams = searchParams.get('region') || '전체';
+
     const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const navigate = useNavigate();
+
+    // 검색 입력값 관리를 위한 로컬 상태
+    const [searchInput, setSearchInput] = useState(search);
 
     useEffect(() => {
         fetchComplaints();
-    }, [page]);
+    }, [page, search, category, statusParams, regionParams, sort, order]);
 
     const fetchComplaints = async () => {
         setLoading(true);
         try {
-            const data = await complaintsAPI.getList({ page, limit: 10 });
+            // Agency 관리자인 경우 agencyNo 파라미터 추가
+            const role = localStorage.getItem('role');
+            const agencyNo = localStorage.getItem('agencyNo');
+
+            const params = {
+                page,
+                limit: 10,
+                search,
+                category,
+                status: statusParams,
+                region: regionParams,
+                sort,
+                order
+            };
+
+            // AGENCY 역할이고 agencyNo가 있으면 해당 기관 민원만 필터링
+            if (role === 'AGENCY' && agencyNo) {
+                params.agencyNo = agencyNo;
+            }
+
+            const data = await complaintsAPI.getList(params);
             setComplaints(data.complaints);
             setTotalPages(data.pagination.totalPages);
         } catch (err) {
@@ -27,10 +60,44 @@ function List() {
         }
     };
 
+    const handleSearch = () => {
+        setSearchParams({ page: 1, search: searchInput, category, status: statusParams, region: regionParams, sort, order });
+    };
+
+    const handleCategoryChange = (e) => {
+        setSearchParams({ page: 1, search, category: e.target.value, status: statusParams, region: regionParams, sort, order });
+    };
+
+    const handleStatusChange = (e) => {
+        setSearchParams({ page: 1, search, category, status: e.target.value, region: regionParams, sort, order });
+    };
+
+    const handleRegionChange = (e) => {
+        setSearchParams({ page: 1, search, category, status: statusParams, region: e.target.value, sort, order });
+    };
+
+    const handleSortChange = (e) => {
+        const val = e.target.value;
+        let newSort = 'created_date';
+        let newOrder = 'DESC';
+
+        if (val === 'old') {
+            newOrder = 'ASC';
+        } else if (val === 'likes') {
+            newSort = 'like_count';
+        }
+
+        setSearchParams({ page: 1, search, category, status: statusParams, region: regionParams, sort: newSort, order: newOrder });
+    };
+
+    const setPage = (newPage) => {
+        setSearchParams({ page: newPage, search, category, status: statusParams, region: regionParams, sort, order });
+    };
+
     const getStatusBadge = (status) => {
         const statusMap = {
             'RECEIVED': { text: '접수', bg: '#dbeafe', color: '#2563eb' },
-            'IN_PROGRESS': { text: '처리중', bg: '#fef3c7', color: '#d97706' },
+            'IN_PROGRESS': { text: '처리중', bg: '#fef3c7', color: '#d97706' }, // 노란색
             'COMPLETED': { text: '완료', bg: '#dcfce7', color: '#16a34a' },
             'REJECTED': { text: '반려', bg: '#fee2e2', color: '#dc2626' },
             'CANCELLED': { text: '취소', bg: '#f1f5f9', color: '#64748b' }
@@ -77,7 +144,7 @@ function List() {
                             <p style={{ color: '#64748b', marginTop: '8px' }}>등록된 민원 현황을 확인하세요</p>
                         </div>
                         <button
-                            onClick={() => navigate('/apply-image')}
+                            onClick={() => navigate('/')}
                             style={{
                                 padding: '14px 28px',
                                 background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
@@ -94,31 +161,72 @@ function List() {
                         </button>
                     </div>
 
-                    {/* 검색바 */}
                     <div style={{
                         display: 'flex',
                         gap: '12px',
                         marginTop: '24px',
                         padding: '20px',
                         backgroundColor: '#f8fafc',
-                        borderRadius: '12px'
+                        borderRadius: '12px',
+                        alignItems: 'center'
                     }}>
-                        <select style={{
-                            padding: '12px 16px',
-                            border: '2px solid #e2e8f0',
-                            borderRadius: '10px',
-                            fontSize: '0.95rem',
-                            backgroundColor: 'white',
-                            cursor: 'pointer'
-                        }}>
-                            <option>전체</option>
-                            <option>교통</option>
-                            <option>환경</option>
-                            <option>안전</option>
+                        <select
+                            value={category}
+                            onChange={handleCategoryChange}
+                            style={{
+                                padding: '12px 16px',
+                                border: '2px solid #e2e8f0',
+                                borderRadius: '10px',
+                                fontSize: '0.95rem',
+                                backgroundColor: 'white',
+                                cursor: 'pointer'
+                            }}
+
+                        >
+                            {['전체', '교통', '행정·안전', '도로', '산업·통상', '주택·건축', '교육', '경찰·검찰', '환경', '보건', '관광', '기타'].map(cat => (
+                                <option key={cat} value={cat}>{cat === '전체' ? '민원유형' : cat}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={regionParams}
+                            onChange={handleRegionChange}
+                            style={{
+                                padding: '12px 16px',
+                                border: '2px solid #e2e8f0',
+                                borderRadius: '10px',
+                                fontSize: '0.95rem',
+                                backgroundColor: 'white',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {['전체', '서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'].map(r => (
+                                <option key={r} value={r}>{r === '전체' ? '지역' : r}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={statusParams}
+                            onChange={handleStatusChange}
+                            style={{
+                                padding: '12px 16px',
+                                border: '2px solid #e2e8f0',
+                                borderRadius: '10px',
+                                fontSize: '0.95rem',
+                                backgroundColor: 'white',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {['전체', '접수', '처리중', '완료'].map(s => (
+                                <option key={s} value={s === '전체' ? '전체' : (s === '접수' ? 'RECEIVED' : (s === '처리중' ? 'IN_PROGRESS' : 'COMPLETED'))}>
+                                    {s === '전체' ? '접수상태' : s}
+                                </option>
+                            ))}
                         </select>
                         <input
                             type="text"
-                            placeholder="🔍 검색어를 입력하세요"
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                            placeholder="🔍 제목 또는 내용으로 검색"
                             style={{
                                 flex: 1,
                                 padding: '12px 18px',
@@ -128,17 +236,39 @@ function List() {
                                 outline: 'none'
                             }}
                         />
-                        <button style={{
-                            padding: '12px 24px',
-                            backgroundColor: '#1e293b',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '10px',
-                            fontWeight: '600',
-                            cursor: 'pointer'
-                        }}>
+                        <button
+                            onClick={handleSearch}
+                            style={{
+                                padding: '12px 24px',
+                                backgroundColor: '#1e293b',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '10px',
+                                fontWeight: '600',
+                                cursor: 'pointer'
+                            }}
+                        >
                             검색
                         </button>
+
+                        <div style={{ width: '2px', height: '30px', backgroundColor: '#e2e8f0', margin: '0 8px' }}></div>
+
+                        <select
+                            value={sort === 'like_count' ? 'likes' : (sort === 'complaint_no' ? (order === 'ASC' ? 'id_asc' : 'id_desc') : (order === 'ASC' ? 'old' : 'recent'))}
+                            onChange={handleSortChange}
+                            style={{
+                                padding: '12px 16px',
+                                border: '2px solid #e2e8f0',
+                                borderRadius: '10px',
+                                fontSize: '0.95rem',
+                                backgroundColor: 'white',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <option value="recent">최신순</option>
+                            <option value="old">과거순</option>
+                            <option value="likes">좋아요순</option>
+                        </select>
                     </div>
                 </div>
 
@@ -190,7 +320,7 @@ function List() {
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead>
                                     <tr style={{ backgroundColor: '#f8fafc' }}>
-                                        {['번호', '분류', '제목', '상태', '작성자', '등록일', '좋아요'].map(h => (
+                                        {['번호', '분류', '제목', '발송기관', '상태', '등록일', '좋아요'].map(h => (
                                             <th key={h} style={{
                                                 padding: '16px 20px',
                                                 textAlign: 'left',
@@ -214,7 +344,7 @@ function List() {
                                             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
                                             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                         >
-                                            <td style={{ padding: '18px 20px', color: '#94a3b8', borderBottom: '1px solid #f1f5f9' }}>{c.complaintNo}</td>
+                                            <td style={{ padding: '18px 20px', color: '#94a3b8', borderBottom: '1px solid #f1f5f9' }}>{c.seqNo || c.complaintNo}</td>
                                             <td style={{ padding: '18px 20px', borderBottom: '1px solid #f1f5f9' }}>
                                                 <span style={{
                                                     padding: '4px 10px',
@@ -228,8 +358,16 @@ function List() {
                                                 {c.title}
                                                 {!c.isPublic && <span style={{ marginLeft: '8px', fontSize: '0.8rem' }}>🔒</span>}
                                             </td>
+                                            <td style={{ padding: '18px 20px', borderBottom: '1px solid #f1f5f9' }}>
+                                                <span style={{
+                                                    padding: '4px 10px',
+                                                    backgroundColor: c.agencyName && c.agencyName !== '미지정' ? '#e0f2fe' : '#f1f5f9',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.8rem',
+                                                    color: c.agencyName && c.agencyName !== '미지정' ? '#0369a1' : '#94a3b8'
+                                                }}>{c.agencyName}</span>
+                                            </td>
                                             <td style={{ padding: '18px 20px', borderBottom: '1px solid #f1f5f9' }}>{getStatusBadge(c.status)}</td>
-                                            <td style={{ padding: '18px 20px', color: '#64748b', borderBottom: '1px solid #f1f5f9' }}>{c.authorName}</td>
                                             <td style={{ padding: '18px 20px', color: '#94a3b8', fontSize: '0.9rem', borderBottom: '1px solid #f1f5f9' }}>{formatDate(c.createdDate)}</td>
                                             <td style={{ padding: '18px 20px', borderBottom: '1px solid #f1f5f9' }}>
                                                 <span style={{ color: '#ef4444', fontWeight: '600' }}>❤️ {c.likeCount}</span>
@@ -260,24 +398,35 @@ function List() {
                                             opacity: page === 1 ? 0.5 : 1
                                         }}
                                     >⏪</button>
-                                    {[...Array(Math.min(5, totalPages))].map((_, i) => (
-                                        <button
-                                            key={i + 1}
-                                            onClick={() => setPage(i + 1)}
-                                            style={{
-                                                width: '40px',
-                                                height: '40px',
-                                                borderRadius: '10px',
-                                                border: 'none',
-                                                backgroundColor: page === i + 1 ? '#7c3aed' : '#f1f5f9',
-                                                color: page === i + 1 ? 'white' : '#64748b',
-                                                fontWeight: '600',
-                                                cursor: 'pointer'
-                                            }}
-                                        >{i + 1}</button>
-                                    ))}
+                                    {/* 현재 페이지 그룹 계산 (5개씩 표시) */}
+                                    {(() => {
+                                        const groupSize = 5;
+                                        const currentGroup = Math.ceil(page / groupSize);
+                                        const startPage = (currentGroup - 1) * groupSize + 1;
+                                        const endPage = Math.min(startPage + groupSize - 1, totalPages);
+
+                                        return [...Array(endPage - startPage + 1)].map((_, i) => {
+                                            const pageNum = startPage + i;
+                                            return (
+                                                <button
+                                                    key={pageNum}
+                                                    onClick={() => setPage(pageNum)}
+                                                    style={{
+                                                        width: '40px',
+                                                        height: '40px',
+                                                        borderRadius: '10px',
+                                                        border: 'none',
+                                                        backgroundColor: page === pageNum ? '#7c3aed' : '#f1f5f9',
+                                                        color: page === pageNum ? 'white' : '#64748b',
+                                                        fontWeight: '600',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >{pageNum}</button>
+                                            );
+                                        });
+                                    })()}
                                     <button
-                                        onClick={() => setPage(totalPages)}
+                                        onClick={() => setPage(Math.min(totalPages, page + 1))}
                                         disabled={page === totalPages}
                                         style={{
                                             padding: '10px 14px',
@@ -295,7 +444,7 @@ function List() {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 

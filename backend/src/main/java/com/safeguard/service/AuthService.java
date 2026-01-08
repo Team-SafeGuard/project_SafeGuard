@@ -39,7 +39,8 @@ public class AuthService {
                 .addr(request.getAddr())
                 .phone(request.getPhone())
                 .email(request.getEmail())
-                .role(request.getAgencyNo() != null ? "AGENCY" : "USER")
+                .role(request.getAgencyNo() != null ? com.safeguard.enums.UserRole.AGENCY
+                        : com.safeguard.enums.UserRole.USER)
                 .agencyNo(request.getAgencyNo())
                 .createdDate(OffsetDateTime.now())
                 .build();
@@ -55,14 +56,19 @@ public class AuthService {
             throw new RuntimeException("Invalid password");
         }
 
-        String token = jwtTokenProvider.createToken(user.getUserId(), user.getRole());
+        String token = jwtTokenProvider.createToken(user.getUserId(), user.getRole().name());
+
+        java.util.Map<String, Object> userInfo = new java.util.HashMap<>();
+        userInfo.put("userId", user.getUserId());
+        userInfo.put("name", user.getName());
+        userInfo.put("role", user.getRole().name());
+        if (user.getAgencyNo() != null) {
+            userInfo.put("agencyNo", user.getAgencyNo());
+        }
 
         return Map.of(
                 "token", token,
-                "user", Map.of(
-                        "userId", user.getUserId(),
-                        "name", user.getName(),
-                        "role", user.getRole()));
+                "user", userInfo);
     }
 
     public String findId(String name, String phone) {
@@ -101,5 +107,17 @@ public class AuthService {
         log.info("Resetting password for user {}. Temporary password: {}", userId, tempPassword);
 
         userMapper.updatePassword(userId, passwordEncoder.encode(tempPassword));
+    }
+
+    public Map<String, Object> getUserInfo(String userId) {
+        UserDTO user = userMapper.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return Map.of(
+                "userId", user.getUserId(),
+                "name", user.getName(),
+                "role", user.getRole().name(),
+                "phone", user.getPhone() != null ? user.getPhone() : "",
+                "email", user.getEmail() != null ? user.getEmail() : "");
     }
 }

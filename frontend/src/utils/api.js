@@ -46,6 +46,15 @@ export const authAPI = {
         });
         if (data.token) {
             setToken(data.token);
+            if (data.user) {
+                localStorage.setItem('role', data.user.role);
+                localStorage.setItem('userId', data.user.userId);
+                if (data.user.agencyNo) {
+                    localStorage.setItem('agencyNo', data.user.agencyNo);
+                } else {
+                    localStorage.removeItem('agencyNo');
+                }
+            }
         }
         return data;
     },
@@ -72,6 +81,9 @@ export const authAPI = {
 
     logout: () => {
         removeToken();
+        localStorage.removeItem('role');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('agencyNo');
     },
 
     getMe: () => apiRequest('/auth/me'),
