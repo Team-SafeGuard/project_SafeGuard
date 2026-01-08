@@ -263,7 +263,9 @@
                     "awslogs-region": "ap-northeast-2",
                     "awslogs-stream-prefix": "ecs"
                 }
-            }
+            },
+            "memory": 8192,
+            "memoryReservation": 4096
         },
         {
             "name": "safeguard-ai-rag",
