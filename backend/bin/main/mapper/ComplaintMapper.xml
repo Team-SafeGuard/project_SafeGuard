@@ -7,6 +7,7 @@
         <result property="seqNo" column="seq_no"/>
         <result property="title" column="title"/>
         <result property="content" column="content"/>
+        <result property="answer" column="answer"/>
         <result property="category" column="category"/>
         <result property="address" column="address"/>
         <result property="latitude" column="latitude"/>
@@ -81,6 +82,7 @@
         INSERT INTO complaint (
             title,
             content,
+            answer,
             category,
             address,
             latitude,
@@ -97,6 +99,7 @@
         VALUES (
             #{title},
             #{content},
+            #{answer},
             #{category},
             #{address},
             #{latitude},
@@ -116,6 +119,7 @@
         UPDATE complaint SET
             title = #{title},
             content = #{content},
+            answer = #{answer},
             category = #{category},
             address = #{address},
             latitude = #{latitude},
@@ -125,6 +129,17 @@
             status = #{status}::complaint_status,
             is_public = #{isPublic},
             updated_date = NOW()
+        WHERE complaint_no = #{complaintNo}
+    </update>
+
+
+    <update id="updateStatus">
+        UPDATE complaint SET status = #{status}::complaint_status, updated_date = NOW()
+        WHERE complaint_no = #{complaintNo}
+    </update>
+
+    <update id="updateAnswer">
+        UPDATE complaint SET answer = #{answer}, updated_date = NOW()
         WHERE complaint_no = #{complaintNo}
     </update>
 

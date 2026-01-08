@@ -104,6 +104,16 @@ export const complaintsAPI = {
         method: 'POST',
     }),
 
+    updateStatus: (id, status) => apiRequest(`/complaints/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+    }),
+
+    updateAnswer: (id, answer) => apiRequest(`/complaints/${id}/answer`, {
+        method: 'PATCH',
+        body: JSON.stringify({ answer }),
+    }),
+
     getMapLocations: () => apiRequest('/complaints/map/locations'),
 };
 

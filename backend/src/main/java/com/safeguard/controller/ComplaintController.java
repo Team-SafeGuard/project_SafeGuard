@@ -1,6 +1,9 @@
 package com.safeguard.controller;
 
 import com.safeguard.dto.ComplaintDTO;
+import com.safeguard.dto.UserDTO;
+import com.safeguard.enums.ComplaintStatus;
+import com.safeguard.enums.UserRole;
 import com.safeguard.mapper.ComplaintMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +23,7 @@ public class ComplaintController {
 
     private final ComplaintMapper complaintMapper;
     private final com.safeguard.mapper.UserMapper userMapper;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getComplaints(
@@ -89,6 +93,7 @@ public class ComplaintController {
         result.put("createdDate", c.getCreatedDate() != null ? c.getCreatedDate().toString() : null);
         result.put("authorName", "익명사용자");
         result.put("likeCount", c.getLikeCount() != null ? c.getLikeCount() : 0);
+        result.put("answer", c.getAnswer());
 
         // Check if current user liked this
         // For testing, assuming userNo = 1 (testuser)
@@ -141,5 +146,62 @@ public class ComplaintController {
     @GetMapping("/top-liked")
     public ResponseEntity<List<ComplaintDTO>> getTopLiked() {
         return ResponseEntity.ok(complaintMapper.getTopLiked());
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Map<String, String>> updateStatus(@PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+        String statusStr = body.get("status");
+        ComplaintStatus status = ComplaintStatus.valueOf(statusStr);
+        complaintMapper.updateStatus(id, status);
+        return ResponseEntity.ok(Map.of("message", "Status updated successfully"));
+    }
+
+    @PatchMapping("/{id}/answer")
+    public ResponseEntity<Map<String, String>> updateAnswer(@PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+        String answer = body.get("answer");
+        complaintMapper.updateAnswer(id, answer);
+        return ResponseEntity.ok(Map.of("message", "Answer updated successfully"));
+    }
+
+    @PostMapping("/setup-agency")
+    public ResponseEntity<String> setupAgency() {
+        if (!userMapper.existsByUserId("admin")) {
+            UserDTO admin = UserDTO.builder()
+                    .userId("admin")
+                    .pw("admin123")
+                    .name("관리자")
+                    .role(UserRole.AGENCY)
+                    .phone("010-0000-0000") // Required by mapper? No, but good to have
+                    .build();
+            userMapper.save(admin);
+            return ResponseEntity.ok("Admin created: admin/admin123");
+        }
+        return ResponseEntity.ok("Admin already exists");
+    }
+
+    @PostMapping("/setup-manager")
+    public ResponseEntity<String> setupManager() {
+        try {
+            if (!userMapper.existsByUserId("manager")) {
+                UserDTO manager = UserDTO.builder()
+                        .userId("manager")
+                        .pw(passwordEncoder.encode("manager123"))
+                        .name("담당자")
+                        .birthDate(java.time.LocalDate.of(1990, 1, 1))
+                        .addr("서울시 강남구")
+                        .email("manager@example.com")
+                        .role(UserRole.AGENCY)
+                        .phone("010-9999-9999")
+                        .build();
+                userMapper.save(manager);
+                return ResponseEntity.ok("Manager created: manager/manager123");
+            }
+            return ResponseEntity.ok("Manager already exists");
+        } catch (Exception e) {
+            log.error("Failed to create manager user", e);
+            return ResponseEntity.status(500).body("Failed to create manager: " + e.getMessage());
+        }
     }
 }

@@ -1,24 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { complaintsAPI, authAPI } from '../utils/api';
 
 function Detail() {
     const { id } = useParams();
     const [report, setReport] = useState(null);
+    const [user, setUser] = useState(null);
+    const [answerText, setAnswerText] = useState('');
     const navigate = useNavigate();
 
     const fetchDetail = async () => {
         try {
-            const res = await fetch(`http://localhost:5000/api/complaints/${id}`);
-            const data = await res.json();
+            const data = await complaintsAPI.getDetail(id);
             setReport(data);
+            if (data.answer) setAnswerText(data.answer);
         } catch (err) {
             console.error('Failed to fetch report detail:', err);
         }
     };
 
+    const fetchUser = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (token) {
+                const userData = await authAPI.getMe();
+                setUser(userData);
+            }
+        } catch (err) {
+            console.error('Failed to fetch user:', err);
+        }
+    };
+
     useEffect(() => {
         fetchDetail();
+        fetchUser();
     }, [id]);
+
+    const handleStatusChange = async (newStatus) => {
+        if (!user || user.role !== 'AGENCY') return;
+        try {
+            await complaintsAPI.updateStatus(id, newStatus);
+            setReport(prev => ({ ...prev, status: newStatus }));
+            alert('상태가 변경되었습니다.');
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    const handleAnswerSubmit = async () => {
+        if (!user || user.role !== 'AGENCY') return;
+        try {
+            await complaintsAPI.updateAnswer(id, answerText);
+            setReport(prev => ({ ...prev, answer: answerText }));
+            alert('답변이 등록되었습니다.');
+        } catch (err) {
+            alert(err.message);
+        }
+    };
 
     const handleLike = async () => {
         const token = localStorage.getItem('token');
@@ -29,26 +67,12 @@ function Detail() {
         }
 
         try {
-            const res = await fetch(`http://localhost:5000/api/complaints/${id}/like`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                alert(data.error || '좋아요 처리에 실패했습니다.');
-                return;
-            }
-            // backend now returns { message, likeCount, liked }
-            if (typeof data.liked === 'boolean') {
-                setReport(prev => ({ ...prev, likeCount: data.likeCount, liked: data.liked }));
-            } else {
-                // Fallback if backend doesn't return correct boolean (shouldn't happen with our changes)
-                setReport(prev => ({ ...prev, likeCount: data.likeCount, liked: true }));
-            }
+            await complaintsAPI.toggleLike(id);
+            const updated = await complaintsAPI.getDetail(id);
+            setReport(updated);
         } catch (err) {
             console.error('Failed to update like:', err);
+            alert('좋아요 처리 실패');
         }
     };
 
@@ -71,23 +95,29 @@ function Detail() {
         });
     };
 
-    const statusStepStyle = (isActive, status) => {
-        const activeColors = {
-            'RECEIVED': 'var(--primary-color)',
-            'IN_PROGRESS': '#d97706', // 노란색
-            'COMPLETED': '#16a34a'   // 초록색
-        };
-        const activeColor = activeColors[status] || 'var(--primary-color)';
+    const steps = [
+        { key: 'RECEIVED', label: '접수 완료', icon: '📥' },
+        { key: 'IN_PROGRESS', label: '처리중', icon: '🛠️' },
+        { key: 'COMPLETED', label: '처리완료', icon: '✅' }
+    ];
 
+    const statusOrder = ['RECEIVED', 'IN_PROGRESS', 'COMPLETED'];
+    const currentIndex = Math.max(statusOrder.indexOf(report.status), 0);
+    const progressPercent = (currentIndex / (statusOrder.length - 1)) * 100;
+
+    const getStepStyle = (index) => {
+        const isActive = index <= currentIndex;
         return {
-            padding: '10px 25px',
-            borderRadius: '20px',
-            backgroundColor: isActive ? activeColor : '#EEE',
-            color: isActive ? 'white' : '#777',
-            fontWeight: 'bold',
-            fontSize: '0.9rem',
+            width: '56px',
+            height: '56px',
+            borderRadius: '16px',
+            background: isActive ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' : '#e2e8f0',
+            color: isActive ? 'white' : '#94a3b8',
             display: 'flex',
-            alignItems: 'center'
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.4rem',
+            boxShadow: isActive ? '0 10px 24px rgba(99, 102, 241, 0.3)' : 'none'
         };
     };
 
@@ -143,14 +173,92 @@ function Detail() {
                     <div style={{ lineHeight: '1.8', whiteSpace: 'pre-wrap' }}>{report.content}</div>
                 </div>
 
+                {/* Manager Answer Section */}
+                <h3 style={{ marginBottom: '20px', borderBottom: '2px solid var(--primary-color)', paddingBottom: '10px' }}>담당자 답변</h3>
+                <div style={{ marginBottom: '50px', backgroundColor: '#f8fafc', padding: '20px', borderRadius: '12px' }}>
+                    {user && user.role === 'AGENCY' ? (
+                        <div>
+                            <textarea
+                                value={answerText}
+                                onChange={(e) => setAnswerText(e.target.value)}
+                                placeholder="답변 내용을 입력하세요..."
+                                style={{ width: '100%', minHeight: '100px', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '10px' }}
+                            />
+                            <div style={{ textAlign: 'right' }}>
+                                <button
+                                    onClick={handleAnswerSubmit}
+                                    style={{ padding: '8px 20px', backgroundColor: 'var(--primary-color)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                                >
+                                    답변 등록
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div style={{ whiteSpace: 'pre-wrap', color: report.answer ? '#333' : '#94a3b8' }}>
+                            {report.answer || '아직 답변이 등록되지 않았습니다.'}
+                        </div>
+                    )}
+                </div>
+
                 {/* Workflow Section */}
-                <h3 style={{ marginBottom: '30px' }}>민원 처리 현황</h3>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '30px', marginBottom: '50px' }}>
-                    <div style={statusStepStyle(report.status === 'RECEIVED', 'RECEIVED')}>접수 완료</div>
-                    <div style={{ fontSize: '1.5rem', color: '#CCC' }}>➜</div>
-                    <div style={statusStepStyle(report.status === 'IN_PROGRESS', 'IN_PROGRESS')}>처리중</div>
-                    <div style={{ fontSize: '1.5rem', color: '#CCC' }}>➜</div>
-                    <div style={statusStepStyle(report.status === 'COMPLETED', 'COMPLETED')}>처리완료</div>
+                <h3 style={{ marginBottom: '16px' }}>민원 처리 현황</h3>
+                <div style={{
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '20px',
+                    padding: '28px 24px',
+                    marginBottom: '50px'
+                }}>
+                    <div style={{ position: 'relative', maxWidth: '520px', margin: '0 auto 24px' }}>
+                        <div style={{
+                            position: 'absolute',
+                            top: '28px',
+                            left: '28px',
+                            right: '28px',
+                            height: '8px',
+                            borderRadius: '999px',
+                            backgroundColor: '#e2e8f0'
+                        }} />
+                        <div style={{
+                            position: 'absolute',
+                            top: '28px',
+                            left: '28px',
+                            height: '8px',
+                            borderRadius: '999px',
+                            width: `calc(${progressPercent}% - 0px)`,
+                            background: 'linear-gradient(90deg, #6366f1 0%, #22c55e 100%)',
+                            transition: 'width 0.3s ease'
+                        }} />
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            position: 'relative',
+                            zIndex: 2
+                        }}>
+                            {steps.map((step, index) => (
+                                <div key={step.key} style={{ textAlign: 'center' }}>
+                                    <div style={getStepStyle(index)}>{step.icon}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', maxWidth: '520px', margin: '0 auto' }}>
+                        {steps.map((step, index) => (
+                            <div key={step.key}
+                                onClick={() => user && user.role === 'AGENCY' && handleStatusChange(step.key)}
+                                style={{
+                                    textAlign: 'center',
+                                    flex: 1,
+                                    color: index <= currentIndex ? '#1f2937' : '#94a3b8',
+                                    fontWeight: index <= currentIndex ? '700' : '600',
+                                    cursor: user && user.role === 'AGENCY' ? 'pointer' : 'default'
+                                }}>
+                                {step.label}
+                                {user && user.role === 'AGENCY' && index !== currentIndex && (
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--primary-color)', marginTop: '4px' }}>(변경)</div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 <div style={{ textAlign: 'center', marginTop: '50px' }}>

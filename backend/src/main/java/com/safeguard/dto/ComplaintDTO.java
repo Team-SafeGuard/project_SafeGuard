@@ -15,6 +15,7 @@ public class ComplaintDTO {
     private Long seqNo;
     private String title;
     private String content;
+    private String answer;
     private String category;
     private String address;
     private Double latitude;

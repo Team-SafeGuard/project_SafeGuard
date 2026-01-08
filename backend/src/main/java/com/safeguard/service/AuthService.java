@@ -39,7 +39,8 @@ public class AuthService {
                 .addr(request.getAddr())
                 .phone(request.getPhone())
                 .email(request.getEmail())
-                .role(request.getAgencyNo() != null ? com.safeguard.enums.UserRole.AGENCY : com.safeguard.enums.UserRole.USER)
+                .role(request.getAgencyNo() != null ? com.safeguard.enums.UserRole.AGENCY
+                        : com.safeguard.enums.UserRole.USER)
                 .agencyNo(request.getAgencyNo())
                 .createdDate(OffsetDateTime.now())
                 .build();
@@ -101,5 +102,17 @@ public class AuthService {
         log.info("Resetting password for user {}. Temporary password: {}", userId, tempPassword);
 
         userMapper.updatePassword(userId, passwordEncoder.encode(tempPassword));
+    }
+
+    public Map<String, Object> getUserInfo(String userId) {
+        UserDTO user = userMapper.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return Map.of(
+                "userId", user.getUserId(),
+                "name", user.getName(),
+                "role", user.getRole().name(),
+                "phone", user.getPhone() != null ? user.getPhone() : "",
+                "email", user.getEmail() != null ? user.getEmail() : "");
     }
 }

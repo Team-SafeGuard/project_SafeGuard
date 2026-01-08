@@ -1,6 +1,7 @@
 package com.safeguard.mapper;
 
 import com.safeguard.dto.ComplaintDTO;
+import com.safeguard.enums.ComplaintStatus;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -30,6 +31,10 @@ public interface ComplaintMapper {
     void insert(ComplaintDTO complaint);
 
     void update(ComplaintDTO complaint);
+
+    void updateStatus(@Param("complaintNo") Long complaintNo, @Param("status") ComplaintStatus status);
+
+    void updateAnswer(@Param("complaintNo") Long complaintNo, @Param("answer") String answer);
 
     void deleteByComplaintNo(@Param("complaintNo") Long complaintNo);
 
