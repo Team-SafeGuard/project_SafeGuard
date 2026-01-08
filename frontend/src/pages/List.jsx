@@ -30,7 +30,11 @@ function List() {
     const fetchComplaints = async () => {
         setLoading(true);
         try {
-            const data = await complaintsAPI.getList({
+            // Agency 관리자인 경우 agencyNo 파라미터 추가
+            const role = localStorage.getItem('role');
+            const agencyNo = localStorage.getItem('agencyNo');
+
+            const params = {
                 page,
                 limit: 10,
                 search,
@@ -39,7 +43,14 @@ function List() {
                 region: regionParams,
                 sort,
                 order
-            });
+            };
+
+            // AGENCY 역할이고 agencyNo가 있으면 해당 기관 민원만 필터링
+            if (role === 'AGENCY' && agencyNo) {
+                params.agencyNo = agencyNo;
+            }
+
+            const data = await complaintsAPI.getList(params);
             setComplaints(data.complaints);
             setTotalPages(data.pagination.totalPages);
         } catch (err) {
@@ -309,7 +320,7 @@ function List() {
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead>
                                     <tr style={{ backgroundColor: '#f8fafc' }}>
-                                        {['번호', '분류', '제목', '상태', '작성자', '등록일', '좋아요'].map(h => (
+                                        {['번호', '분류', '제목', '발송기관', '상태', '등록일', '좋아요'].map(h => (
                                             <th key={h} style={{
                                                 padding: '16px 20px',
                                                 textAlign: 'left',
@@ -347,8 +358,16 @@ function List() {
                                                 {c.title}
                                                 {!c.isPublic && <span style={{ marginLeft: '8px', fontSize: '0.8rem' }}>🔒</span>}
                                             </td>
+                                            <td style={{ padding: '18px 20px', borderBottom: '1px solid #f1f5f9' }}>
+                                                <span style={{
+                                                    padding: '4px 10px',
+                                                    backgroundColor: c.agencyName ? '#e0f2fe' : '#f1f5f9',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.8rem',
+                                                    color: c.agencyName ? '#0369a1' : '#94a3b8'
+                                                }}>{c.agencyName || '미지정'}</span>
+                                            </td>
                                             <td style={{ padding: '18px 20px', borderBottom: '1px solid #f1f5f9' }}>{getStatusBadge(c.status)}</td>
-                                            <td style={{ padding: '18px 20px', color: '#64748b', borderBottom: '1px solid #f1f5f9' }}>{c.authorName}</td>
                                             <td style={{ padding: '18px 20px', color: '#94a3b8', fontSize: '0.9rem', borderBottom: '1px solid #f1f5f9' }}>{formatDate(c.createdDate)}</td>
                                             <td style={{ padding: '18px 20px', borderBottom: '1px solid #f1f5f9' }}>
                                                 <span style={{ color: '#ef4444', fontWeight: '600' }}>❤️ {c.likeCount}</span>

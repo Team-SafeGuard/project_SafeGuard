@@ -159,7 +159,7 @@ function Detail() {
                         </h2>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                            <div style={{ display: 'flex', gap: '24px', color: '#64748b', fontSize: '0.95rem' }}>
+                            <div style={{ display: 'flex', gap: '24px', color: '#64748b', fontSize: '0.95rem', flexWrap: 'wrap' }}>
                                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                     <span>👤</span> {report.authorName}
                                 </div>
@@ -171,6 +171,18 @@ function Detail() {
                                 </div>
                                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                     <span>📍</span> {report.address}
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <span>🏛️</span>
+                                    <span style={{
+                                        padding: '2px 10px',
+                                        backgroundColor: report.agencyName ? '#e0f2fe' : '#f1f5f9',
+                                        borderRadius: '6px',
+                                        color: report.agencyName ? '#0369a1' : '#94a3b8',
+                                        fontWeight: '600'
+                                    }}>
+                                        {report.agencyName || '미지정'}
+                                    </span>
                                 </div>
                             </div>
 

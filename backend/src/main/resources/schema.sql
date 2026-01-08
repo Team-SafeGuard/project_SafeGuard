@@ -60,7 +60,18 @@ CREATE TABLE complaint (
     created_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_date TIMESTAMPTZ,
     completed_date TIMESTAMPTZ,
-    user_no BIGINT NOT NULL REFERENCES app_user(user_no)
+    user_no BIGINT NOT NULL REFERENCES app_user(user_no),
+    agency_no BIGINT REFERENCES agency(agency_no),
+    like_count INTEGER DEFAULT 0,
+    answer TEXT
+);
+
+CREATE TABLE complaint_like (
+    like_id BIGSERIAL PRIMARY KEY,
+    complaint_no BIGINT NOT NULL REFERENCES complaint(complaint_no) ON DELETE CASCADE,
+    user_no BIGINT NOT NULL REFERENCES app_user(user_no) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(complaint_no, user_no)
 );
 
 -- 4. 기타 보조 테이블

@@ -58,12 +58,17 @@ public class AuthService {
 
         String token = jwtTokenProvider.createToken(user.getUserId(), user.getRole().name());
 
+        java.util.Map<String, Object> userInfo = new java.util.HashMap<>();
+        userInfo.put("userId", user.getUserId());
+        userInfo.put("name", user.getName());
+        userInfo.put("role", user.getRole().name());
+        if (user.getAgencyNo() != null) {
+            userInfo.put("agencyNo", user.getAgencyNo());
+        }
+
         return Map.of(
                 "token", token,
-                "user", Map.of(
-                        "userId", user.getUserId(),
-                        "name", user.getName(),
-                        "role", user.getRole().name()));
+                "user", userInfo);
     }
 
     public String findId(String name, String phone) {

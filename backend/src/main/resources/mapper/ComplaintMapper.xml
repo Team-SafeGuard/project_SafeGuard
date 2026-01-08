@@ -21,40 +21,40 @@
         <result property="completedDate" column="completed_date"/>
         <result property="likeCount" column="like_count"/>
         <result property="userNo" column="user_no"/>
+        <result property="agencyNo" column="agency_no"/>
+        <result property="agencyName" column="agency_name"/>
     </resultMap>
 
     <select id="findAll" resultMap="ComplaintResultMap">
         WITH OrderedComplaints AS (
-            SELECT *, ROW_NUMBER() OVER (ORDER BY created_date ASC) as seq_no
-            FROM complaint
+            SELECT c.*, ROW_NUMBER() OVER (ORDER BY c.created_date ASC) as seq_no, a.agency_name
+            FROM complaint c
+            LEFT JOIN agency a ON c.agency_no = a.agency_no
         )
-        SELECT c.* FROM OrderedComplaints c
-        <if test="agencyNo != null">
-            JOIN complaint_agency ca ON c.complaint_no = ca.complaint_no
-        </if>
+        SELECT oc.* FROM OrderedComplaints oc
         <where>
             <if test="agencyNo != null">
-                AND ca.agency_no = #{agencyNo}
+                AND oc.agency_no = #{agencyNo}
             </if>
             <if test="search != null and search != ''">
-                AND (title LIKE CONCAT('%', #{search}, '%') OR content LIKE CONCAT('%', #{search}, '%'))
+                AND (oc.title LIKE CONCAT('%', #{search}, '%') OR oc.content LIKE CONCAT('%', #{search}, '%'))
             </if>
             <if test="category != null and category != '' and category != '전체'">
-                AND category = #{category}
+                AND oc.category = #{category}
             </if>
             <if test="status != null and status != '' and status != '전체'">
-                AND status = #{status}::complaint_status
+                AND oc.status = #{status}::complaint_status
             </if>
             <if test="region != null and region != '' and region != '전체'">
-                AND address LIKE CONCAT(#{region}, '%')
+                AND oc.address LIKE CONCAT(#{region}, '%')
             </if>
         </where>
         ORDER BY
         <choose>
-            <when test="sort == 'like_count'">like_count</when>
-            <when test="sort == 'complaint_no'">complaint_no</when>
-            <when test="sort == 'seq_no'">seq_no</when>
-            <otherwise>created_date</otherwise>
+            <when test="sort == 'like_count'">oc.like_count</when>
+            <when test="sort == 'complaint_no'">oc.complaint_no</when>
+            <when test="sort == 'seq_no'">oc.seq_no</when>
+            <otherwise>oc.created_date</otherwise>
         </choose>
         <choose>
             <when test="order == 'ASC'">ASC</when>
@@ -68,10 +68,11 @@
             COUNT(CASE WHEN c.status = 'IN_PROGRESS' THEN 1 END) as processing,
             COUNT(CASE WHEN c.status = 'COMPLETED' THEN 1 END) as completed
         FROM complaint c
-        <if test="agencyNo != null">
-            JOIN complaint_agency ca ON c.complaint_no = ca.complaint_no
-            WHERE ca.agency_no = #{agencyNo}
-        </if>
+        <where>
+            <if test="agencyNo != null">
+                c.agency_no = #{agencyNo}
+            </if>
+        </where>
     </select>
 
     <select id="getTopLiked" resultMap="ComplaintResultMap">
@@ -85,7 +86,10 @@
     </select>
 
     <select id="findByComplaintNo" resultMap="ComplaintResultMap">
-        SELECT * FROM complaint WHERE complaint_no = #{complaintNo}
+        SELECT c.*, a.agency_name 
+        FROM complaint c
+        LEFT JOIN agency a ON c.agency_no = a.agency_no
+        WHERE c.complaint_no = #{complaintNo}
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="complaintNo" keyColumn="complaint_no">
@@ -104,7 +108,8 @@
             like_count,
             created_date,
             updated_date,
-            user_no
+            user_no,
+            agency_no
         )
         VALUES (
             #{title},
@@ -121,7 +126,8 @@
             #{likeCount},
             #{createdDate},
             NOW(),
-            #{userNo}
+            #{userNo},
+            #{agencyNo}
         )
     </insert>
 

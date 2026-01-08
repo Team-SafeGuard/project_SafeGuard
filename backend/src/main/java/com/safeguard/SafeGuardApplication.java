@@ -11,16 +11,4 @@ public class SafeGuardApplication {
 		System.out.println("Server Started");
 	}
 
-	@org.springframework.context.annotation.Bean
-	public org.springframework.boot.CommandLineRunner initDB(org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
-		return args -> {
-			try {
-				jdbcTemplate.execute("ALTER TABLE complaint ADD COLUMN IF NOT EXISTS answer TEXT");
-				System.out.println("Added answer column to complaint table");
-			} catch (Exception e) {
-				System.out.println("DB Update Note: " + e.getMessage());
-			}
-		};
-	}
-
 }

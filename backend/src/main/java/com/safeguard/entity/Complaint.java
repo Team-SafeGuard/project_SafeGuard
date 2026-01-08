@@ -22,4 +22,5 @@ public class Complaint {
     private OffsetDateTime completedDate;
 
     private Long userNo;
+    private Long agencyNo;
 }

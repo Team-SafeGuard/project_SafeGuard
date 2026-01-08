@@ -29,4 +29,6 @@ public class ComplaintDTO {
     private OffsetDateTime completedDate;
     private Integer likeCount;
     private Long userNo;
+    private Long agencyNo;
+    private String agencyName;
 }

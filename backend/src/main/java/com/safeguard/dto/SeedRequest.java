@@ -15,4 +15,5 @@ public class SeedRequest {
     private String status;
     private Integer likeCount;
     private String createdDate;
+    private Long agencyNo;
 }

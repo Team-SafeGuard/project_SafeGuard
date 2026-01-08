@@ -3,13 +3,16 @@ package com.safeguard.controller;
 import com.safeguard.dto.ComplaintDTO;
 import com.safeguard.dto.SeedRequest;
 import com.safeguard.dto.UserDTO;
+import com.safeguard.entity.Agency;
 import com.safeguard.mapper.ComplaintMapper;
 import com.safeguard.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -21,12 +24,18 @@ public class SeedController {
     private final ComplaintMapper complaintMapper;
     private final UserMapper userMapper;
     private final com.safeguard.mapper.AgencyMapper agencyMapper;
+    private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/reset")
     public ResponseEntity<Map<String, String>> resetData() {
         complaintMapper.deleteAllLikes();
         complaintMapper.deleteAllComplaints();
         return ResponseEntity.ok(Map.of("message", "All data deleted"));
+    }
+
+    @GetMapping("/agencies")
+    public ResponseEntity<List<Agency>> getAgencies() {
+        return ResponseEntity.ok(agencyMapper.findAll());
     }
 
     @PostMapping("/agencies")
@@ -75,6 +84,40 @@ public class SeedController {
         return ResponseEntity.ok(Map.of("message", "Agencies seeded successfully", "count", count));
     }
 
+    @PostMapping("/agency-admins")
+    public ResponseEntity<Map<String, Object>> createAgencyAdmins() {
+        int count = 0;
+        List<Agency> agencies = agencyMapper.findAll();
+
+        for (Agency agency : agencies) {
+            // 기관별 관리자 ID 생성 (예: admin_seoul, admin_busan 등)
+            String adminId = "admin_" + agency.getAgencyNo();
+
+            // 이미 존재하면 스킵
+            if (userMapper.existsByUserId(adminId)) {
+                continue;
+            }
+
+            UserDTO adminUser = UserDTO.builder()
+                    .userId(adminId)
+                    .pw(passwordEncoder.encode("admin123"))
+                    .name(agency.getAgencyName() + " 관리자")
+                    .birthDate(java.time.LocalDate.of(1980, 1, 1))
+                    .addr("서울시 중구 세종대로 110")
+                    .phone("02-1234-5678")
+                    .email(adminId + "@gov.kr")
+                    .role(com.safeguard.enums.UserRole.AGENCY)
+                    .agencyNo(agency.getAgencyNo())
+                    .build();
+
+            userMapper.save(adminUser);
+            log.info("[Seed] Created agency admin: {} for {}", adminId, agency.getAgencyName());
+            count++;
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Agency admins created successfully", "count", count));
+    }
+
     @PostMapping("/complaints")
     public ResponseEntity<Map<String, Object>> createSeedComplaint(@RequestBody SeedRequest request) {
         try {
@@ -87,7 +130,7 @@ public class SeedController {
                             log.info("Creating default test user for seeding...");
                             UserDTO newUser = UserDTO.builder()
                                     .userId("testuser")
-                                    .pw("$2a$10$dummyHashedPasswordForSeeding")
+                                    .pw(passwordEncoder.encode("testuser123"))
                                     .name("테스트유저")
                                     .birthDate(java.time.LocalDate.of(1990, 1, 1))
                                     .addr("서울시 강남구")
@@ -121,10 +164,12 @@ public class SeedController {
                                     : java.time.OffsetDateTime.now())
                     .isPublic(true)
                     .userNo(user.getUserNo())
+                    .agencyNo(request.getAgencyNo())
                     .build();
 
             complaintMapper.insert(complaint);
-            log.info("[Seed] Created complaint #{} for user {}", complaint.getComplaintNo(), user.getUserId());
+            log.info("[Seed] Created complaint #{} for user {}, agency: {}",
+                    complaint.getComplaintNo(), user.getUserId(), request.getAgencyNo());
 
             return ResponseEntity.ok(Map.of(
                     "message", "Complaint created",
