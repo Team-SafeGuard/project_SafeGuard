@@ -116,12 +116,22 @@ export const complaintsAPI = {
         method: 'POST',
     }),
 
-//    getMapLocations: () => apiRequest('/complaints/map/locations'),
+    updateStatus: (id, status) => apiRequest(`/complaints/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+    }),
+
+    updateAnswer: (id, answer) => apiRequest(`/complaints/${id}/answer`, {
+        method: 'PATCH',
+        body: JSON.stringify({ answer }),
+    }),
+
+    //    getMapLocations: () => apiRequest('/complaints/map/locations'),
     getMapItems: (params) => {
         const query = new URLSearchParams(params).toString();
         return apiRequest(`/gis/map-items${query ? `?${query}` : ''}`);
     },
-      getComplaints: (params) => {
+    getComplaints: (params) => {
         const query = new URLSearchParams(params).toString();
         return apiRequest(`/gis/complaints${query ? `?${query}` : ''}`);
     },
