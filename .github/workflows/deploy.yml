@@ -48,7 +48,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           # Build Frontend
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest .
+          docker build --build-arg VITE_KAKAO_MAP_KEY=${{ secrets.VITE_KAKAO_MAP_KEY }} -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest
 
