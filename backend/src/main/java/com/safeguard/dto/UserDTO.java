@@ -19,7 +19,6 @@ public class UserDTO {
     private LocalDate birthDate;
     private String addr;
     private String phone;
-    private String email;
     private OffsetDateTime createdDate;
     private com.safeguard.enums.UserRole role; // USER, ADMIN, AGENCY
     private Long agencyNo;

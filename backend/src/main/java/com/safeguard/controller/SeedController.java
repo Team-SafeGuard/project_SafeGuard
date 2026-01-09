@@ -54,7 +54,7 @@ public class SeedController {
                             birth_date DATE NOT NULL,
                             addr VARCHAR(300) NOT NULL,
                             phone VARCHAR(20) NOT NULL,
-                            email VARCHAR(100),
+
                             created_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
                             role VARCHAR(20) NOT NULL DEFAULT 'USER',
                             agency_no BIGINT REFERENCES agency(agency_no)
@@ -196,7 +196,6 @@ public class SeedController {
                     .birthDate(java.time.LocalDate.of(1980, 1, 1))
                     .addr("서울시 중구 세종대로 110")
                     .phone("02-1234-5678")
-                    .email(adminId + "@gov.kr")
                     .role(com.safeguard.enums.UserRole.AGENCY)
                     .agencyNo(agency.getAgencyNo())
                     .build();
@@ -225,8 +224,8 @@ public class SeedController {
                                     .name("테스트유저")
                                     .birthDate(java.time.LocalDate.of(1990, 1, 1))
                                     .addr("서울시 강남구")
+
                                     .phone("010-0000-0000")
-                                    .email("test@test.com")
                                     .role(com.safeguard.enums.UserRole.USER)
                                     .build();
                             userMapper.save(newUser);

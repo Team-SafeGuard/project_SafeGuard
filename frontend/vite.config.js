@@ -12,7 +12,7 @@ export default defineConfig({
                 rewrite: (path) => path.replace(/^\/api\/stt/, ''),
             },
             '/api': {
-                target: 'http://localhost:5000',
+                target: 'http://localhost:8080',
                 changeOrigin: true,
             },
         },
