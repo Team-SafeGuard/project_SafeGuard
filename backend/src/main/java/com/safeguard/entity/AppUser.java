@@ -15,7 +15,6 @@ public class AppUser {
     private LocalDate birthDate; // DATE 권장
     private String addr;
     private String phone;
-    private String email;
 
     private OffsetDateTime createdDate; // TIMESTAMPTZ
     private UserRole role;

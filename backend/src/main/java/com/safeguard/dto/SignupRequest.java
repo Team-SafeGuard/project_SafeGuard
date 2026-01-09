@@ -11,6 +11,5 @@ public class SignupRequest {
     private LocalDate birthDate; // yyyy-MM-dd
     private String addr;
     private String phone;
-    private String email;
     private Long agencyNo; // Optional, only for AGENCY role
 }

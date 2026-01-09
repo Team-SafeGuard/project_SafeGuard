@@ -38,7 +38,6 @@ public class AuthService {
                 .birthDate(request.getBirthDate())
                 .addr(request.getAddr())
                 .phone(request.getPhone())
-                .email(request.getEmail())
                 .role(request.getAgencyNo() != null ? com.safeguard.enums.UserRole.AGENCY
                         : com.safeguard.enums.UserRole.USER)
                 .agencyNo(request.getAgencyNo())
@@ -117,7 +116,6 @@ public class AuthService {
                 "userId", user.getUserId(),
                 "name", user.getName(),
                 "role", user.getRole().name(),
-                "phone", user.getPhone() != null ? user.getPhone() : "",
-                "email", user.getEmail() != null ? user.getEmail() : "");
+                "phone", user.getPhone() != null ? user.getPhone() : "");
     }
 }
