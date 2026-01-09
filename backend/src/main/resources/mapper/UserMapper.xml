@@ -25,6 +25,43 @@
         <result property="agencyNo" column="agency_no"/>
     </resultMap>
 
+    <!-- 회원 생성 (main 기준) -->
+    <insert id="save"
+            parameterType="com.safeguard.dto.UserDTO"
+            useGeneratedKeys="true"
+            keyProperty="userNo"
+            keyColumn="user_no">
+        INSERT INTO app_user (
+            user_id,
+            pw,
+            name,
+            birth_date,
+            addr,
+            phone,
+            role,
+            agency_no,
+            created_date
+        )
+        VALUES (
+            #{userId},
+            #{pw},
+            #{name},
+            #{birthDate},
+            #{addr},
+            #{phone},
+            #{role}::user_role,
+            #{agencyNo},
+            NOW()
+        )
+    </insert>
+
+    <!-- 비밀번호 변경 (main 기준) -->
+    <update id="updatePassword">
+        UPDATE app_user
+        SET pw = #{password}
+        WHERE user_id = #{userId}
+    </update>
+
     <!-- 단건 조회 (PK) -->
     <select id="findByUserNo" resultMap="UserResultMap">
         SELECT *
@@ -33,7 +70,7 @@
     </select>
 
     <!-- 단건 조회 (ID) -->
-    <select id="findByUserId" resultMap="UserResultMap">
+    <select id="findByUserId" resultMap="UserResultMap" parameterType="string">
         SELECT *
         FROM app_user
         WHERE user_id = #{userId}
@@ -47,35 +84,6 @@
             WHERE user_id = #{userId}
         )
     </select>
-
-    <!-- 회원 생성 -->
-    <insert id="insert"
-            useGeneratedKeys="true"
-            keyProperty="userNo"
-            keyColumn="user_no">
-        INSERT INTO app_user (
-            user_id,
-            pw,
-            name,
-            birth_date,
-            addr,
-            phone,
-            created_date,
-            role,
-            agency_no
-        )
-        VALUES (
-            #{userId},
-            #{pw},
-            #{name},
-            #{birthDate},
-            #{addr},
-            #{phone},
-            CURRENT_TIMESTAMP,
-            #{role}::user_role,
-            #{agencyNo}
-        )
-    </insert>
 
     <!-- 회원 정보 수정 -->
     <update id="update">

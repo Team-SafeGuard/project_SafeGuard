@@ -38,18 +38,22 @@ def analyze_image(image_path):
     }
     
     # 3. 결과 정리
-    if len(results[0].boxes) > 0:
-        # 가장 신뢰도가 높은 첫 번째 객체 기준
-        box = results[0].boxes[0]
-        class_id = int(box.cls[0])
+    boxes = results[0].boxes
+
+    if boxes is not None and len(boxes) > 0:
+        # conf 값이 가장 높은 객체 선택
+        best_idx = boxes.conf.argmax()
+        best_box = boxes[best_idx]
+
+        class_id = int(best_box.cls[0])
         class_name = model.names[class_id]
-        confidence = float(box.conf[0])
-        
+        confidence = float(best_box.conf[0])
+
         agency = AGENCY_MAP.get(class_name, '지자체 민원실')
-        
+
         log_korean(f"분석 완료: {class_name} 탐지 (신뢰도: {confidence*100:.1f}%)")
         log_korean(f"추천 처리 기관: {agency}")
-        
+
         return {
             "type": class_name,
             "agency": agency,
@@ -62,6 +66,7 @@ def analyze_image(image_path):
             "agency": "지자체 민원실 (수동 확인 필요)",
             "confidence": 0.0
         }
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

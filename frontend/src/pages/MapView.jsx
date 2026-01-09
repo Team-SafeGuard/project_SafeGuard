@@ -19,6 +19,9 @@ function MapView() {
   const [locations, setLocations] = useState([]);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
 
+  // [추가] map이 실제로 생성되었는지 (초기 렌더/StrictMode에서 renderMarkers가 먼저 호출되는 문제 방지)
+  const [mapReady, setMapReady] = useState(false);
+
   // ====== UI Helpers ======
   const getCategoryStyle = (category) => {
     const styles = {
@@ -70,6 +73,7 @@ function MapView() {
   const clearMarkers = () => {
     markersRef.current.forEach((m) => m.setMap(null));
     markersRef.current = [];
+
     if (clustererRef.current) {
       clustererRef.current.clear();
     }
@@ -110,40 +114,71 @@ function MapView() {
   // ====== 마커 렌더링 ======
   const renderMarkers = () => {
     const map = mapRef.current;
-    if (!map || !window.kakao?.maps) return;
+    console.log("[renderMarkers] called", { locationsLen: locations?.length });
+    console.log("[renderMarkers] mapRef", !!map, "kakao", !!window.kakao?.maps);
+//     if (!map || !window.kakao?.maps) return;
 
+    // [수정] mapReady + kakao + map 다 준비된 후에만 진행
+    if (!mapReady || !map || !window.kakao?.maps) return;
+
+    // 기존 마커 제거
     clearMarkers();
 
-    // locations가 0이어도 이전 마커는 지워야 하므로 여기서 return하지 말고,
-    // clearMarkers() 후에 종료
+    // 클러스터러 내부 마커까지 제거 (핵심)
+    if (clustererRef.current) {
+      clustererRef.current.clear();
+      clustererRef.current.setMap(null);
+    }
+
     if (!locations || locations.length === 0) return;
 
-    // 클러스터러는 한 번만 생성해서 재사용
+    // 클러스터러 생성/재연결
     if (!clustererRef.current) {
       clustererRef.current = new window.kakao.maps.MarkerClusterer({
         map,
         averageCenter: true,
-        minLevel: 5
+        minLevel: 5,
       });
     } else {
       clustererRef.current.setMap(map);
     }
 
-    const markers = locations.map((loc) => {
-      const marker = new window.kakao.maps.Marker({
-        position: new window.kakao.maps.LatLng(loc.lat, loc.lng)
-      });
+    // 좌표 숫자 변환 + invalid 방어
+    const markers = locations
+      .map((loc) => {
+        const lat = Number(loc.lat);
+        const lng = Number(loc.lng);
 
-      window.kakao.maps.event.addListener(marker, 'click', () => {
-        setSelectedComplaint(loc);
-      });
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+          console.warn("invalid coord", loc);
+          return null;
+        }
 
-      return marker;
-    });
+        const marker = new window.kakao.maps.Marker({
+          position: new window.kakao.maps.LatLng(lat, lng),
+        });
 
+        window.kakao.maps.event.addListener(marker, "click", () => {
+          setSelectedComplaint(loc);
+        });
+
+        return marker;
+      })
+      .filter(Boolean);
+
+    // add 전에 clear 한번 더 (갱신 안정화)
+    clustererRef.current.clear();
     clustererRef.current.addMarkers(markers);
+
     markersRef.current = markers;
   };
+
+  // [추가] locations가 바뀌면 마커를 다시 그림
+  // 단, mapReady가 false면 renderMarkers 내부에서 return 됨
+  useEffect(() => {
+    renderMarkers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapReady, locations]);
 
   // ====== Kakao SDK 로드 & 지도 생성 ======
   useEffect(() => {
@@ -163,6 +198,9 @@ function MapView() {
         };
         const map = new window.kakao.maps.Map(container, options);
         mapRef.current = map;
+
+      // [추가] map 생성 완료 플래그
+      setMapReady(true);
 
         // idle 이벤트: 이동/줌 끝날 때마다 bounds 재조회
         // (너희 GIS 요구사항에 맞는 정석 패턴)
@@ -208,6 +246,9 @@ function MapView() {
       mapRef.current = null;
       clustererRef.current = null;
       idleListenerRef.current = null;
+
+      // [추가] mapReady 리셋
+      setMapReady(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

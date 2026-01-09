@@ -37,9 +37,11 @@ async def analyze(image: UploadFile = File(...)):
 def get_reports():
     # Mock Data for List Page
     return [
-        {"id": 1, "title": "불법 주정차 신고합니다", "region": "서울시 강남구", "date": "2024-05-01", "interested": 5},
-        {"id": 2, "title": "도로 파손 위험", "region": "경기도 성남시", "date": "2024-05-02", "interested": 3},
-        {"id": 3, "title": "쓰레기 무단 투기", "region": "부산시 해운대구", "date": "2024-05-03", "interested": 12},
+        {"id": 1, "title": "보행방해물", "region": "서울시 강남구(수정해야함. 현재 하드코딩 돼있음.)", "date": "2024-05-01", "interested": 5},
+        {"id": 2, "title": "현수막", "region": "경기도 성남시(수정해야함. 현재 하드코딩 돼있음.)", "date": "2024-05-02", "interested": 3},
+        {"id": 3, "title": "불법주정차", "region": "부산시 해운대구(수정해야함. 현재 하드코딩 돼있음.)", "date": "2024-05-03", "interested": 12},
+        {"id": 4, "title": "공사현장", "region": "부산시 해운대구(수정해야함. 현재 하드코딩 돼있음.)", "date": "2024-05-03", "interested": 12},
+        {"id": 5, "title": "쓰레기 무단 투기", "region": "부산시 해운대구(수정해야함. 현재 하드코딩 돼있음.)", "date": "2024-05-03", "interested": 12},
     ]
 
 @app.get("/health")

@@ -37,8 +37,7 @@
     </select>
 
     <!-- 좋아요 TOP -->
-    <select id="getTopLiked"
-            resultType="com.safeguard.dto.ComplaintListItemDto">
+    <select id="getTopLiked" resultType="com.safeguard.dto.ComplaintListItemDto">
         SELECT
             c.complaint_no AS complaintNo,
             c.title,

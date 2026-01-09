@@ -46,7 +46,6 @@ CREATE TABLE app_user (
     birth_date DATE NOT NULL,
     addr VARCHAR(300) NOT NULL,
     phone VARCHAR(20) NOT NULL,
-    email VARCHAR(100),
     created_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     role user_role NOT NULL DEFAULT 'USER',
     agency_no BIGINT REFERENCES agency(agency_no)
