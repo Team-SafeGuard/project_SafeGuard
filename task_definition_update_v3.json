@@ -17,7 +17,20 @@
                 }
             ],
             "essential": true,
-            "environment": [],
+            "environment": [
+                {
+                    "name": "BACKEND_HOST",
+                    "value": "127.0.0.1"
+                },
+                {
+                    "name": "AI_YOLO_HOST",
+                    "value": "127.0.0.1"
+                },
+                {
+                    "name": "AI_STT_HOST",
+                    "value": "127.0.0.1"
+                }
+            ],
             "mountPoints": [],
             "volumesFrom": [],
             "memory": 512,
