@@ -154,6 +154,23 @@ export const analyzeText = async (text) => {
     });
 };
 
+// Title Generation API
+export const generateTitle = async (text, address, type) => {
+    const response = await fetch('http://localhost:8001/generate-title', { // Direct call to RAG server for now, or via proxy if setup
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text, address, type }),
+    });
+
+    if (!response.ok) {
+        throw new Error('Title generation failed');
+    }
+
+    return await response.json();
+};
+
 // Image Analysis API
 export const analyzeImage = async (file) => {
     const formData = new FormData();
@@ -204,5 +221,6 @@ export default {
     agencies: agenciesAPI,
     analyzeImage,
     analyzeText,
+    generateTitle,
     stt: sttAPI
 };

@@ -318,6 +318,13 @@ async def upload_voice(
     processed_path = None
 
     try:
+        # [최적화] 텍스트가 이미 있으면 오디오 처리(Whisper/FFPEG)를 완전히 건너뜀
+        if text and text.strip():
+            logging.info(f"--- 텍스트 입력 감지됨 (오디오 처리 건너뜀) ---")
+            logging.info(f"Client provided text: {text}")
+            result = manager.process_complaint(provided_text=text)
+            return result
+
         if file:
             logging.info(f"--- 파일 업로드 시작: {file.filename} ({file.content_type}) ---")
             # 1. 업로드된 파일을 임시 저장
@@ -355,9 +362,9 @@ async def upload_voice(
             
             # 3. 변환된 텍스트를 민원 관리 엔진에 전달하여 분석
             result = manager.process_complaint(file_path=processed_path, provided_text=text)
-        else: # Only text is provided
-            logging.info(f"--- 텍스트 입력 처리 시작 ---")
-            result = manager.process_complaint(provided_text=text)
+        else: 
+            # 텍스트도 없고 파일도 없는 경우 (이론상 진입 불가하지만 방어 코드)
+             raise HTTPException(status_code=400, detail="음성 파일 또는 텍스트 입력이 필요합니다.")
         
         return result
         

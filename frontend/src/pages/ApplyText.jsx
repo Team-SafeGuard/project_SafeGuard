@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { complaintsAPI, getToken, analyzeText } from '../utils/api';
+import { complaintsAPI, getToken, analyzeText, generateTitle } from '../utils/api';
 
 function ApplyText() {
     const navigate = useNavigate();
@@ -166,6 +166,27 @@ function ApplyText() {
         try {
             const result = await analyzeText(formData.content);
             setAiResult(result);
+
+            // 제목 자동 생성 호출
+            try {
+                const { generateTitle } = await import('../utils/api'); // 동적 임포트 or 상단 임포트 사용
+                const titleRes = await generateTitle(
+                    formData.content,
+                    formData.location?.address || '',
+                    '텍스트민원'
+                );
+
+                if (titleRes.title) {
+                    setFormData(prev => ({
+                        ...prev,
+                        title: titleRes.title
+                    }));
+                }
+            } catch (titleErr) {
+                console.error("Title generation failed, skipping...", titleErr);
+                // 제목 생성 실패해도 분석 결과는 유지
+            }
+
         } catch (err) {
             alert('AI 분석에 실패했습니다: ' + err.message);
         } finally {

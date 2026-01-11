@@ -36,7 +36,6 @@ KEYWORD_TO_AGENCY = {
     "음주운전": "경찰청",
 
     # 국토교통부 (교통·건설·시설)
-    "주차": "국토교통부",
     "주차장": "국토교통부",
     "도로": "국토교통부",
     "포트홀": "국토교통부",
@@ -73,6 +72,8 @@ KEYWORD_TO_AGENCY = {
     # 소방청
     "소방": "소방청",
     "화재": "소방청",
+    "소화기":"소방청",
+    "소화전":"소방청",
 
     # 보건복지부 / 식약처
     "감염병": "보건복지부",
@@ -159,6 +160,18 @@ AGENCY_TO_CATEGORY = {
     20: "기타",
 }
 
+import re
+
+def contains_keyword_ignore_space(text: str, keyword: str) -> bool:
+    """
+    띄어쓰기를 무시하고 keyword 포함 여부 판단
+    (원본 text는 변경하지 않음)
+    """
+    normalized_text = re.sub(r"\s+", "", text)
+    normalized_keyword = re.sub(r"\s+", "", keyword)
+    return normalized_keyword in normalized_text
+
+
 # ======================================================
 # 민원 분류 메인 함수
 # ======================================================
@@ -167,6 +180,23 @@ def classify_complaint(user_query: str) -> dict:
     사용자 민원 문장을 입력받아
     RAG 검색 결과를 기반으로 소관 기관을 최종 판단한다.
     """
+
+    if contains_keyword_ignore_space(user_query, "주정차") and (
+        contains_keyword_ignore_space(user_query, "불법") or
+        any(
+            contains_keyword_ignore_space(user_query, k)
+            for k in ["단속", "신고", "조치"]
+        )
+    ):
+        return {
+            "agency_code": AGENCY_CODES["경찰청"],
+            "agency_name": "경찰청",
+            "category": AGENCY_TO_CATEGORY[AGENCY_CODES["경찰청"]],
+            "confidence": 1.0,
+            "reasoning": "주정차 단속·불법 주정차는 교통질서 위반으로 경찰청 소관으로 우선 분류됩니다.",
+            "sources": []
+        }
+
 
     logger.info("=" * 60)
     logger.info("[RAG] Query received: %s", user_query)

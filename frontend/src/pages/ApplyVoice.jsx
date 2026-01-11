@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { complaintsAPI, sttAPI, getToken, analyzeText } from '../utils/api';
+import { complaintsAPI, sttAPI, getToken, analyzeText, generateTitle } from '../utils/api';
 
 function ApplyVoice() {
     const navigate = useNavigate();
     const mapRef = useRef(null);
     const mapInstance = useRef(null);
     const markerInstance = useRef(null);
+    const accumulatedTextRef = useRef(''); // STT 누적 텍스트 저장을 위한 Ref 추가
 
     const [formData, setFormData] = useState({
         title: '',
@@ -53,17 +54,29 @@ function ApplyVoice() {
         recognition.interimResults = true;
 
         recognition.onresult = (event) => {
-            // 기존 event.resultIndex 방식(부분 업데이트) 대신 전체 텍스트 재조립 방식으로 변경하여 누락 방지
-            const transcript = Array.from(event.results)
-                .map(result => result[0].transcript)
-                .join('');
+            let interimAndFinal = '';
+            let newFinalAdded = '';
 
-            if (transcript) {
-                setPreviewText(transcript); // (선택) 미리보기용 UI 유지
-                setFormData(prev => ({ ...prev, content: transcript })); // ★ Textarea 실시간 업데이트!
-                previewTextRef.current = transcript;
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    accumulatedTextRef.current += transcript + ' ';
+                    newFinalAdded += transcript + ' ';
+                } else {
+                    interimAndFinal += transcript;
+                }
             }
+
+            // 최종 텍스트 + 임시 텍스트 조합
+            const fullText = accumulatedTextRef.current + interimAndFinal;
+
+            setPreviewText(fullText); // 화면 표시용 (선택)
+            setFormData(prev => ({ ...prev, content: fullText })); // Textarea 업데이트
+            previewTextRef.current = fullText; // 전송용 참조 업데이트
         };
+
+        // 녹음 재시작 시 기존 누적 텍스트 유지를 위해 초기화 하지 않음 
+        // (단, '다시 쓰기' 같은 기능이 있다면 accumulatedTextRef.current = '' 필요)
 
         recognitionRef.current = recognition;
     }, []);
@@ -110,20 +123,38 @@ function ApplyVoice() {
                     const finalTranscript = previewTextRef.current;
                     const result = await sttAPI.transcribe(audioBlob, finalTranscript);
 
+                    let finalContent = finalTranscript;
+
                     // UnifiedComplaintManager response mapping
                     if (result?.original_text) {
-                        setFormData(prev => ({
-                            ...prev,
-                            // 서버에서 돌아온 original_text (우리가 보낸 텍스트가 그대로 옴)
-                            content: result.original_text || finalTranscript,
-                            title: result.title || prev.title
-                        }));
+                        finalContent = result.original_text || finalTranscript;
                     } else if (result?.stt_text) {
-                        setFormData(prev => ({ ...prev, content: result.stt_text }));
-                    } else {
-                        // Fallback
-                        setFormData(prev => ({ ...prev, content: finalTranscript }));
+                        finalContent = result.stt_text;
                     }
+
+                    setFormData(prev => ({
+                        ...prev,
+                        content: finalContent
+                    }));
+
+                    // 제목 자동 생성 호출 (음성민원)
+                    try {
+                        const titleRes = await generateTitle(
+                            finalContent,
+                            formData.location?.address || '',
+                            '음성민원' // 타입 지정
+                        );
+
+                        if (titleRes.title) {
+                            setFormData(prev => ({
+                                ...prev,
+                                title: titleRes.title
+                            }));
+                        }
+                    } catch (titleErr) {
+                        console.error("Voice title generation failed", titleErr);
+                    }
+
                 } catch (err) {
                     setError('음성 인식에 실패했습니다: ' + err.message);
                 } finally {
@@ -133,8 +164,16 @@ function ApplyVoice() {
             };
 
             setFormData(prev => ({ ...prev, content: '' }));
+
+            // [Fix] 녹음 시작 전, 현재 텍스트를 누적 Ref에 동기화하여 이어쓰기 보장
+            // 기존 텍스트가 있다면 뒤에 공백 추가하여 자연스럽게 이어지도록 함
+            const currentContent = formData.content || '';
+            accumulatedTextRef.current = currentContent + (currentContent && !currentContent.endsWith(' ') ? ' ' : '');
+
             mediaRecorder.start();
             if (recognitionRef.current) {
+                // [Fix] 중요: 세션이 새로 시작되므로 브라우저 내부 상태 초기화됨
+                // 따라서 accumulatedTextRef를 위에서 동기화해주는 것이 핵심
                 recognitionRef.current.start();
             }
 
@@ -503,7 +542,17 @@ function ApplyVoice() {
                                 </label>
                                 <textarea
                                     value={formData.content}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+
+                                    // [Fix] 사용자가 직접 수정한 내용도 STT 누적 변수에 동기화
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setFormData(prev => ({ ...prev, content: val }));
+                                        if (!isRecording) { // 녹음 중이 아닐 때만 동기화 (충돌 방지)
+                                            accumulatedTextRef.current = val;
+                                        }
+                                    }}
+                                    disabled={isRecording} // [Fix] 녹음 중 수정 방지 (Ghost UX 방지)
+
                                     placeholder="음성 인식 결과가 여기에 표시됩니다. 직접 입력도 가능합니다."
                                     style={{
                                         width: '100%',
@@ -515,7 +564,9 @@ function ApplyVoice() {
                                         outline: 'none',
                                         resize: 'none',
                                         boxSizing: 'border-box',
-                                        transition: 'border-color 0.2s'
+                                        transition: 'border-color 0.2s',
+                                        backgroundColor: isRecording ? '#f1f5f9' : 'white', // 시각적 피드백
+                                        color: isRecording ? '#64748b' : 'inherit'
                                     }}
                                 />
 

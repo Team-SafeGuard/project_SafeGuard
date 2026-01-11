@@ -105,5 +105,27 @@ async def classify_text(input_data: ComplaintInput):
         # STT 앱은 예외 발생 시 키워드 검색으로 대체하므로 500 에러도 괜찮음.
         raise HTTPException(status_code=500, detail=str(e))
 
+# ======================================================
+# 민원 제목 생성 API
+# ======================================================
+from complainttitle import generate_complaint_title
+
+class TitleGenInput(BaseModel):
+    text: str
+    address: str
+    type: str # '텍스트민원' or '음성민원'
+
+@app.post("/generate-title")
+async def generate_title_endpoint(input_data: TitleGenInput):
+    """
+    민원 내용과 주소를 받아 자동으로 제목을 생성합니다.
+    """
+    try:
+        title = generate_complaint_title(input_data.text, input_data.address, input_data.type)
+        return {"title": title}
+    except Exception as e:
+        print(f"Title Generation Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8001)
