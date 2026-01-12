@@ -55,13 +55,23 @@ function ApplyVoice() {
 
         recognition.onresult = (event) => {
             let interimAndFinal = '';
-            let newFinalAdded = '';
 
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 const transcript = event.results[i][0].transcript;
+
+                // [Filter] 한글(음절, 자모), 숫자, 공백, 기본 문장부호(.,?!)만 허용
+                // 영어(a-z), 한자, 기타 특수문자 포함 시 해당 청크 전체 무시 (환각 방지)
+                if (/[^가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,?!]/.test(transcript)) {
+                    continue;
+                }
+
+                // [Filter] 2. 너무 짧은 텍스트 무시 
+                if (transcript.trim().length < 2) {
+                    continue;
+                }
+
                 if (event.results[i].isFinal) {
                     accumulatedTextRef.current += transcript + ' ';
-                    newFinalAdded += transcript + ' ';
                 } else {
                     interimAndFinal += transcript;
                 }
@@ -70,9 +80,9 @@ function ApplyVoice() {
             // 최종 텍스트 + 임시 텍스트 조합
             const fullText = accumulatedTextRef.current + interimAndFinal;
 
-            setPreviewText(fullText); // 화면 표시용 (선택)
-            setFormData(prev => ({ ...prev, content: fullText })); // Textarea 업데이트
-            previewTextRef.current = fullText; // 전송용 참조 업데이트
+            setPreviewText(fullText);
+            setFormData(prev => ({ ...prev, content: fullText }));
+            previewTextRef.current = fullText;
         };
 
         // 녹음 재시작 시 기존 누적 텍스트 유지를 위해 초기화 하지 않음 
@@ -114,23 +124,35 @@ function ApplyVoice() {
 
             mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(chunksRef.current, { type: options.mimeType || 'audio/wav' });
-                setIsTranscribing(true);
+
+                // [UX fix] 텍스트가 비어있거나(무음/필터링됨), 공백뿐이라면 서버 요청 스킵
+                if (!previewTextRef.current || !previewTextRef.current.trim()) {
+                    console.log("STT Skipped: Empty text");
+                    setIsTranscribing(false);
+                    return;
+                }
+
+                setIsTranscribing(true); // 변환 중 표시
                 setError('');
 
                 try {
-                    // 사용자 요청: Web Speech API 인식 결과(previewText)를 그대로 사용
-                    // 백엔드에는 텍스트를 함께 보내서 Whisper 변환 스킵
-                    const finalTranscript = previewTextRef.current;
-                    const result = await sttAPI.transcribe(audioBlob, finalTranscript);
+                    // [Fix] Web Speech API(브라우저 내장)의 환각(예: noise -> strange text)이 
+                    // 백엔드 필터링을 우회하는 문제를 해결하기 위해,
+                    // 최종 변환 시에는 브라우저 인식 텍스트(previewText)를 서버로 보내지 않고
+                    // 무조건 서버의 Whisper(강화된 설정 적용됨)를 사용하도록 변경.
+                    const result = await sttAPI.transcribe(audioBlob, null); // text인자를 null로 전달
 
-                    let finalContent = finalTranscript;
+                    let finalContent = '';
 
                     // UnifiedComplaintManager response mapping
                     if (result?.original_text) {
-                        finalContent = result.original_text || finalTranscript;
+                        finalContent = result.original_text;
                     } else if (result?.stt_text) {
                         finalContent = result.stt_text;
                     }
+
+                    // 서버 STT 결과가 비어있다면(무음 필터링됨), 사용자에게 알림 없이 조용히 처리 (또는 빈 값 유지)
+                    // 기존 previewTextRef.current 값은 신뢰하지 않음.
 
                     setFormData(prev => ({
                         ...prev,
