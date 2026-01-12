@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
-  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.safeguard.mapper.ComplaintMapper">
 
-    <!-- 민원 목록 -->
+    <!-- 민원 목록 (페이징 + 필터 + 좋아요 수) -->
     <select id="findAll" resultType="com.safeguard.dto.ComplaintDTO">
         SELECT
-            c.complaint_no AS complaintNo,
-            c.title,
-            c.category,
-            c.status,
-            c.created_date AS createdDate,
-            COUNT(pl.complaint_no) AS likeCount
+        c.complaint_no AS complaintNo,
+        c.title,
+        c.category,
+        c.status,
+        c.created_date AS createdDate,
+        COUNT(pl.complaint_no) AS likeCount
         FROM complaint c
         LEFT JOIN post_like pl
-               ON c.complaint_no = pl.complaint_no
+        ON c.complaint_no = pl.complaint_no
         <where>
             <if test="category != null and category != '전체'">
                 AND c.category = #{category}
@@ -25,44 +25,60 @@
                 AND c.status = #{status}
             </if>
             <if test="agencyNo != null">
-                AND c.complaint_no IN (
-                    SELECT complaint_no
-                    FROM complaint_agency
-                    WHERE agency_no = #{agencyNo}
+                AND EXISTS (
+                SELECT 1
+                FROM complaint_agency ca
+                WHERE ca.complaint_no = c.complaint_no
+                AND ca.agency_no = #{agencyNo}
                 )
             </if>
             <if test="search != null and search != ''">
-                AND (c.title LIKE CONCAT('%', #{search}, '%') OR c.content LIKE CONCAT('%', #{search}, '%'))
+                AND (
+                c.title ILIKE CONCAT('%', #{search}, '%')
+                OR c.content ILIKE CONCAT('%', #{search}, '%')
+                )
             </if>
         </where>
-        GROUP BY c.complaint_no
+        GROUP BY
+        c.complaint_no,
+        c.title,
+        c.category,
+        c.status,
+        c.created_date
         ORDER BY c.complaint_no DESC
+        LIMIT #{limit}
+        OFFSET #{offset}
     </select>
 
-    <!-- 좋아요 TOP -->
+    <!-- 좋아요 TOP 5 -->
     <select id="getTopLiked" resultType="com.safeguard.dto.ComplaintDTO">
         SELECT
-            c.complaint_no AS complaintNo,
-            c.title,
-            c.category,
-            c.status,
-            c.created_date AS createdDate,
-            COUNT(pl.complaint_no) AS likeCount
+        c.complaint_no AS complaintNo,
+        c.title,
+        c.category,
+        c.status,
+        c.created_date AS createdDate,
+        COUNT(pl.complaint_no) AS likeCount
         FROM complaint c
         LEFT JOIN post_like pl
-               ON c.complaint_no = pl.complaint_no
-        GROUP BY c.complaint_no
+        ON c.complaint_no = pl.complaint_no
+        GROUP BY
+        c.complaint_no,
+        c.title,
+        c.category,
+        c.status,
+        c.created_date
         ORDER BY likeCount DESC
         LIMIT 5
     </select>
 
-    <!-- 통계 -->
+    <!-- 민원 통계 -->
     <select id="getStats" resultType="java.util.Map">
         SELECT
-            COUNT(*) AS total,
-            COUNT(CASE WHEN status = 'RECEIVED' THEN 1 END) AS received,
-            COUNT(CASE WHEN status = 'IN_PROGRESS' THEN 1 END) AS processing,
-            COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END) AS completed
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE status = 'RECEIVED') AS received,
+        COUNT(*) FILTER (WHERE status = 'IN_PROGRESS') AS processing,
+        COUNT(*) FILTER (WHERE status = 'COMPLETED') AS completed
         FROM complaint
     </select>
 

@@ -13,13 +13,8 @@ import java.util.Optional;
 
 @Mapper
 public interface ComplaintMapper {
-    List<ComplaintDTO> findAll(@Param("search") String search,
-            @Param("category") String category,
-            @Param("status") String status,
-            @Param("region") String region,
-            @Param("sort") String sort,
-            @Param("order") String order,
-            @Param("agencyNo") Long agencyNo);
+    List<ComplaintDTO> findAll(Map<String, Object> params);
+
 
     List<Map<String, Object>> getStats(@Param("agencyNo") Long agencyNo);
 
