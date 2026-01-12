@@ -96,6 +96,40 @@ public class SeedController {
                         )
                     """);
 
+            // 5. Create ErrorLogs Table
+            jdbcTemplate.execute("""
+                        CREATE TABLE IF NOT EXISTS error_logs (
+                            log_id BIGSERIAL PRIMARY KEY,
+                            trace_id VARCHAR(100),
+                            endpoint VARCHAR(200),
+                            http_method VARCHAR(10),
+                            client_ip VARCHAR(50),
+                            user_id VARCHAR(50),
+                            error_code VARCHAR(50),
+                            error_message TEXT,
+                            stack_trace TEXT,
+                            timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+                        )
+                    """);
+
+            // 6. Create SpatialFeature Table
+            try {
+                jdbcTemplate.execute("CREATE EXTENSION IF NOT EXISTS postgis");
+            } catch (Exception e) {
+                log.warn("PostGIS extension creation failed (might need superuser): {}", e.getMessage());
+            }
+
+            jdbcTemplate.execute("""
+                        CREATE TABLE IF NOT EXISTS spatial_feature (
+                            feature_id BIGSERIAL PRIMARY KEY,
+                            feature_type VARCHAR(20),
+                            geom GEOMETRY(Geometry, 4326),
+                            addr_text VARCHAR(300),
+                            complaint_no BIGINT REFERENCES complaint(complaint_no) ON DELETE CASCADE,
+                            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+                        )
+                    """);
+
             // Ensure columns exist (for existing tables)
             jdbcTemplate.execute(
                     "ALTER TABLE complaint ADD COLUMN IF NOT EXISTS agency_no BIGINT REFERENCES agency(agency_no)");
@@ -126,7 +160,7 @@ public class SeedController {
 
     @GetMapping("/agencies")
     public ResponseEntity<List<Agency>> getAgencies() {
-        return ResponseEntity.ok(agencyMapper.findAll());
+        return ResponseEntity.ok(agencyMapper.selectAgencyList());
     }
 
     @PostMapping("/agencies")
@@ -178,7 +212,7 @@ public class SeedController {
     @PostMapping("/agency-admins")
     public ResponseEntity<Map<String, Object>> createAgencyAdmins() {
         int count = 0;
-        List<Agency> agencies = agencyMapper.findAll();
+        List<Agency> agencies = agencyMapper.selectAgencyList();
 
         for (Agency agency : agencies) {
             // 기관별 관리자 ID 생성 (예: admin_seoul, admin_busan 등)
@@ -200,7 +234,7 @@ public class SeedController {
                     .agencyNo(agency.getAgencyNo())
                     .build();
 
-            userMapper.save(adminUser);
+            userMapper.insertUser(adminUser);
             log.info("[Seed] Created agency admin: {} for {}", adminId, agency.getAgencyName());
             count++;
         }
@@ -213,7 +247,7 @@ public class SeedController {
         try {
             System.out.println(">>> SEED REQUEST START: " + request.getTitle());
             // 먼저 기존에 등록된 유저 찾기 (첫번째 유저 사용)
-            UserDTO user = userMapper.findByUserId("testuser")
+            UserDTO user = userMapper.selectUserByUserId("testuser")
                     .orElseGet(() -> {
                         try {
                             // 테스트 유저가 없으면 만들기
@@ -228,8 +262,8 @@ public class SeedController {
                                     .phone("010-0000-0000")
                                     .role(com.safeguard.enums.UserRole.USER)
                                     .build();
-                            userMapper.save(newUser);
-                            return userMapper.findByUserId("testuser").orElseThrow();
+                            userMapper.insertUser(newUser);
+                            return userMapper.selectUserByUserId("testuser").orElseThrow();
                         } catch (Exception e) {
                             log.error("Failed to create test user", e);
                             throw new RuntimeException("Test user creation failed: " + e.getMessage());
@@ -257,7 +291,7 @@ public class SeedController {
                     .agencyNo(request.getAgencyNo())
                     .build();
 
-            complaintMapper.insert(complaint);
+            complaintMapper.insertComplaintDto(complaint);
             log.info("[Seed] Created complaint #{} for user {}, agency: {}",
                     complaint.getComplaintNo(), user.getUserId(), request.getAgencyNo());
 

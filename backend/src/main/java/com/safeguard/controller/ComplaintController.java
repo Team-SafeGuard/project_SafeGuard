@@ -48,13 +48,14 @@ public class ComplaintController {
                 .getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser")) {
             String userId = auth.getName();
-            UserDTO currentUser = userMapper.findByUserId(userId).orElse(null);
+            UserDTO currentUser = userMapper.selectUserByUserId(userId).orElse(null);
             if (currentUser != null && currentUser.getRole() == UserRole.AGENCY) {
                 agencyNo = currentUser.getAgencyNo();
             }
         }
 
-        List<ComplaintDTO> complaints = complaintMapper.findAll(search, category, status, region, sort, order,
+        List<ComplaintDTO> complaints = complaintMapper.selectComplaintList(search, category, status, region, sort,
+                order,
                 agencyNo);
         int totalItems = complaints.size();
         int totalPages = (int) Math.ceil((double) totalItems / limit);
@@ -97,7 +98,7 @@ public class ComplaintController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getComplaintDetail(@PathVariable Long id) {
-        ComplaintDTO c = complaintMapper.findByComplaintNo(id)
+        ComplaintDTO c = complaintMapper.selectComplaintByNo(id)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
         Map<String, Object> result = new HashMap<>();
@@ -117,7 +118,7 @@ public class ComplaintController {
 
         // Check if current user liked this
         // For testing, assuming userNo = 1 (testuser)
-        Long userNo = userMapper.findByUserId("testuser").map(u -> u.getUserNo()).orElse(1L);
+        Long userNo = userMapper.selectUserByUserId("testuser").map(u -> u.getUserNo()).orElse(1L);
         result.put("liked", complaintMapper.isLikedByUser(id, userNo));
 
         return ResponseEntity.ok(result);
@@ -132,7 +133,7 @@ public class ComplaintController {
         // if (auth == null || !auth.isAuthenticated()) return
         // ResponseEntity.status(401).build();
 
-        Long userNo = userMapper.findByUserId("testuser").map(u -> u.getUserNo()).orElse(1L);
+        Long userNo = userMapper.selectUserByUserId("testuser").map(u -> u.getUserNo()).orElse(1L);
 
         boolean isLiked = complaintMapper.checkUserLike(id, userNo) > 0;
         log.info("Toggle Like Request: complaintNo={}, userNo={}, isLiked={}", id, userNo, isLiked);
@@ -149,7 +150,7 @@ public class ComplaintController {
             complaintMapper.updateLikeCount(id);
         }
 
-        ComplaintDTO c = complaintMapper.findByComplaintNo(id).orElseThrow();
+        ComplaintDTO c = complaintMapper.selectComplaintByNo(id).orElseThrow();
         // liked 상태는 토글 후 반전된 상태임
         return ResponseEntity.ok(Map.of("message", "Success", "likeCount", c.getLikeCount(), "liked", !isLiked));
     }
@@ -161,13 +162,13 @@ public class ComplaintController {
                 .getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser")) {
             String userId = auth.getName();
-            UserDTO currentUser = userMapper.findByUserId(userId).orElse(null);
+            UserDTO currentUser = userMapper.selectUserByUserId(userId).orElse(null);
             if (currentUser != null && currentUser.getRole() == UserRole.AGENCY) {
                 agencyNo = currentUser.getAgencyNo();
             }
         }
 
-        List<Map<String, Object>> stats = complaintMapper.getStats(agencyNo);
+        List<Map<String, Object>> stats = complaintMapper.selectComplaintStats(agencyNo);
         if (stats != null && !stats.isEmpty()) {
             return ResponseEntity.ok(stats.get(0));
         }
@@ -176,7 +177,7 @@ public class ComplaintController {
 
     @GetMapping("/top-liked")
     public ResponseEntity<List<ComplaintDTO>> getTopLiked() {
-        return ResponseEntity.ok(complaintMapper.getTopLiked());
+        return ResponseEntity.ok(complaintMapper.selectTopLikedComplaints());
     }
 
     @PatchMapping("/{id}/status")
@@ -210,11 +211,11 @@ public class ComplaintController {
                         .phone("010-0000-0000")
                         .agencyNo(1L) // Assign to agency 1 (Seoul)
                         .build();
-                userMapper.save(admin);
+                userMapper.insertUser(admin);
                 return ResponseEntity.ok("Admin created: admin/admin123");
             } else {
                 // Update password if exists to ensure it's encoded
-                userMapper.updatePassword("admin", passwordEncoder.encode("admin123"));
+                userMapper.updateUserPassword("admin", passwordEncoder.encode("admin123"));
                 return ResponseEntity.ok("Admin password reset: admin/admin123");
             }
         } catch (Exception e) {
@@ -242,13 +243,13 @@ public class ComplaintController {
                         .phone("010-9999-9999")
                         .agencyNo(agencyNo)
                         .build();
-                userMapper.save(manager);
+                userMapper.insertUser(manager);
                 log.info("Manager account created successfully: {}", userId);
                 return ResponseEntity.ok("Manager created: " + userId);
             } else {
-                userMapper.updatePassword(userId, passwordEncoder.encode(password));
+                userMapper.updateUserPassword(userId, passwordEncoder.encode(password));
                 // Assuming we want to update the agency as well if it's a seed update
-                UserDTO existing = userMapper.findByUserId(userId).orElse(null);
+                UserDTO existing = userMapper.selectUserByUserId(userId).orElse(null);
                 if (existing != null) {
                     // Update role and agency in case they changed
                     // (Note: UserMapper needs an update method for this in a real app,
@@ -282,11 +283,11 @@ public class ComplaintController {
                         .phone("010-9999-9999")
                         .agencyNo(agencyNo)
                         .build();
-                userMapper.save(manager);
+                userMapper.insertUser(manager);
                 log.info("Manager account created successfully: {}", userId);
                 return ResponseEntity.ok("Manager created: manager_insa / password123 (AgencyNo: 37)");
             } else {
-                userMapper.updatePassword(userId, passwordEncoder.encode(password));
+                userMapper.updateUserPassword(userId, passwordEncoder.encode(password));
                 log.warn("Manager account already exists, updated password: {}", userId);
                 return ResponseEntity.ok("Manager password updated: manager_insa / password123");
             }

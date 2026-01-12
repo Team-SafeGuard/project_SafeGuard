@@ -5,13 +5,6 @@
 
 <mapper namespace="com.safeguard.mapper.UserMapper">
 
-    <!--
-      기준:
-      - DDL 수정 ❌
-      - Entity(AppUser) 사용 ❌ (존재하지 않음)
-      - DTO(UserDTO) 기준 사용 ✅
-    -->
-
     <resultMap id="UserResultMap" type="com.safeguard.dto.UserDTO">
         <id property="userNo" column="user_no"/>
         <result property="userId" column="user_id"/>
@@ -26,7 +19,7 @@
     </resultMap>
 
     <!-- 회원 생성 (main 기준) -->
-    <insert id="save"
+    <insert id="insertUser"
             parameterType="com.safeguard.dto.UserDTO"
             useGeneratedKeys="true"
             keyProperty="userNo"
@@ -55,22 +48,22 @@
         )
     </insert>
 
-    <!-- 비밀번호 변경 (main 기준) -->
-    <update id="updatePassword">
+    <!-- 비밀번호 변경 -->
+    <update id="updateUserPassword">
         UPDATE app_user
         SET pw = #{password}
         WHERE user_id = #{userId}
     </update>
 
     <!-- 단건 조회 (PK) -->
-    <select id="findByUserNo" resultMap="UserResultMap">
+    <select id="selectUserByUserNo" resultMap="UserResultMap">
         SELECT *
         FROM app_user
         WHERE user_no = #{userNo}
     </select>
 
     <!-- 단건 조회 (ID) -->
-    <select id="findByUserId" resultMap="UserResultMap" parameterType="string">
+    <select id="selectUserByUserId" resultMap="UserResultMap" parameterType="string">
         SELECT *
         FROM app_user
         WHERE user_id = #{userId}
@@ -86,7 +79,7 @@
     </select>
 
     <!-- 이름 + 전화번호로 조회 (아이디 찾기) -->
-    <select id="findByNameAndPhone" resultMap="UserResultMap">
+    <select id="selectUserByNameAndPhone" resultMap="UserResultMap">
         SELECT *
         FROM app_user
         WHERE name = #{name}
@@ -94,7 +87,7 @@
     </select>
 
     <!-- 아이디 + 전화번호로 조회 (비밀번호 찾기) -->
-    <select id="findByUserIdAndPhone" resultMap="UserResultMap">
+    <select id="selectUserByUserIdAndPhone" resultMap="UserResultMap">
         SELECT *
         FROM app_user
         WHERE user_id = #{userId}
@@ -102,7 +95,7 @@
     </select>
 
     <!-- 회원 정보 수정 -->
-    <update id="update">
+    <update id="updateUser">
         UPDATE app_user
         SET
             name = #{name},
@@ -115,7 +108,7 @@
     </update>
 
     <!-- 회원 삭제 -->
-    <delete id="deleteByUserNo">
+    <delete id="deleteUserByUserNo">
         DELETE
         FROM app_user
         WHERE user_no = #{userNo}

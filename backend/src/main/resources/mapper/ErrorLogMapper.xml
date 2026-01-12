@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.safeguard.mapper.ErrorLogMapper">
+
+    <insert id="insertErrorLog" parameterType="com.safeguard.dto.ErrorLogDTO">
+        INSERT INTO error_logs (
+            trace_id,
+            endpoint,
+            http_method,
+            client_ip,
+            user_id,
+            error_code,
+            error_message,
+            stack_trace,
+            timestamp
+        )
+        VALUES (
+            #{traceId},
+            #{endpoint},
+            #{httpMethod},
+            #{clientIp},
+            #{userId},
+            #{errorCode},
+            #{errorMessage},
+            #{stackTrace},
+            NOW()
+        )
+    </insert>
+
+</mapper>

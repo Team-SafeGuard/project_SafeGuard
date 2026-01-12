@@ -1,17 +1,15 @@
--- ⚠️ DBeaver에서 이 스크립트를 실행하면 데이터가 초기화됩니다.
+-- DBeaver에서 이 스크립트를 실행하면 데이터가 초기화됩니다.
 -- (전체 선택 후 ALT+X 또는 Execute Script 버튼 실행)
 
 -- 1. 기존 테이블 삭제 (순서 중요)
+DROP TABLE IF EXISTS error_logs CASCADE;
+DROP TABLE IF EXISTS spatial_feature CASCADE;
 DROP TABLE IF EXISTS complaint_like CASCADE;
 DROP TABLE IF EXISTS post_like CASCADE;
 DROP TABLE IF EXISTS complaint_agency CASCADE;
-DROP TABLE IF EXISTS complaint_file CASCADE;
-DROP TABLE IF EXISTS complaint_history CASCADE;
-DROP TABLE IF EXISTS complaint_reply CASCADE;
 DROP TABLE IF EXISTS complaint CASCADE;
 DROP TABLE IF EXISTS app_user CASCADE;
 DROP TABLE IF EXISTS agency CASCADE;
-DROP TABLE IF EXISTS spatial_feature CASCADE;
 
 -- 2. 테이블 재생성
 
@@ -76,12 +74,31 @@ CREATE TABLE complaint_agency (
     PRIMARY KEY (complaint_no, agency_no)
 );
 
--- 호환성을 위해 post_like 뷰 또는 테이블 생성 (기존 코드 호환)
-CREATE TABLE post_like (
-    post_like_no BIGSERIAL PRIMARY KEY,
-    complaint_no BIGINT NOT NULL,
-    user_no BIGINT NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW()
+-- PostGIS Extension (필요 시 생성)
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+-- Spatial Feature (공간 정보)
+CREATE TABLE spatial_feature (
+    feature_id BIGSERIAL PRIMARY KEY,
+    feature_type VARCHAR(20),
+    geom GEOMETRY(Geometry, 4326),
+    addr_text VARCHAR(300),
+    complaint_no BIGINT REFERENCES complaint(complaint_no) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Error Logs (에러 로그)
+CREATE TABLE error_logs (
+    log_id BIGSERIAL PRIMARY KEY,
+    trace_id VARCHAR(100),
+    endpoint VARCHAR(200),
+    http_method VARCHAR(10),
+    client_ip VARCHAR(50),
+    user_id VARCHAR(50),
+    error_code VARCHAR(50),
+    error_message TEXT,
+    stack_trace TEXT,
+    timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -128,11 +145,4 @@ INSERT INTO agency (agency_type, agency_name, region_code) VALUES
   ('CENTRAL', '인사혁신처', NULL),
   ('CENTRAL', '기타', NULL);
 
-
--- 4. 테스트 유저 삽입 (비밀번호: testuser123의 해시값이라고 가정하거나, 백엔드에서 생성 권장)
--- 여기서는 임시로 plaintext password를 비워둡니다. 실제 로그인을 위해서는 백엔드 회원가입을 이용하거나 Seed API를 써야 합니다.
-INSERT INTO app_user (user_id, pw, name, role) VALUES 
-('testuser', '$2a$10$SomethingHashed...', '테스트유저', 'USER');
-
--- 끝
 SELECT 'Reset Complete' as status;

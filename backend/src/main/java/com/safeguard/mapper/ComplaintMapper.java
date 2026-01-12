@@ -13,7 +13,7 @@ import java.util.Optional;
 
 @Mapper
 public interface ComplaintMapper {
-    List<ComplaintDTO> findAll(@Param("search") String search,
+    List<ComplaintDTO> selectComplaintList(@Param("search") String search,
             @Param("category") String category,
             @Param("status") String status,
             @Param("region") String region,
@@ -21,25 +21,25 @@ public interface ComplaintMapper {
             @Param("order") String order,
             @Param("agencyNo") Long agencyNo);
 
-    List<Map<String, Object>> getStats(@Param("agencyNo") Long agencyNo);
+    List<Map<String, Object>> selectComplaintStats(@Param("agencyNo") Long agencyNo);
 
-    List<ComplaintDTO> getTopLiked();
+    List<ComplaintDTO> selectTopLikedComplaints();
 
     boolean isLikedByUser(@Param("complaintNo") Long complaintNo, @Param("userNo") Long userNo);
 
-    List<ComplaintDTO> findByUserNo(@Param("userNo") Long userNo);
+    List<ComplaintDTO> selectComplaintListByUserNo(@Param("userNo") Long userNo);
 
-    Optional<ComplaintDTO> findByComplaintNo(@Param("complaintNo") Long complaintNo);
+    Optional<ComplaintDTO> selectComplaintByNo(@Param("complaintNo") Long complaintNo);
 
-    void insert(ComplaintDTO complaint);
+    void insertComplaintDto(ComplaintDTO complaint);
 
-    void update(ComplaintDTO complaint);
+    void updateComplaint(ComplaintDTO complaint);
 
     void updateStatus(@Param("complaintNo") Long complaintNo, @Param("status") ComplaintStatus status);
 
     void updateAnswer(@Param("complaintNo") Long complaintNo, @Param("answer") String answer);
 
-    void deleteByComplaintNo(@Param("complaintNo") Long complaintNo);
+    void deleteComplaintByNo(@Param("complaintNo") Long complaintNo);
 
     void updateLikeCount(@Param("complaintNo") Long complaintNo);
 

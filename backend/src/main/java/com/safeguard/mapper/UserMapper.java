@@ -9,15 +9,23 @@ import java.util.Optional;
 
 @Mapper
 public interface UserMapper {
-    void save(UserDTO user);
+    void insertUser(UserDTO user);
 
-    Optional<UserDTO> findByUserId(@Param("userId") String userId);
+    Optional<UserDTO> selectUserByUserId(@Param("userId") String userId);
 
-    List<UserDTO> findByNameAndPhone(@Param("name") String name, @Param("phone") String phone); // For find ID
+    List<UserDTO> selectUserByNameAndPhone(@Param("name") String name, @Param("phone") String phone); // For find ID
 
-    Optional<UserDTO> findByUserIdAndPhone(@Param("userId") String userId, @Param("phone") String phone); // For find PW
+    Optional<UserDTO> selectUserByUserIdAndPhone(@Param("userId") String userId, @Param("phone") String phone); // For
+                                                                                                                // find
+                                                                                                                // PW
 
-    void updatePassword(@Param("userId") String userId, @Param("password") String password);
+    void updateUserPassword(@Param("userId") String userId, @Param("password") String password);
 
     boolean existsByUserId(String userId);
+
+    Optional<UserDTO> selectUserByUserNo(@Param("userNo") Long userNo);
+
+    void updateUser(UserDTO user);
+
+    void deleteUserByUserNo(@Param("userNo") Long userNo);
 }

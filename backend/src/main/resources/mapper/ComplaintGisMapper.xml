@@ -42,7 +42,7 @@
     </sql>
 
     <!-- markers -->
-    <select id="selectMarkers" resultType="com.safeguard.dto.MapItemDto">
+    <select id="selectMapMarkers" resultType="com.safeguard.dto.MapItemDto">
         SELECT
         'MARKER'      AS type,
         ST_Y(sf.geom) AS lat,
@@ -61,7 +61,7 @@
 
 
     <!-- clusters -->
-    <select id="selectClusters" resultType="com.safeguard.dto.MapClusterDto">
+    <select id="selectMapClusters" resultType="com.safeguard.dto.MapClusterDto">
         WITH filtered AS (
         SELECT sf.geom
         FROM complaint c
@@ -82,7 +82,7 @@
     </select>
 
     <!-- list -->
-    <select id="selectComplaintList" resultType="com.safeguard.dto.ComplaintListItemDto">
+    <select id="selectComplaintMapList" resultType="com.safeguard.dto.ComplaintListItemDto">
         SELECT
         c.complaint_no AS complaintNo,
         c.title        AS title,
@@ -98,7 +98,7 @@
     </select>
 
     <!-- count -->
-    <select id="countComplaintList" resultType="long">
+    <select id="countComplaintMapList" resultType="long">
         SELECT COUNT(*)
         FROM complaint c
         JOIN spatial_feature sf ON sf.complaint_no = c.complaint_no

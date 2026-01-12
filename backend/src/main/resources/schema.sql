@@ -1,11 +1,9 @@
 -- 모든 테이블 삭제 (순서 주의)
+DROP TABLE IF EXISTS error_logs CASCADE;
 DROP TABLE IF EXISTS spatial_feature CASCADE;
-DROP TABLE IF EXISTS complaint_agency CASCADE;
-DROP TABLE IF EXISTS complaint_file CASCADE;
-DROP TABLE IF EXISTS complaint_reply CASCADE;
-DROP TABLE IF EXISTS complaint_history CASCADE;
-DROP TABLE IF EXISTS post_like CASCADE;
 DROP TABLE IF EXISTS complaint_like CASCADE;
+DROP TABLE IF EXISTS post_like CASCADE;
+DROP TABLE IF EXISTS complaint_agency CASCADE;
 DROP TABLE IF EXISTS complaint CASCADE;
 DROP TABLE IF EXISTS app_user CASCADE;
 DROP TABLE IF EXISTS agency CASCADE;
@@ -69,25 +67,36 @@ CREATE TABLE complaint_like (
     UNIQUE(complaint_no, user_no)
 );
 
--- 5. complaint_agency (추가됨)
+-- 5. complaint_agency
 CREATE TABLE complaint_agency (
     complaint_no BIGINT NOT NULL,
     agency_no BIGINT NOT NULL,
     PRIMARY KEY (complaint_no, agency_no)
 );
 
--- 6. post_like (호환성용)
-CREATE TABLE post_like (
-    post_like_no BIGSERIAL PRIMARY KEY,
-    complaint_no BIGINT NOT NULL,
-    user_no BIGINT NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW()
-);
+-- 6. PostGIS Extension
+CREATE EXTENSION IF NOT EXISTS postgis;
 
--- 7. spatial_feature (기존 유지)
+-- 7. spatial_feature
 CREATE TABLE spatial_feature (
     feature_id BIGSERIAL PRIMARY KEY,
-    feature_type VARCHAR(20) NOT NULL,
-    geom_text TEXT,
-    complaint_no BIGINT NOT NULL REFERENCES complaint(complaint_no) ON DELETE CASCADE
+    feature_type VARCHAR(20),
+    geom GEOMETRY(Geometry, 4326),
+    addr_text VARCHAR(300),
+    complaint_no BIGINT REFERENCES complaint(complaint_no) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 8. error_logs
+CREATE TABLE error_logs (
+    log_id BIGSERIAL PRIMARY KEY,
+    trace_id VARCHAR(100),
+    endpoint VARCHAR(200),
+    http_method VARCHAR(10),
+    client_ip VARCHAR(50),
+    user_id VARCHAR(50),
+    error_code VARCHAR(50),
+    error_message TEXT,
+    stack_trace TEXT,
+    timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

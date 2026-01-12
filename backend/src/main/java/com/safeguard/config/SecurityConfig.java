@@ -26,6 +26,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final com.safeguard.security.BrowserRequestFilter browserRequestFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -45,6 +46,7 @@ public class SecurityConfig {
                                 "/api/check", "/api/**", "/error")
                         .permitAll()
                         .anyRequest().authenticated())
+                .addFilterBefore(browserRequestFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
                         UsernamePasswordAuthenticationFilter.class);
 

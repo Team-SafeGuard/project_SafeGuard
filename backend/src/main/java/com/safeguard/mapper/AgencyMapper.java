@@ -10,9 +10,9 @@ import java.util.List;
 public interface AgencyMapper {
     void insertAgency(Agency agency);
 
-    List<Agency> findAll();
+    List<Agency> selectAgencyList();
 
-    Agency findByNo(@Param("agencyNo") Long agencyNo);
+    Agency selectAgencyByNo(@Param("agencyNo") Long agencyNo);
 
     boolean existsByNameAndRegion(@Param("agencyName") String agencyName, @Param("regionCode") String regionCode);
 }

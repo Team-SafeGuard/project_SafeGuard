@@ -6,17 +6,25 @@
 <mapper namespace="com.safeguard.mapper.ComplaintMapper">
 
     <!-- 민원 목록 -->
-    <select id="findAll" resultType="com.safeguard.dto.ComplaintDTO">
+    <select id="selectComplaintList" resultType="com.safeguard.dto.ComplaintDTO">
         SELECT
             c.complaint_no AS complaintNo,
             c.title,
+            c.content,
             c.category,
             c.status,
             c.created_date AS createdDate,
-            COUNT(pl.complaint_no) AS likeCount
+            c.address,
+            c.latitude,
+            c.longitude,
+            c.image_path AS imagePath,
+            c.answer,
+            c.is_public AS isPublic,
+            c.like_count AS likeCount,
+            a.agency_name AS agencyName,
+            c.agency_no AS agencyNo
         FROM complaint c
-        LEFT JOIN post_like pl
-               ON c.complaint_no = pl.complaint_no
+        LEFT JOIN agency a ON c.agency_no = a.agency_no
         <where>
             <if test="category != null and category != '전체'">
                 AND c.category = #{category}
@@ -35,29 +43,80 @@
                 AND (c.title LIKE CONCAT('%', #{search}, '%') OR c.content LIKE CONCAT('%', #{search}, '%'))
             </if>
         </where>
-        GROUP BY c.complaint_no
         ORDER BY c.complaint_no DESC
     </select>
 
+    <!-- 민원 상세 -->
+    <select id="selectComplaintByNo" resultType="com.safeguard.dto.ComplaintDTO">
+        SELECT
+            c.complaint_no AS complaintNo,
+            c.title,
+            c.content,
+            c.category,
+            c.status,
+            c.created_date AS createdDate,
+            c.address,
+            c.latitude,
+            c.longitude,
+            c.image_path AS imagePath,
+            c.answer,
+            c.is_public AS isPublic,
+            c.like_count AS likeCount,
+            c.agency_no AS agencyNo
+        FROM complaint c
+        WHERE c.complaint_no = #{complaintNo}
+    </select>
+
+    <!-- 민원 등록 (Entity) -->
+    <insert id="insertComplaint" useGeneratedKeys="true" keyProperty="complaintNo" parameterType="com.safeguard.entity.Complaint">
+        INSERT INTO complaint (
+            title, content, category, status, is_public, user_no, created_date, updated_date
+        ) VALUES (
+            #{title}, #{content}, #{category}, #{status}, #{isPublic}, #{userNo}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        )
+    </insert>
+
+    <!-- 공간 정보 등록 -->
+    <insert id="insertSpatialFeature" useGeneratedKeys="true" keyProperty="featureId" parameterType="com.safeguard.entity.SpatialFeature">
+        INSERT INTO spatial_feature (
+            feature_type, geom, addr_text, complaint_no, created_at
+        ) VALUES (
+            #{featureType}, ST_GeomFromText(#{geom, typeHandler=com.safeguard.config.GeometryTypeHandler}, 4326), #{addrText}, #{complaintNo}, CURRENT_TIMESTAMP
+        )
+    </insert>
+
+    <!-- 기관 매핑 등록 -->
+    <insert id="insertComplaintAgency">
+        INSERT INTO complaint_agency (complaint_no, agency_no) VALUES (#{complaintNo}, #{agencyNo})
+    </insert>
+
+    <!-- 시드용 DTO 등록 -->
+    <insert id="insertComplaintDto" useGeneratedKeys="true" keyProperty="complaintNo" parameterType="com.safeguard.dto.ComplaintDTO">
+        INSERT INTO complaint (
+            title, content, category, status, is_public, user_no, created_date, address, latitude, longitude, image_path, agency_no, like_count
+        ) VALUES (
+            #{title}, #{content}, #{category}, #{status}, #{isPublic}, #{userNo}, #{createdDate}, #{address}, #{latitude}, #{longitude}, #{imagePath}, #{agencyNo}, #{likeCount}
+        )
+    </insert>
+
     <!-- 좋아요 TOP -->
-    <select id="getTopLiked" resultType="com.safeguard.dto.ComplaintDTO">
+    <select id="selectTopLikedComplaints" resultType="com.safeguard.dto.ComplaintDTO">
         SELECT
             c.complaint_no AS complaintNo,
             c.title,
             c.category,
             c.status,
             c.created_date AS createdDate,
-            COUNT(pl.complaint_no) AS likeCount
+            COUNT(cl.complaint_no) AS likeCount
         FROM complaint c
-        LEFT JOIN post_like pl
-               ON c.complaint_no = pl.complaint_no
+        LEFT JOIN complaint_like cl ON c.complaint_no = cl.complaint_no
         GROUP BY c.complaint_no
         ORDER BY likeCount DESC
         LIMIT 5
     </select>
 
     <!-- 통계 -->
-    <select id="getStats" resultType="java.util.Map">
+    <select id="selectComplaintStats" resultType="java.util.Map">
         SELECT
             COUNT(*) AS total,
             COUNT(CASE WHEN status = 'RECEIVED' THEN 1 END) AS received,
@@ -65,5 +124,51 @@
             COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END) AS completed
         FROM complaint
     </select>
+
+    <!-- 좋아요 확인 -->
+    <select id="isLikedByUser" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM complaint_like WHERE complaint_no = #{complaintNo} AND user_no = #{userNo}
+        )
+    </select>
+
+    <select id="checkUserLike" resultType="int">
+        SELECT COUNT(*) FROM complaint_like WHERE complaint_no = #{complaintNo} AND user_no = #{userNo}
+    </select>
+
+    <insert id="insertLike">
+        INSERT INTO complaint_like (complaint_no, user_no) VALUES (#{complaintNo}, #{userNo})
+        ON CONFLICT (complaint_no, user_no) DO NOTHING
+    </insert>
+
+    <delete id="deleteLike">
+        DELETE FROM complaint_like WHERE complaint_no = #{complaintNo} AND user_no = #{userNo}
+    </delete>
+
+    <update id="updateLikeCount">
+        UPDATE complaint SET like_count = (SELECT COUNT(*) FROM complaint_like WHERE complaint_no = #{complaintNo})
+        WHERE complaint_no = #{complaintNo}
+    </update>
+
+    <update id="decreaseLikeCount">
+        UPDATE complaint SET like_count = (SELECT COUNT(*) FROM complaint_like WHERE complaint_no = #{complaintNo})
+        WHERE complaint_no = #{complaintNo}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE complaint SET status = #{status} WHERE complaint_no = #{complaintNo}
+    </update>
+
+    <update id="updateAnswer">
+        UPDATE complaint SET answer = #{answer} WHERE complaint_no = #{complaintNo}
+    </update>
+    
+    <delete id="deleteAllLikes">
+        DELETE FROM complaint_like
+    </delete>
+
+    <delete id="deleteAllComplaints">
+        DELETE FROM complaint
+    </delete>
 
 </mapper>

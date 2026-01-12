@@ -1,0 +1,422 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { complaintsAPI, authAPI } from '../utils/api';
+
+function Detail() {
+    const { id } = useParams();
+    const [report, setReport] = useState(null);
+    const [user, setUser] = useState(null);
+    const [answerText, setAnswerText] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
+    const navigate = useNavigate();
+
+    const fetchDetail = async () => {
+        try {
+            const data = await complaintsAPI.getDetail(id);
+            setReport(data);
+            if (data.answer) setAnswerText(data.answer);
+        } catch (err) {
+            console.error('Failed to fetch report detail:', err);
+        }
+    };
+
+    const fetchUser = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (token) {
+                const userData = await authAPI.getMe();
+                setUser(userData);
+            }
+        } catch (err) {
+            console.error('Failed to fetch user:', err);
+        }
+    };
+
+    useEffect(() => {
+        fetchDetail();
+        fetchUser();
+    }, [id]);
+
+    const handleStatusChange = async (newStatus) => {
+        if (!user || user.role !== 'AGENCY') return;
+        try {
+            await complaintsAPI.updateStatus(id, newStatus);
+            setReport(prev => ({ ...prev, status: newStatus }));
+            alert('상태가 변경되었습니다.');
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    const handleAnswerSubmit = async () => {
+        if (!user || user.role !== 'AGENCY') return;
+        try {
+            await complaintsAPI.updateAnswer(id, answerText);
+            setReport(prev => ({ ...prev, answer: answerText }));
+            setIsEditing(false); // Exit edit mode
+            alert('답변이 등록되었습니다.');
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    const handleLike = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('로그인이 필요한 서비스입니다.');
+            navigate('/login');
+            return;
+        }
+
+        try {
+            await complaintsAPI.toggleLike(id);
+            const updated = await complaintsAPI.getDetail(id);
+            setReport(updated);
+        } catch (err) {
+            console.error('Failed to update like:', err);
+            alert('좋아요 처리 실패');
+        }
+    };
+
+    if (!report) return <div className="container" style={{ padding: '100px', textAlign: 'center' }}>로딩중...</div>;
+
+    const statusMap = {
+        'RECEIVED': '접수 완료',
+        'IN_PROGRESS': '처리중',
+        'COMPLETED': '처리완료',
+        'REJECTED': '반려',
+        'CANCELLED': '취소'
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+    };
+
+    const steps = [
+        { key: 'RECEIVED', label: '접수 완료', icon: '📥' },
+        { key: 'IN_PROGRESS', label: '처리중', icon: '🛠️' },
+        { key: 'COMPLETED', label: '처리완료', icon: '✅' }
+    ];
+
+    const statusOrder = ['RECEIVED', 'IN_PROGRESS', 'COMPLETED'];
+    const currentIndex = Math.max(statusOrder.indexOf(report.status), 0);
+    const progressPercent = (currentIndex / (statusOrder.length - 1)) * 100;
+
+    const getStepStyle = (index) => {
+        const isActive = index <= currentIndex;
+        return {
+            width: '56px',
+            height: '56px',
+            borderRadius: '16px',
+            background: isActive ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' : '#e2e8f0',
+            color: isActive ? 'white' : '#94a3b8',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.4rem',
+            boxShadow: isActive ? '0 10px 24px rgba(99, 102, 241, 0.3)' : 'none'
+        };
+    };
+
+    return (
+        <div className="detail-page" style={{ padding: '40px 0', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+            <div className="container" style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px' }}>
+                {/* Header Navigation */}
+                <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem', color: '#64748b' }}>
+                    <span style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>홈</span>
+                    <span>&gt;</span>
+                    <span style={{ cursor: 'pointer' }} onClick={() => navigate('/list')}>민원 목록</span>
+                    <span>&gt;</span>
+                    <span style={{ color: 'var(--primary-color)', fontWeight: '600' }}>상세 보기</span>
+                </div>
+
+                {/* Main Content Card */}
+                <div style={{ backgroundColor: 'white', borderRadius: '24px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', overflow: 'hidden' }}>
+
+                    {/* Title Header */}
+                    <div style={{ padding: '40px 40px 30px', borderBottom: '1px solid #f1f5f9' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                            <span style={{
+                                padding: '6px 14px',
+                                borderRadius: '999px',
+                                backgroundColor: report.status === 'COMPLETED' ? '#dcfce7' : '#e0e7ff',
+                                color: report.status === 'COMPLETED' ? '#166534' : '#4338ca',
+                                fontSize: '0.85rem',
+                                fontWeight: '700'
+                            }}>
+                                {statusMap[report.status] || report.status}
+                            </span>
+                            <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>No. {report.complaintNo}</span>
+                        </div>
+
+                        <h2 style={{ fontSize: '2rem', fontWeight: '800', color: '#1e293b', marginBottom: '20px', lineHeight: '1.3' }}>
+                            {report.title}
+                        </h2>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                            <div style={{ display: 'flex', gap: '24px', color: '#64748b', fontSize: '0.95rem', flexWrap: 'wrap' }}>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <span>👤</span> {report.authorName}
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <span>📅</span> {formatDate(report.createdDate)}
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <span>📂</span> {report.category}
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <span>📍</span> {report.address}
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <span>🏛️</span>
+                                    <span style={{
+                                        padding: '2px 10px',
+                                        backgroundColor: report.agencyName ? '#e0f2fe' : '#f1f5f9',
+                                        borderRadius: '6px',
+                                        color: report.agencyName ? '#0369a1' : '#94a3b8',
+                                        fontWeight: '600'
+                                    }}>
+                                        {report.agencyName || '미지정'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleLike}
+                                style={{
+                                    padding: '10px 20px',
+                                    backgroundColor: report.liked ? '#fff1f2' : '#f8fafc',
+                                    color: report.liked ? '#e11d48' : '#64748b',
+                                    border: report.liked ? '1px solid #fda4af' : '1px solid #e2e8f0',
+                                    borderRadius: '12px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    transition: 'all 0.2s',
+                                    fontSize: '0.95rem'
+                                }}
+                            >
+                                <span style={{ fontSize: '1.1rem' }}>{report.liked ? '❤️' : '🤍'}</span>
+                                <span>공감 {report.likeCount || 0}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Body Content */}
+                    <div style={{ padding: '40px' }}>
+                        {/* Progress Bar */}
+                        <div style={{ marginBottom: '60px', padding: '0 20px' }}>
+                            <div style={{ position: 'relative', maxWidth: '600px', margin: '0 auto' }}>
+                                {/* Progress Line Background */}
+                                <div style={{ position: 'absolute', top: '24px', left: '0', right: '0', height: '4px', backgroundColor: '#e2e8f0', borderRadius: '4px', zIndex: 0 }} />
+                                {/* Active Progress Line */}
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '24px',
+                                    left: '0',
+                                    height: '4px',
+                                    width: `${progressPercent}%`,
+                                    background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+                                    borderRadius: '4px',
+                                    zIndex: 0,
+                                    transition: 'width 0.5s ease-out'
+                                }} />
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
+                                    {steps.map((step, index) => {
+                                        const isActive = index <= currentIndex;
+                                        const isCurrent = index === currentIndex;
+                                        return (
+                                            <div
+                                                key={step.key}
+                                                style={{ textAlign: 'center', cursor: user && user.role === 'AGENCY' ? 'pointer' : 'default' }}
+                                                onClick={() => user && user.role === 'AGENCY' && handleStatusChange(step.key)}
+                                            >
+                                                <div style={{
+                                                    width: '52px',
+                                                    height: '52px',
+                                                    borderRadius: '50%',
+                                                    backgroundColor: isActive ? 'white' : '#f1f5f9',
+                                                    border: isActive ? '2px solid #6366f1' : '2px solid #e2e8f0',
+                                                    color: isActive ? '#6366f1' : '#94a3b8',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontSize: '1.5rem',
+                                                    margin: '0 auto 12px',
+                                                    boxShadow: isCurrent ? '0 0 0 4px rgba(99, 102, 241, 0.2)' : 'none',
+                                                    transition: 'all 0.3s ease'
+                                                }}>
+                                                    {step.icon}
+                                                </div>
+                                                <div style={{ fontSize: '0.9rem', fontWeight: isActive ? '700' : '500', color: isActive ? '#1e293b' : '#94a3b8' }}>
+                                                    {step.label}
+                                                </div>
+                                                {user && user.role === 'AGENCY' && !isCurrent && (
+                                                    <div style={{ fontSize: '0.75rem', color: '#6366f1', marginTop: '4px' }}>변경하기</div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Complaint Content Grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '40px', marginBottom: '60px' }}>
+                            <div style={{ width: '100%', aspectRatio: '4/3', backgroundColor: '#f8fafc', borderRadius: '16px', overflow: 'hidden', border: '1px solid #f1f5f9' }}>
+                                {report.imagePath ? (
+                                    <img src={report.imagePath} alt="현장 사진" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+                                        <span style={{ fontSize: '2rem', marginBottom: '10px' }}>📷</span>
+                                        <span>등록된 이미지가 없습니다</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div>
+                                <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '16px', color: '#1e293b', paddingLeft: '12px', borderLeft: '4px solid #6366f1' }}>민원 내용</h3>
+                                <div style={{
+                                    backgroundColor: '#f8fafc',
+                                    padding: '24px',
+                                    borderRadius: '16px',
+                                    lineHeight: '1.8',
+                                    color: '#334155',
+                                    whiteSpace: 'pre-wrap',
+                                    fontSize: '1.05rem',
+                                    minHeight: '200px'
+                                }}>
+                                    {report.content}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Answer Section */}
+                        <div>
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '16px', color: '#1e293b', paddingLeft: '12px', borderLeft: '4px solid #22c55e' }}>담당자 답변</h3>
+
+                            {user && user.role === 'AGENCY' ? (
+                                (!report.answer || isEditing) ? (
+                                    <div style={{ backgroundColor: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                                        <div style={{ marginBottom: '12px', fontWeight: '600', color: '#475569' }}>답변 작성</div>
+                                        <textarea
+                                            value={answerText}
+                                            onChange={(e) => setAnswerText(e.target.value)}
+                                            placeholder="민원 처리 결과 및 안내 사항을 자세히 적어주세요."
+                                            style={{
+                                                width: '100%',
+                                                minHeight: '200px',
+                                                padding: '16px',
+                                                borderRadius: '12px',
+                                                border: '1px solid #cbd5e1',
+                                                fontSize: '1rem',
+                                                lineHeight: '1.6',
+                                                resize: 'vertical',
+                                                marginBottom: '16px',
+                                                fontFamily: 'inherit'
+                                            }}
+                                        />
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                                            {report.answer && (
+                                                <button
+                                                    onClick={() => {
+                                                        setIsEditing(false);
+                                                        setAnswerText(report.answer);
+                                                    }}
+                                                    style={{ padding: '10px 24px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: 'white', color: '#475569', fontWeight: '600', cursor: 'pointer' }}
+                                                >
+                                                    취소
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={handleAnswerSubmit}
+                                                style={{ padding: '10px 24px', borderRadius: '8px', border: 'none', backgroundColor: '#6366f1', color: 'white', fontWeight: '600', cursor: 'pointer', boxShadow: '0 2px 4px rgba(99, 102, 241, 0.3)' }}
+                                            >
+                                                {report.answer ? '수정 완료' : '답변 등록'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div style={{ position: 'relative', backgroundColor: '#f0fdf4', padding: '32px', borderRadius: '16px', border: '1px solid #bbf7d0' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+                                            <span style={{ backgroundColor: '#16a34a', color: 'white', padding: '4px 12px', borderRadius: '999px', fontSize: '0.85rem', fontWeight: 'bold' }}>답변 완료</span>
+                                            <button
+                                                onClick={() => setIsEditing(true)}
+                                                style={{ border: 'none', background: 'none', color: '#64748b', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.9rem' }}
+                                            >
+                                                수정하기
+                                            </button>
+                                        </div>
+                                        <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8', color: '#1e293b', fontSize: '1.05rem' }}>
+                                            {report.answer}
+                                        </div>
+                                        <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px dashed #bbf7d0', fontSize: '0.9rem', color: '#64748b' }}>
+                                            담당자: {user?.name || '관리자'} | 처리일시: {formatDate(new Date().toISOString())} {/* 실제로는 답변 시간을 DB에 저장해야 함 */}
+                                        </div>
+                                    </div>
+                                )
+                            ) : (
+                                <div style={{
+                                    backgroundColor: report.answer ? '#f0fdf4' : '#f8fafc',
+                                    padding: '40px',
+                                    borderRadius: '16px',
+                                    border: report.answer ? '1px solid #bbf7d0' : '1px dashed #cbd5e1',
+                                    textAlign: report.answer ? 'left' : 'center'
+                                }}>
+                                    {report.answer ? (
+                                        <>
+                                            <div style={{ marginBottom: '16px' }}>
+                                                <span style={{ backgroundColor: '#16a34a', color: 'white', padding: '6px 16px', borderRadius: '999px', fontSize: '0.9rem', fontWeight: 'bold' }}>SafeGuard 공식 답변</span>
+                                            </div>
+                                            <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8', color: '#1e293b', fontSize: '1.1rem' }}>
+                                                {report.answer}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div style={{ color: '#94a3b8' }}>
+                                            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⏳</div>
+                                            <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>아직 답변이 등록되지 않았습니다.</p>
+                                            <p style={{ fontSize: '0.9rem' }}>담당자가 내용을 확인 후 빠른 시일 내에 답변해 드리겠습니다.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* List Button */}
+                        <div style={{ marginTop: '60px', textAlign: 'center' }}>
+                            <button
+                                onClick={() => navigate('/list')}
+                                style={{
+                                    padding: '14px 48px',
+                                    backgroundColor: 'white',
+                                    color: '#475569',
+                                    border: '1px solid #cbd5e1',
+                                    borderRadius: '12px',
+                                    fontWeight: '700',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    fontSize: '1rem'
+                                }}
+                                onMouseOver={(e) => { (e.target as HTMLElement).style.backgroundColor = '#f8fafc'; (e.target as HTMLElement).style.borderColor = '#94a3b8'; }}
+                                onMouseOut={(e) => { (e.target as HTMLElement).style.backgroundColor = 'white'; (e.target as HTMLElement).style.borderColor = '#cbd5e1'; }}
+                            >
+                                ≡ 목록으로 돌아가기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default Detail;

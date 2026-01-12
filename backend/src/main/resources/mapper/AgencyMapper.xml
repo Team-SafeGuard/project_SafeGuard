@@ -15,11 +15,11 @@
         VALUES (#{agencyType}, #{agencyName}, #{regionCode})
     </insert>
 
-    <select id="findAll" resultMap="AgencyResultMap">
+    <select id="selectAgencyList" resultMap="AgencyResultMap">
         SELECT * FROM agency ORDER BY agency_no ASC
     </select>
 
-    <select id="findByNo" resultMap="AgencyResultMap">
+    <select id="selectAgencyByNo" resultMap="AgencyResultMap">
         SELECT * FROM agency WHERE agency_no = #{agencyNo}
     </select>
 

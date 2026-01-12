@@ -1,6 +1,5 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 // https://vite.dev/config/
 export default defineConfig({
     plugins: [react()],
@@ -9,7 +8,7 @@ export default defineConfig({
             '/api/stt': {
                 target: 'http://127.0.0.1:8000',
                 changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/api\/stt/, ''),
+                rewrite: function (path) { return path.replace(/^\/api\/stt/, ''); },
             },
             '/api': {
                 target: 'http://localhost:8080',
@@ -17,4 +16,4 @@ export default defineConfig({
             },
         },
     },
-})
+});
