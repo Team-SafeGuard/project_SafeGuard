@@ -20,7 +20,6 @@ public class MapItemDto {
     private String title;
     private String status;
     private String address;
-    private String imagePath;
 
     // CLUSTER
     private Integer count;

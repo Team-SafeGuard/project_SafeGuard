@@ -18,5 +18,4 @@ public class ComplaintListItemDto {
     private String adminCode;
     private Double lat;
     private Double lng;
-    private String imagePath;
 }
