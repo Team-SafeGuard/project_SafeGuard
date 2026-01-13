@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../utils/api';
 
 // Hardcoded Agency Data (Must match init.sql / database)
-// Hardcoded Agency Data (Must match init.sql / database)
 const LOCAL_AGENCIES = [
     { id: 1, name: '서울특별시' },
     { id: 2, name: '부산광역시' },
@@ -66,10 +65,16 @@ function Register() {
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isIdChecked, setIsIdChecked] = useState(false); // ID check status
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+
+        // Reset ID check if userId changes
+        if (name === 'userId') {
+            setIsIdChecked(false);
+        }
     };
 
     const handleUserTypeChange = (e) => {
@@ -79,12 +84,54 @@ function Register() {
         setFormData(prev => ({ ...prev, agencyNo: '' }));
     };
 
+    const handleIdCheck = async () => {
+        if (!formData.userId) {
+            alert('아이디를 입력해주세요.');
+            return;
+        }
+        try {
+            const response = await authAPI.checkIdDuplicate(formData.userId);
+            if (response.isDuplicate) {
+                alert('이미 사용 중인 아이디입니다.');
+                setIsIdChecked(false);
+            } else {
+                alert('사용 가능한 아이디입니다.');
+                setIsIdChecked(true);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('중복 확인 중 오류가 발생했습니다.');
+            setIsIdChecked(false);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
+        if (!isIdChecked) {
+            setError('아이디 중복 확인을 해주세요.');
+            return;
+        }
+
         if (formData.password !== formData.passwordConfirm) {
             setError('비밀번호가 일치하지 않습니다.');
+            return;
+        }
+
+        // password validation rules
+        const { password } = formData;
+        if (password.length < 8) {
+            setError('비밀번호는 8자 이상이어야 합니다.');
+            return;
+        }
+        if (password.includes(' ')) {
+            setError('비밀번호에 공백을 포함할 수 없습니다.');
+            return;
+        }
+        const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
+        if (!specialCharRegex.test(password)) {
+            setError('비밀번호는 특수문자를 최소 1개 이상 포함해야 합니다.');
             return;
         }
 
@@ -101,7 +148,7 @@ function Register() {
 
             // Clean up: If INDIVIDUAL, ensure agencyNo is null/undefined just in case
             if (userType === 'INDIVIDUAL') {
-                delete registerData.agencyNo;
+                delete (registerData as any).agencyNo;
             } else {
                 // Ensure agencyNo is Number
                 (registerData as any).agencyNo = Number(registerData.agencyNo);
@@ -112,7 +159,7 @@ function Register() {
             await authAPI.register(registerData);
             alert('회원가입이 완료되었습니다. 로그인해주세요.');
             navigate('/login');
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
             setError(err.message || '회원가입 중 오류가 발생했습니다.');
         } finally {
@@ -314,42 +361,106 @@ function Register() {
                     {/* 아이디 */}
                     <div style={{ marginBottom: '20px' }}>
                         <label style={labelStyle}>아이디 <span style={{ color: '#ef4444' }}>*</span></label>
-                        <input
-                            type="text"
-                            name="userId"
-                            value={formData.userId}
-                            onChange={handleChange}
-                            required
-                            placeholder="사용할 아이디를 입력하세요"
-                            style={inputStyle}
-                        />
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <input
+                                type="text"
+                                name="userId"
+                                value={formData.userId}
+                                onChange={handleChange}
+                                required
+                                placeholder="사용할 아이디를 입력하세요"
+                                style={{
+                                    flex: 1,
+                                    padding: '14px',
+                                    borderRadius: '12px',
+                                    border: '2px solid #e2e8f0',
+                                    fontSize: '1rem'
+                                }}
+                            />
+                            <button
+                                type="button"
+                                onClick={handleIdCheck}
+                                style={{
+                                    padding: '0 20px',
+                                    borderRadius: '12px',
+                                    border: 'none',
+                                    background: '#3b82f6',
+                                    color: 'white',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                중복 확인
+                            </button>
+                        </div>
+                        {/* 중복 확인 결과 메시지 */}
+                        {formData.userId && (
+                            <div style={{ fontSize: '0.85rem', marginTop: '6px', color: isIdChecked ? '#10b981' : '#f59e0b' }}>
+                                {isIdChecked ? '✅ 사용 가능한 아이디입니다.' : 'ℹ️ 아이디 중복 확인이 필요합니다.'}
+                            </div>
+                        )}
                     </div>
 
-                    {/* 비밀번호 */}
+                    {/* 비밀번호 & 유효성 규칙 위치 변경 */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
                         <div>
-                            <label style={labelStyle}>비밀번호 <span style={{ color: '#ef4444' }}>*</span></label>
-                            <input
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                required
-                                placeholder="비밀번호"
-                                style={inputStyle}
-                            />
+                            <div style={{ marginBottom: '16px' }}>
+                                <label style={labelStyle}>비밀번호 <span style={{ color: '#ef4444' }}>*</span></label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="비밀번호"
+                                    style={inputStyle}
+                                />
+                            </div>
+                            <div>
+                                <label style={labelStyle}>비밀번호 확인 <span style={{ color: '#ef4444' }}>*</span></label>
+                                <input
+                                    type="password"
+                                    name="passwordConfirm"
+                                    value={formData.passwordConfirm}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="비밀번호 확인"
+                                    style={inputStyle}
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <label style={labelStyle}>비밀번호 확인 <span style={{ color: '#ef4444' }}>*</span></label>
-                            <input
-                                type="password"
-                                name="passwordConfirm"
-                                value={formData.passwordConfirm}
-                                onChange={handleChange}
-                                required
-                                placeholder="비밀번호 확인"
-                                style={inputStyle}
-                            />
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            {/* Layout Spacer: Hidden label to align top of box with top of input field */}
+                            <label style={{ ...labelStyle, visibility: 'hidden' }}>비밀번호 생성 규칙</label>
+
+                            {/* 비밀번호 유효성 가이드 */}
+                            <div style={{
+                                fontSize: '0.85rem',
+                                padding: '16px',
+                                backgroundColor: '#f9fafb',
+                                borderRadius: '12px',
+                                border: '1px solid #e2e8f0',
+                                flex: 1,
+                                boxSizing: 'border-box',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'center'
+                            }}>
+                                <div style={{ fontWeight: '600', marginBottom: '8px', color: '#64748b' }}>비밀번호 생성 규칙</div>
+                                <div style={{ color: formData.password.length >= 8 ? '#10b981' : '#94a3b8', display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                                    <span style={{ marginRight: '6px' }}>{formData.password.length >= 8 ? '✓' : '•'}</span>
+                                    8자 이상
+                                </div>
+                                <div style={{ color: !formData.password.includes(' ') && formData.password.length > 0 ? '#10b981' : '#94a3b8', display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                                    <span style={{ marginRight: '6px' }}>{!formData.password.includes(' ') && formData.password.length > 0 ? '✓' : '•'}</span>
+                                    공백 미포함
+                                </div>
+                                <div style={{ color: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? '#10b981' : '#94a3b8', display: 'flex', alignItems: 'center' }}>
+                                    <span style={{ marginRight: '6px' }}>{/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? '✓' : '•'}</span>
+                                    특수문자 포함 (!@#$%^&* 등)
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -412,17 +523,16 @@ function Register() {
                     <div style={{ display: 'flex', gap: '16px' }}>
                         <button
                             type="submit"
-                            disabled={loading}
                             style={{
                                 flex: 2,
                                 padding: '18px',
-                                background: loading ? '#94a3b8' : 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+                                background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '14px',
                                 fontSize: '1.1rem',
                                 fontWeight: '700',
-                                cursor: loading ? 'not-allowed' : 'pointer',
+                                cursor: 'pointer',
                                 boxShadow: '0 4px 14px rgba(124, 58, 237, 0.4)',
                                 transition: 'all 0.3s'
                             }}

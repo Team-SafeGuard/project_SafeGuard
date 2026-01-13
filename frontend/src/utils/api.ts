@@ -44,6 +44,8 @@ export const authAPI = {
         body: JSON.stringify(userData),
     }),
 
+    checkIdDuplicate: (userId: string) => apiRequest(`/auth/check-id?userId=${userId}`),
+
     login: async (credentials: any) => {
         const data = await apiRequest('/auth/login', {
             method: 'POST',
@@ -69,10 +71,7 @@ export const authAPI = {
         body: JSON.stringify(data),
     }),
 
-    resetPassword: (data: any) => apiRequest('/auth/reset-password', {
-        method: 'POST',
-        body: JSON.stringify(data),
-    }),
+
 
     verifyReset: (data: any) => apiRequest('/auth/verify-reset', {
         method: 'POST',
