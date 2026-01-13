@@ -16,50 +16,104 @@ const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory }) => {
     };
 
     const series = [
-        { name: `${selectedCategory} 접수`, data: getCategoryData(selectedCategory) }
+        {
+            name: `${selectedCategory} 접수`,
+            type: 'column',
+            data: getCategoryData(selectedCategory)
+        },
+        {
+            name: '증감률',
+            type: 'line',
+            data: getCategoryData(selectedCategory).map((v, i, arr) => {
+                if (i === 0) return 0;
+                return Math.round(((v - arr[i - 1]) / arr[i - 1]) * 100);
+            })
+        }
     ];
 
     const [options] = useState({
-        legend: { show: false, position: 'top' as const, horizontalAlign: 'left' as const },
-        colors: ['#3B82F6'],
+        legend: { show: false },
+        colors: ['#3B82F6', '#EF4444'],
         chart: {
             fontFamily: 'Satoshi, sans-serif',
-            height: 335,
-            type: 'area' as const,
-            dropShadow: { enabled: true, color: '#623CEA14', top: 10, blur: 4, left: 0, opacity: 0.1 },
+            height: '100%',
+            type: 'line' as const,
             toolbar: { show: false },
         },
-        responsive: [{ breakpoint: 1024, options: { chart: { height: 300 } } }],
-        stroke: { width: [2, 2], curve: 'straight' as const },
-        grid: { xaxis: { lines: { show: true } }, yaxis: { lines: { show: true } } },
-        dataLabels: { enabled: false },
-        markers: { size: 4, colors: '#fff', strokeColors: ['#3B82F6', '#10B981'], strokeWidth: 3, hover: { size: 7 } },
+        stroke: {
+            width: [0, 4],
+            curve: 'smooth' as const
+        },
+        plotOptions: {
+            bar: {
+                borderRadius: 4,
+                columnWidth: '50%',
+            }
+        },
+        fill: {
+            opacity: [0.85, 1],
+        },
+        markers: {
+            size: [0, 5],
+            colors: '#fff',
+            strokeColors: '#EF4444',
+            strokeWidth: 3,
+            hover: { size: 7 }
+        },
         xaxis: {
             type: 'category' as const,
             categories: ['12/25', '12/26', '12/27', '12/28', '12/29', '12/30', '12/31', '01/01', '01/02', '01/03'],
             axisBorder: { show: false },
             axisTicks: { show: false },
         },
-        yaxis: { title: { style: { fontSize: '0px' } } },
+        yaxis: [
+            {
+                title: { text: '접수 건수', style: { color: '#3B82F6', fontWeight: 900 } },
+                labels: { style: { colors: '#3B82F6', fontWeight: 700 } }
+            },
+            {
+                opposite: true,
+                title: { text: '증감률 (%)', style: { color: '#EF4444', fontWeight: 900 } },
+                labels: { style: { colors: '#EF4444', fontWeight: 700 } }
+            }
+        ],
+        grid: {
+            borderColor: '#f1f5f9',
+            strokeDashArray: 4,
+        }
     });
 
     return (
-        <div className="w-full" style={{ backgroundColor: 'white', border: '1px solid #E2E8F0', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', padding: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px' }}>
+        <div className="w-full" style={{
+            backgroundColor: 'white',
+            border: '1px solid #E2E8F0',
+            borderRadius: '16px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            padding: '24px',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column'
+        }}>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '16px', flexShrink: 0 }}>
                 <h5 style={{ fontSize: '20px', fontWeight: '900', color: '#1e293b' }}>
                     [{selectedCategory}] 상세 현황
                 </h5>
             </div>
-            <div>
-                <div id="chartOne" className="-ml-5">
-                    <ReactApexChart options={options} series={series} type="area" height={350} />
+
+            <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                <div id="chartOne" className="-ml-5" style={{ flex: 1, minHeight: 0 }}>
+                    <ReactApexChart options={options} series={series} type="line" height="100%" />
                 </div>
             </div>
 
-            <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '80px', borderTop: '2px solid #f1f5f9', paddingTop: '24px' }}>
+            <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '40px', borderTop: '2px solid #f1f5f9', paddingTop: '24px', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontSize: '24px', color: '#3B82F6' }}>●</span>
-                    <span style={{ fontSize: '18px', fontWeight: '900', color: '#1e293b' }}>접수</span>
+                    <span style={{ fontSize: '24px', color: '#3B82F6' }}>■</span>
+                    <span style={{ fontSize: '18px', fontWeight: '900', color: '#1e293b' }}>접수 건수</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '24px', color: '#EF4444' }}>●</span>
+                    <span style={{ fontSize: '18px', fontWeight: '900', color: '#1e293b' }}>증감률 (%)</span>
                 </div>
             </div>
         </div>

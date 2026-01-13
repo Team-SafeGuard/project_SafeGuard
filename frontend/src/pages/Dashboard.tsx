@@ -5,11 +5,13 @@ import {
 import { complaintsAPI } from '../utils/api';
 import ComplaintTrendChart from '../components/Charts/ComplaintTrendChart';
 import ComplaintCategoryChart from '../components/Charts/ComplaintCategoryChart';
+import AgeGroupChart from '../components/Charts/AgeGroupChart';
+import RegionStatsChart from '../components/Charts/RegionStatsChart';
 
 
 
 
-// --- Mock Data ---
+// --- 임시 데이터 (Mock) ---
 const MOCK_KEYWORDS = [
     { id: 1, text: '불법주차 신고', rank: 1, count: 1450, change: 120, changeType: 'up' },
     { id: 2, text: '친환경차 충전구역', rank: 2, count: 980, change: 45, changeType: 'up' },
@@ -65,12 +67,12 @@ const Dashboard = () => {
             .dash-actions { display:flex; gap: 8px; }
             .dash-btn { padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 8px; background:#fff; font-size: 13px; cursor:pointer; }
             .dash-btn:hover { background:#f9fafb; }
-            .dash-kpi-grid { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 32px; }
+            .dash-kpi-grid { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; margin-bottom: 24px; }
             .dash-kpi-card { border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.06); height: 112px; display:flex; flex-direction:column; align-items:center; justify-content:center; border: 1px solid #e5e7eb; border-top-width: 4px; }
             .dash-kpi-title { color:#6b7280; font-weight: 800; margin-bottom: 8px; }
             .dash-kpi-value { font-size: 32px; font-weight: 900; }
 
-            .dash-main { display:grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px; margin-bottom: 32px; }
+            .dash-main { display:grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 20px; margin-bottom: 24px; }
             .dash-left { grid-column: span 5 / span 5; display:flex; flex-direction:column; gap: 24px; }
             .dash-right { grid-column: span 7 / span 7; }
 
@@ -97,14 +99,14 @@ const Dashboard = () => {
                     <h1 className="dash-title">관리자 대시보드</h1>
                 </div>
 
-                {/* 나의 민원 현황 (KPI Cards) */}
+                {/* 나의 민원 현황 (KPI 카드) */}
                 <section style={{
                     backgroundColor: '#ffffff',
                     border: '1px solid #E2E8F0',
-                    borderRadius: '12px',
-                    padding: '32px',
-                    marginBottom: '40px',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                    borderRadius: '16px',
+                    padding: '24px',
+                    marginBottom: '32px',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
                     position: 'relative',
                     overflow: 'hidden'
                 }}>
@@ -139,27 +141,34 @@ const Dashboard = () => {
                         ))}
                     </div>
                 </section>
-
-                {/* 2. Main Content Grid (Boxed Layout) */}
-                <div className="bg-slate-50/50 p-6 rounded-2xl border border-slate-200 shadow-inner mb-8">
-                    <div className="dash-main !mb-0">
-                        {/* Left: Donut Chart -> Replaced with ChartTwo */}
-                        <div className="dash-left">
+                {/* 2. 메인 콘텐츠 그리드 (박스형 레이아웃) */}
+                <div className="mb-6">
+                    <div className="dash-main !mb-0 gap-5">
+                        {/* 좌측: 도넛 차트 (분류별) */}
+                        <div className="dash-left gap-5">
                             <ComplaintCategoryChart selectedCategory={selectedCategory} onSelect={setSelectedCategory} />
                         </div>
 
-                        {/* Right: Trend Chart -> Replaced with ChartOne */}
-                        <div className="dash-right">
-                            <ComplaintTrendChart selectedCategory={selectedCategory} />
+                        {/* 우측: 트렌드 및 연령별 차트 */}
+                        <div className="dash-right flex flex-col gap-6 h-full">
+                            <div className="flex-1 w-full min-h-[350px] relative">
+                                <ComplaintTrendChart selectedCategory={selectedCategory} />
+                            </div>
+                            <div className="flex-1 w-full min-h-[350px] relative">
+                                <AgeGroupChart />
+                            </div>
+                            <div className="flex-1 w-full min-h-[350px] relative">
+                                <RegionStatsChart />
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* 3. Bottom Grid: Keywords & Word Cloud */}
-                <div className="dash-bottom" style={{ marginBottom: '40px' }}>
-                    {/* Surging Keyword - Integrated Design */}
-                    <div className="dash-card shadow-2xl" style={{ height: 680, display: 'flex', flexDirection: 'column', border: '1px solid #E2E8F0', borderRadius: '12px', overflow: 'hidden', backgroundColor: 'white' }}>
-                        {/* Integrated Header Block */}
+                {/* 3. 하단 그리드: 키워드 분석 & 워드 클라우드 */}
+                <div className="dash-bottom gap-5" style={{ marginBottom: '32px' }}>
+                    {/* 급증 키워드 분석 - 통합 디자인 */}
+                    <div className="dash-card" style={{ height: 600, display: 'flex', flexDirection: 'column', border: '1px solid #E2E8F0', borderRadius: '16px', overflow: 'hidden', backgroundColor: 'white', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}>
+                        {/* 통합 헤더 블록 */}
                         <div style={{ backgroundColor: 'white', borderBottom: 'none', flexShrink: 0 }}>
                             <div className="flex justify-between items-center" style={{ padding: '24px 32px 16px 32px' }}>
                                 <h3 className="font-bold text-gray-800 flex items-center gap-3">
@@ -172,7 +181,7 @@ const Dashboard = () => {
                                 </div>
                             </div>
 
-                            {/* Table Header integrated into Header Block */}
+                            {/* 헤더 블록에 통합된 테이블 헤더 */}
                             <div style={{ padding: '0 32px 12px 32px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.03)', borderRadius: '12px', padding: '12px 0' }}>
                                     <div style={{ width: '70px', textAlign: 'center', fontSize: '11px', fontWeight: '900', color: '#64748B', textTransform: 'uppercase' }}>Rank</div>
@@ -225,8 +234,8 @@ const Dashboard = () => {
                         </div>
                     </div>
 
-                    {/* Word Cloud - Matching Design */}
-                    <div className="dash-card shadow-2xl" style={{ height: 680, border: '1px solid #E2E8F0', borderRadius: '12px', display: 'flex', flexDirection: 'column', overflow: 'hidden', backgroundColor: 'white' }}>
+                    {/* 워드 클라우드 - 디자인 매칭 */}
+                    <div className="dash-card" style={{ height: 600, border: '1px solid #E2E8F0', borderRadius: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden', backgroundColor: 'white', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}>
                         <div style={{ backgroundColor: 'white', borderBottom: 'none', padding: '24px 32px', flexShrink: 0 }}>
                             <h3 className="font-bold text-gray-800 flex items-center gap-3">
                                 <span style={{ fontSize: '20px', fontWeight: '950', letterSpacing: '-0.03em' }}>실시간 키워드 클라우드</span>
