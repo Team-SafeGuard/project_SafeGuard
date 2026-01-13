@@ -21,10 +21,9 @@
             c.answer,
             c.is_public AS isPublic,
             c.like_count AS likeCount,
-            a.agency_name AS agencyName,
-            c.agency_no AS agencyNo
+            (SELECT a.agency_name FROM complaint_agency ca JOIN agency a ON ca.agency_no = a.agency_no WHERE ca.complaint_no = c.complaint_no LIMIT 1) AS agencyName,
+            (SELECT a.agency_no FROM complaint_agency ca JOIN agency a ON ca.agency_no = a.agency_no WHERE ca.complaint_no = c.complaint_no LIMIT 1) AS agencyNo
         FROM complaint c
-        LEFT JOIN agency a ON c.agency_no = a.agency_no
         <where>
             <if test="category != null and category != '전체'">
                 AND c.category = #{category}
@@ -61,18 +60,22 @@
             c.image_path AS imagePath,
             c.answer,
             c.is_public AS isPublic,
+            c.is_public AS isPublic,
             c.like_count AS likeCount,
-            c.agency_no AS agencyNo
+            (SELECT a.agency_no FROM complaint_agency ca JOIN agency a ON ca.agency_no = a.agency_no WHERE ca.complaint_no = c.complaint_no LIMIT 1) AS agencyNo
         FROM complaint c
         WHERE c.complaint_no = #{complaintNo}
     </select>
 
     <!-- 민원 등록 (Entity) -->
-    <insert id="insertComplaint" useGeneratedKeys="true" keyProperty="complaintNo" parameterType="com.safeguard.entity.Complaint">
+    <insert id="insertComplaint" useGeneratedKeys="true" keyProperty="complaintNo" keyColumn="complaint_no">
         INSERT INTO complaint (
-            title, content, category, status, is_public, user_no, created_date, updated_date
-        ) VALUES (
-            #{title}, #{content}, #{category}, #{status}, #{isPublic}, #{userNo}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+            title, content, category, status, is_public, user_no, image_path, created_date, updated_date,
+            address, latitude, longitude
+        )
+        VALUES (
+            #{title}, #{content}, #{category}, #{status}, #{isPublic}, #{userNo}, #{imagePath}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
+            #{address}, #{latitude}, #{longitude}
         )
     </insert>
 
@@ -93,9 +96,9 @@
     <!-- 시드용 DTO 등록 -->
     <insert id="insertComplaintDto" useGeneratedKeys="true" keyProperty="complaintNo" parameterType="com.safeguard.dto.ComplaintDTO">
         INSERT INTO complaint (
-            title, content, category, status, is_public, user_no, created_date, address, latitude, longitude, image_path, agency_no, like_count
+            title, content, category, status, is_public, user_no, created_date, address, latitude, longitude, image_path, like_count
         ) VALUES (
-            #{title}, #{content}, #{category}, #{status}, #{isPublic}, #{userNo}, #{createdDate}, #{address}, #{latitude}, #{longitude}, #{imagePath}, #{agencyNo}, #{likeCount}
+            #{title}, #{content}, #{category}, #{status}, #{isPublic}, #{userNo}, #{createdDate}, #{address}, #{latitude}, #{longitude}, #{imagePath}, #{likeCount}
         )
     </insert>
 

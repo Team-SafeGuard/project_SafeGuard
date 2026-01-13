@@ -77,9 +77,9 @@ const ComplaintCategoryChart: React.FC<ChartTwoProps> = ({ selectedCategory, onS
         <div className="w-full" style={{
             backgroundColor: 'white',
             border: '1px solid #E2E8F0',
-            borderRadius: '16px',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-            padding: '24px',
+            borderRadius: '12px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            padding: '32px',
             height: '100%',
             display: 'flex',
             flexDirection: 'column'

@@ -17,7 +17,7 @@ def analyze_image(image_path):
     log_korean(f"이미지 분석을 시작합니다. 대상 파일: {image_path}")
     
     # 1. 모델 로드
-    model_path = os.path.join(os.path.dirname(__file__), '5k_each.pt')
+    model_path = os.path.join(os.path.dirname(__file__), 'best.pt')
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"모델 파일(best.pt)을 찾을 수 없습니다: {model_path}")
     
@@ -37,11 +37,11 @@ def analyze_image(image_path):
     
     # 기관 매핑 정보
     AGENCY_MAP = {
-        '보행방해물': '지자체 도로과',
-        '현수막': '지자체 광고물관리부서',
-        '불법주정차': '지자체 교통과',
-        '공사현장': '지자체 건설과',
-        '쓰레기': '지자체 환경과'
+        '보행방해물': '국토교통부',
+        '현수막': '행정안전부',
+        '불법주정차': '경찰청',
+        '공사현장': '행정안전부',
+        '쓰레기': '기후에너지환경부'
     }
     
     # 3. 결과 정리
