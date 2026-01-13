@@ -17,7 +17,7 @@ def analyze_image(image_path):
     log_korean(f"이미지 분석을 시작합니다. 대상 파일: {image_path}")
     
     # 1. 모델 로드
-    model_path = os.path.join(os.path.dirname(__file__), 'best.pt')
+    model_path = os.path.join(os.path.dirname(__file__), '5k_each.pt')
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"모델 파일(best.pt)을 찾을 수 없습니다: {model_path}")
     
@@ -26,7 +26,7 @@ def analyze_image(image_path):
     
     # 2. 이미지 분석 (Inference)
     log_korean("객체 탐지 및 이미지 분석을 수행 중입니다...")
-    results = model(image_path, conf=0.5, verbose=False) # 신뢰도 0.5 이상만 탐지, 로그 억제
+    results = model(image_path, conf=0.1, verbose=False) # 신뢰도 0.1 이상만 탐지, 로그 억제
     
     # 기관 매핑 정보
     AGENCY_MAP = {
