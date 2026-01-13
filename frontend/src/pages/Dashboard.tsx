@@ -8,16 +8,16 @@ import ChartTwo from '../components/Charts/ChartTwo';
 
 // --- Mock Data ---
 const MOCK_KEYWORDS = [
-    { id: 1, text: '불법주차 신고', rank: 1 },
-    { id: 2, text: '친환경차 충전구역', rank: 2 },
-    { id: 3, text: '충전구역 불법주차', rank: 3 },
-    { id: 4, text: '사업 정상화', rank: 4 },
-    { id: 5, text: '위례신사선 장기', rank: 5 },
-    { id: 6, text: '주무 부처', rank: 6 },
-    { id: 7, text: '핵심 교통망', rank: 7 },
-    { id: 8, text: '사업촉진 관계기관', rank: 8 },
-    { id: 9, text: '광역교통개선대책', rank: 9 },
-    { id: 10, text: '변경사항 통보', rank: 10 },
+    { id: 1, text: '불법주차 신고', rank: 1, count: 1450, change: 120, changeType: 'up' },
+    { id: 2, text: '친환경차 충전구역', rank: 2, count: 980, change: 45, changeType: 'up' },
+    { id: 3, text: '충전구역 불법주차', rank: 3, count: 850, change: -12, changeType: 'down' },
+    { id: 4, text: '사업 정상화', rank: 4, count: 720, change: 0, changeType: 'same' },
+    { id: 5, text: '위례신사선 장기', rank: 5, count: 650, change: 15, changeType: 'up' },
+    { id: 6, text: '주무 부처', rank: 6, count: 540, change: -5, changeType: 'down' },
+    { id: 7, text: '핵심 교통망', rank: 7, count: 430, change: 8, changeType: 'up' },
+    { id: 8, text: '사업촉진 관계기관', rank: 8, count: 320, change: 0, changeType: 'same' },
+    { id: 9, text: '광역교통개선대책', rank: 9, count: 210, change: -20, changeType: 'down' },
+    { id: 10, text: '변경사항 통보', rank: 10, count: 150, change: 5, changeType: 'up' },
 ];
 
 const WORD_CLOUD_TAGS = [
@@ -69,20 +69,21 @@ const Dashboard = () => {
             .dash-left { grid-column: span 4 / span 4; display:flex; flex-direction:column; gap: 24px; }
             .dash-right { grid-column: span 8 / span 8; }
 
-            .dash-card { background:#fff; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+            .dash-card { background:#fff; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
             .dash-card-pad-4 { padding: 16px; }
             .dash-card-pad-6 { padding: 24px; }
             .dash-card-title { font-weight: 800; color:#374151; }
 
             .dash-bottom { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 
-            @media (max-width: 1024px) {
-              .dash-container { padding: 20px; }
-              .dash-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-              .dash-left { grid-column: span 12 / span 12; }
               .dash-right { grid-column: span 12 / span 12; }
               .dash-bottom { grid-template-columns: 1fr; }
             }
+            /* Custom Scrollbar */
+            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+            .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
           `}</style>
             <div className="dash-container">
                 {/* 상단 타이틀 및 필터 */}
@@ -120,19 +121,57 @@ const Dashboard = () => {
                 {/* 3. Bottom Grid: Keywords & Word Cloud */}
                 <div className="dash-bottom">
                     {/* Keyword List */}
-                    <div className="dash-card dash-card-pad-6" style={{ height: 400, overflow: 'hidden' }}>
-                        <div className="flex justify-between items-center mb-4 border-b pb-2">
-                            <h3 className="font-bold text-gray-800">급증 키워드 <span className="text-xs text-gray-400 font-normal ml-2">2026.01.12 12:00</span></h3>
-                            <span className="bg-gray-200 text-gray-500 text-xs px-2 py-1 rounded-full">CSV</span>
+                    <div className="dash-card dash-card-pad-6" style={{ height: 400, display: 'flex', flexDirection: 'column' }}>
+                        <div className="flex justify-between items-center mb-4 border-b pb-2 flex-shrink-0">
+                            <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                                <span>🔥 급증 키워드</span>
+                                <span className="text-xs text-gray-400 font-normal">2026.01.12 12:00</span>
+                            </h3>
+                            <span className="bg-blue-50 text-blue-600 text-xs px-2 py-1 rounded border border-blue-100 font-medium">실시간 분석</span>
                         </div>
-                        <ul className="space-y-3 h-full overflow-y-auto pb-10">
-                            {MOCK_KEYWORDS.map((item) => (
-                                <li key={item.id} className="flex items-center gap-3 text-sm border-b border-gray-50 pb-2 last:border-0 hover:bg-gray-50 p-1 rounded">
-                                    <span className="font-bold text-gray-400 w-4 text-center">{item.rank}</span>
-                                    <span className="text-gray-700">{item.text}</span>
-                                </li>
-                            ))}
-                        </ul>
+                        <div className="overflow-y-auto pr-2 custom-scrollbar flex-1">
+                            <ul className="space-y-3">
+                                {MOCK_KEYWORDS.map((item, index) => (
+                                    <li key={item.id} className="group flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
+                                        {/* Rank */}
+                                        <div className={`
+                                            flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg font-bold text-sm
+                                            ${item.rank <= 3 ? 'bg-blue-500 text-white shadow-sm' : 'bg-gray-100 text-gray-500'}
+                                        `}>
+                                            {item.rank}
+                                        </div>
+
+                                        {/* Content */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="font-medium text-gray-700 truncate text-sm">{item.text}</span>
+                                                <span className="text-xs text-gray-400">{item.count}건</span>
+                                            </div>
+                                            {/* Progress Bar background */}
+                                            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                {/* Progress Bar fill */}
+                                                <div
+                                                    className={`h-full rounded-full ${item.rank <= 3 ? 'bg-blue-400' : 'bg-slate-300'}`}
+                                                    style={{ width: `${(item.count / 1450) * 100}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+
+                                        {/* Change Indicator */}
+                                        <div className="flex-shrink-0 w-12 text-right">
+                                            <div className={`text-xs font-semibold flex items-center justify-end gap-0.5
+                                                ${item.changeType === 'up' ? 'text-red-500' : item.changeType === 'down' ? 'text-blue-500' : 'text-gray-400'}
+                                            `}>
+                                                {item.changeType === 'up' && '▲'}
+                                                {item.changeType === 'down' && '▼'}
+                                                {item.changeType === 'same' && '-'}
+                                                <span>{item.change !== 0 ? Math.abs(item.change) : ''}</span>
+                                            </div>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
 
                     {/* Word Cloud */}

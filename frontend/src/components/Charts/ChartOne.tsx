@@ -33,7 +33,7 @@ const ChartOne = () => {
     });
 
     return (
-        <div className="w-full bg-white rounded-lg border border-gray-200 shadow-sm dark:border-gray-700 dark:bg-gray-800 p-4">
+        <div className="w-full bg-white rounded-xl border border-slate-300 shadow-md dark:border-gray-700 dark:bg-gray-800 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap mb-4">
                 <div className="flex w-full flex-wrap gap-3 sm:gap-5">
                     <div className="flex min-w-47.5">

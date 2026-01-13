@@ -25,7 +25,7 @@ const ChartTwo = () => {
     });
 
     return (
-        <div className="w-full bg-white rounded-lg border border-gray-200 shadow-sm dark:border-gray-700 dark:bg-gray-800 p-4">
+        <div className="w-full bg-white rounded-xl border border-slate-300 shadow-md dark:border-gray-700 dark:bg-gray-800 p-4">
             <div className="mb-3 justify-between gap-4 sm:flex">
                 <div>
                     <h5 className="text-xl font-bold text-gray-900 dark:text-white">
