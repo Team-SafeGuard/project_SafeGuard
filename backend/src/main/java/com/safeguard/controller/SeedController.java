@@ -73,7 +73,7 @@ public class SeedController {
                             longitude DOUBLE PRECISION,
                             image_path VARCHAR(500),
                             analysis_result JSONB,
-                            status VARCHAR(20) NOT NULL DEFAULT 'RECEIVED',
+                            status VARCHAR(20) NOT NULL DEFAULT 'UNPROCESSED',
                             is_public BOOLEAN NOT NULL DEFAULT TRUE,
                             created_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
                             updated_date TIMESTAMPTZ,
@@ -281,7 +281,7 @@ public class SeedController {
                     .analysisResult(request.getAnalysisResult())
                     .status(request.getStatus() != null
                             ? com.safeguard.enums.ComplaintStatus.valueOf(request.getStatus())
-                            : com.safeguard.enums.ComplaintStatus.RECEIVED)
+                            : com.safeguard.enums.ComplaintStatus.UNPROCESSED)
                     .likeCount(request.getLikeCount() != null ? request.getLikeCount() : 0)
                     .createdDate(
                             request.getCreatedDate() != null ? java.time.OffsetDateTime.parse(request.getCreatedDate())

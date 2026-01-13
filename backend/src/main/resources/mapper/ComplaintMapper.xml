@@ -25,6 +25,7 @@
             c.agency_no AS agencyNo
         FROM complaint c
         LEFT JOIN agency a ON c.agency_no = a.agency_no
+        LEFT JOIN complaint_agency ca ON c.complaint_no = ca.complaint_no
         <where>
             <if test="category != null and category != '전체'">
                 AND c.category = #{category}
@@ -33,11 +34,7 @@
                 AND c.status = #{status}
             </if>
             <if test="agencyNo != null">
-                AND c.complaint_no IN (
-                    SELECT complaint_no
-                    FROM complaint_agency
-                    WHERE agency_no = #{agencyNo}
-                )
+                AND ca.agency_no = #{agencyNo}
             </if>
             <if test="search != null and search != ''">
                 AND (c.title LIKE CONCAT('%', #{search}, '%') OR c.content LIKE CONCAT('%', #{search}, '%'))
@@ -119,7 +116,7 @@
     <select id="selectComplaintStats" resultType="java.util.Map">
         SELECT
             COUNT(*) AS total,
-            COUNT(CASE WHEN status = 'RECEIVED' THEN 1 END) AS received,
+            COUNT(CASE WHEN status = 'UNPROCESSED' THEN 1 END) AS received,
             COUNT(CASE WHEN status = 'IN_PROGRESS' THEN 1 END) AS processing,
             COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END) AS completed
         FROM complaint

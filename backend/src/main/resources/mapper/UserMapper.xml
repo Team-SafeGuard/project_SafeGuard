@@ -42,7 +42,7 @@
             #{birthDate},
             #{addr},
             #{phone},
-            #{role}::user_role,
+            #{role},
             #{agencyNo},
             NOW()
         )
@@ -102,7 +102,7 @@
             birth_date = #{birthDate},
             addr = #{addr},
             phone = #{phone},
-            role = #{role}::user_role,
+            role = #{role},
             agency_no = #{agencyNo}
         WHERE user_no = #{userNo}
     </update>

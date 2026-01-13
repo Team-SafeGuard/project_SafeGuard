@@ -111,6 +111,11 @@ scrape_configs:
         return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
     ```
 
+3.  **Request Instrumentation (Middleware)**:
+    모든 서비스에는 요청 횟수와 응답 시간을 측정하기 위한 미들웨어가 추가되었습니다.
+    - `http_requests_total`: 메서드, 엔드포인트, 상태 코드별 요청 수
+    - `http_request_duration_seconds`: 엔드포인트별 응답 지연 시간
+
 ---
 
 ## 4. 🚀 실행 및 접속 방법
@@ -148,4 +153,19 @@ docker compose up -d
     - (나머지 설정은 기본값 유지)
 4.  하단 **Save & test** 클릭 -> "Successfully queried the Prometheus API" 메시지 확인.
 
-이제 **Dashboards** 메뉴에서 새로운 대시보드를 생성하고, `request_count`, `http_server_requests_seconds_count` 등의 쿼리를 통해 그래프를 그릴 수 있습니다.
+---
+
+## 6. 📊 자동 프로비저닝 및 대시보드
+
+현재 설정은 **자동 프로비저닝(Automated Provisioning)**이 적용되어 있어, 별도의 수동 설정 없이도 기본적인 대시보드와 데이터 소스가 구성됩니다.
+
+### 6.1 제공되는 대시보드
+- **SafeGuard Overview**: 
+    - 백엔드 및 AI 서비스들의 생존 여부(Up/Down) 확인.
+    - 전체 서비스의 RPS(Request Per Second) 및 평균 응답 속도 시각화.
+    - 백엔드(Spring Boot) 상세 메트릭 및 AI 서비스별 엔드포인트 지표 제공.
+
+### 6.2 대시보드 커스텀 방법
+1.  `monitoring/grafana/dashboards/safeguard-overview.json` 파일을 직접 수정하거나,
+2.  Grafana UI에서 설정을 변경한 뒤 `JSON Model`을 복사하여 위 파일에 덮어쓰기하면 설정이 유지됩니다.
+3.  수정 후에는 `docker compose restart grafana` 명령을 통해 변경 사항을 반영하세요.

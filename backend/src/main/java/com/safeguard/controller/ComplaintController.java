@@ -39,11 +39,15 @@ public class ComplaintController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String region,
+            @RequestParam(required = false) Long agencyNo,
+            @RequestParam(defaultValue = "false") boolean adminMode,
             @RequestParam(defaultValue = "complaint_no") String sort,
             @RequestParam(defaultValue = "ASC") String order) {
 
-        // Dynamically get the logged-in user's agencyNo from security context
-        Long agencyNo = null;
+        log.info("getComplaints request: page={}, search={}, category={}, status={}, agencyNo={}, adminMode={}",
+                page, search, category, status, agencyNo, adminMode);
+
+        // For AGENCY role, we FORCIBLY enforce agencyNo ONLY if adminMode is true
         org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
                 .getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser")) {
@@ -51,12 +55,18 @@ public class ComplaintController {
             UserDTO currentUser = userMapper.selectUserByUserId(userId).orElse(null);
             if (currentUser != null && currentUser.getRole() == UserRole.AGENCY) {
                 agencyNo = currentUser.getAgencyNo();
+                log.info("AGENCY detected. Forcing agencyNo={} for security.", agencyNo);
+            } else if (currentUser != null && currentUser.getRole() == UserRole.ADMIN) {
+                // System Admin sees everything or specified agency
+                log.info("SYSTEM ADMIN detected. agencyNo={}", agencyNo);
             }
         }
 
+        log.info("Executing selectComplaintList with agencyNo={}", agencyNo);
         List<ComplaintDTO> complaints = complaintMapper.selectComplaintList(search, category, status, region, sort,
                 order,
                 agencyNo);
+        log.info("Query returned {} results", complaints.size());
         int totalItems = complaints.size();
         int totalPages = (int) Math.ceil((double) totalItems / limit);
 
