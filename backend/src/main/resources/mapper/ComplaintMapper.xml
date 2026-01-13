@@ -5,17 +5,6 @@
 
 <mapper namespace="com.safeguard.mapper.ComplaintMapper">
 
-            </if>
-            <if test="agencyNo != null">
-                AND ca.agency_no = #{agencyNo}
-            </if>
-            <if test="search != null and search != ''">
-                AND (c.title LIKE CONCAT('%', #{search}, '%') OR c.content LIKE CONCAT('%', #{search}, '%'))
-            </if>
-        </where>
-        ORDER BY c.complaint_no DESC
-    </select>
-
     <select id="findAll" resultType="com.safeguard.dto.ComplaintDTO">
         SELECT
             c.complaint_no AS complaintNo,
@@ -76,9 +65,9 @@
     <!-- 민원 등록 (Entity) -->
     <insert id="insertComplaint" useGeneratedKeys="true" keyProperty="complaintNo" parameterType="com.safeguard.entity.Complaint">
         INSERT INTO complaint (
-            title, content, category, status, is_public, user_no, created_date, updated_date
+            title, content, category, status, is_public, user_no, image_path, agency_no, created_date, updated_date
         ) VALUES (
-            #{title}, #{content}, #{category}, #{status}, #{isPublic}, #{userNo}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+            #{title}, #{content}, #{category}, #{status}, #{isPublic}, #{userNo}, #{imagePath}, #{agencyNo}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
         )
     </insert>
 

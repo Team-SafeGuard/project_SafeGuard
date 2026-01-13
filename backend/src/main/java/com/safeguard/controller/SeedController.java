@@ -247,7 +247,7 @@ public class SeedController {
         try {
             System.out.println(">>> SEED REQUEST START: " + request.getTitle());
             // 먼저 기존에 등록된 유저 찾기 (첫번째 유저 사용)
-            UserDTO user = userMapper.selectUserByUserId("testuser")
+            UserDTO user = userMapper.findByUserId("testuser")
                     .orElseGet(() -> {
                         try {
                             // 테스트 유저가 없으면 만들기
