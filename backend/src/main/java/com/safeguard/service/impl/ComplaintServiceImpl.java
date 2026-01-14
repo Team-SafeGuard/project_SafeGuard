@@ -166,13 +166,12 @@ public class ComplaintServiceImpl implements ComplaintService {
 
         Map<String, Object> stats = new java.util.HashMap<>();
 
-        // 1. 상태별 요약 정보 (전체, 접수, 처리중, 완료 및 SLA 준수율 포함)
-        List<Map<String, Object>> summaryList = complaintMapper.selectComplaintStats(agencyNo);
-        if (summaryList != null && !summaryList.isEmpty()) {
-            stats.put("summary", summaryList.get(0));
+        // 1. 상태별 요약 정보 (전체, 오늘, 접수, 처리중, 완료 및 SLA 준수율 포함)
+        com.safeguard.dto.ComplaintStatsDTO summary = complaintMapper.selectComplaintStats(agencyNo);
+        if (summary != null) {
+            stats.put("summary", summary);
         } else {
-            stats.put("summary",
-                    Map.of("total", 0, "received", 0, "processing", 0, "completed", 0, "sla_compliance", 0));
+            stats.put("summary", new com.safeguard.dto.ComplaintStatsDTO());
         }
 
         // 2. 카테고리별 민원 건수 분포
