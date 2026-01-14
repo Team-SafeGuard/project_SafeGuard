@@ -45,6 +45,7 @@ public class ComplaintController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "false") boolean myAgencyOnly,
             @RequestParam(required = false) String region) {
 
         /*
@@ -61,7 +62,16 @@ public class ComplaintController {
 
             UserDTO user = userMapper.findByUserId(auth.getName()).orElse(null);
             if (user != null && user.getRole() == UserRole.AGENCY) {
-                agencyNo = user.getAgencyNo();
+                if (myAgencyOnly) {
+                    agencyNo = user.getAgencyNo();
+                } else {
+                    // agencyNo not enforced for general filtering unless explicitly requested,
+                    // but we might want to keep the option to filter by agencyNo if passed by
+                    // param?
+                    // The requirement says:
+                    // Checkbox ON -> myAgencyOnly=true -> filter by my agency
+                    // Checkbox OFF -> myAgencyOnly=false -> show all (or filtered by region)
+                }
             }
         }
 
@@ -77,7 +87,7 @@ public class ComplaintController {
         params.put("category", category);
         params.put("status", status);
         params.put("region", region);
-        params.put("agencyNo", agencyNo);
+        params.put("agencyNo", agencyNo); // Will be null if myAgencyOnly is false
         params.put("limit", limit);
         params.put("offset", offset);
 
