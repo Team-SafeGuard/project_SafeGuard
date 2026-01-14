@@ -19,7 +19,7 @@ spring:
   cloud:
     aws:
       s3:
-        bucket: ${AWS_S3_BUCKET:safeguard-uploads}
+        bucket: ${AWS_S3_BUCKET:safeguard-bukket}
         region: ${AWS_REGION:ap-northeast-2}
       credentials:
         access-key: ${AWS_ACCESS_KEY_ID}
