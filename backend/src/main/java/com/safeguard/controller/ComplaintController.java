@@ -248,7 +248,7 @@ public class ComplaintController {
         Map<String, Object> params = new HashMap<>();
         params.put("userNo", userNo);
 
-        List<ComplaintDTO> myComplaints = complaintMapper.selectComplaintList(params);
+        List<ComplaintDTO> myComplaints = complaintMapper.selectComplaintListByUserNo(params);
         return ResponseEntity.ok(myComplaints);
     }
 

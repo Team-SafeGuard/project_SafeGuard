@@ -54,4 +54,6 @@ public interface ComplaintMapper {
     void insertSpatialFeature(SpatialFeature spatialFeature);
 
     void insertComplaintAgency(@Param("complaintNo") Long complaintNo, @Param("agencyNo") Long agencyNo);
+
+    List<ComplaintDTO> selectComplaintListByUserNo(Map<String, Object> params);
 }
