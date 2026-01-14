@@ -71,19 +71,20 @@
             c.answer,
             c.is_public AS isPublic,
             c.like_count AS likeCount,
-            ca.agency_no AS agencyNo,
-            a.agency_name AS agencyName,
-            a.region_code AS regionCode,
-            CASE 
+            MAX(ca.agency_no) AS agencyNo,
+            MAX(a.agency_name) AS agencyName,
+            MAX(a.region_code) AS regionCode,
+            MAX(CASE 
                 WHEN a.agency_type = 'LOCAL' THEN a.agency_name
                 ELSE NULL
-            END AS regionName
+            END) AS regionName
         FROM complaint c
         LEFT JOIN complaint_agency ca
             ON c.complaint_no = ca.complaint_no
         LEFT JOIN agency a
             ON ca.agency_no = a.agency_no
         WHERE c.complaint_no = #{complaintNo}
+        GROUP BY c.complaint_no
     </select>
 
     <!-- 민원 등록 (Entity) : 서비스(createComplaint)에서 호출 -->
@@ -156,6 +157,7 @@
     </sql>
 
     <!-- 대시보드/목록 페이징 조회 -->
+    <!-- 대시보드/목록 페이징 조회 -->
     <select id="findAll" resultType="com.safeguard.dto.ComplaintDTO">
         SELECT
             c.complaint_no AS complaintNo,
@@ -166,19 +168,20 @@
             c.address,
             c.is_public AS isPublic,
             c.like_count AS likeCount,
-            ca.agency_no AS agencyNo,
-            a.agency_name AS agencyName,
-            a.region_code AS regionCode,
-            CASE 
+            MAX(ca.agency_no) AS agencyNo,
+            MAX(a.agency_name) AS agencyName,
+            MAX(a.region_code) AS regionCode,
+            MAX(CASE 
                 WHEN a.agency_type = 'LOCAL' THEN a.agency_name
                 ELSE NULL
-            END AS regionName
+            END) AS regionName
         FROM complaint c
         LEFT JOIN complaint_agency ca
             ON c.complaint_no = ca.complaint_no
         LEFT JOIN agency a
             ON ca.agency_no = a.agency_no
         <include refid="SharedWhere"/>
+        GROUP BY c.complaint_no
         ORDER BY
         <choose>
             <when test="sort == 'like_count'">c.like_count</when>
@@ -193,15 +196,15 @@
     </select>
 
     <!-- 페이징 total count -->
-<select id="countAll" resultType="long">
-    SELECT COUNT(*)
-    FROM complaint c
-    LEFT JOIN complaint_agency ca
-        ON c.complaint_no = ca.complaint_no
-    LEFT JOIN agency a
-        ON ca.agency_no = a.agency_no
-    <include refid="SharedWhere"/>
-</select>
+    <select id="countAll" resultType="long">
+        SELECT COUNT(DISTINCT c.complaint_no)
+        FROM complaint c
+        LEFT JOIN complaint_agency ca
+            ON c.complaint_no = ca.complaint_no
+        LEFT JOIN agency a
+            ON ca.agency_no = a.agency_no
+        <include refid="SharedWhere"/>
+    </select>
 
 
     <!-- 좋아요 여부 -->
