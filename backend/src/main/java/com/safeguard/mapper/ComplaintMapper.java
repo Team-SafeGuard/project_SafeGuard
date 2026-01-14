@@ -14,6 +14,8 @@ import java.util.Optional;
 public interface ComplaintMapper {
     List<ComplaintDTO> selectComplaintList(Map<String, Object> params);
 
+    List<ComplaintDTO> findAll(Map<String, Object> params);
+
     long countAll(Map<String, Object> params);
 
     List<Map<String, Object>> selectComplaintStats(@Param("agencyNo") Long agencyNo);
