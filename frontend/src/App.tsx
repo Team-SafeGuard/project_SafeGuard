@@ -96,7 +96,14 @@ function App() {
                   </>
                 ) : (
                   <>
-                    <li className="nav__item"><Link to="/apply-text">신고 하기</Link></li>
+                    <li className="nav__item nav-dropdown">
+                      <span>민원접수 ▾</span>
+                      <div className="nav-dropdown-content">
+                        <Link to="/apply-text">텍스트 민원</Link>
+                        <Link to="/apply-voice">음성 민원</Link>
+                        <Link to="/apply-image">이미지 민원</Link>
+                      </div>
+                    </li>
                     <li className="nav__item"><Link to="/about">서비스 소개</Link></li>
                     <li className="nav__item"><Link to="/list">민원 목록</Link></li>
                     <li className="nav__item"><Link to="/map">신고현황 지도</Link></li>
