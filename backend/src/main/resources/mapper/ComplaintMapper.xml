@@ -195,9 +195,9 @@
         GROUP BY c.complaint_no
         ORDER BY
         <choose>
-            <when test="sort == 'like_count'">c.like_count</when>
-            <when test="sort == 'complaint_no'">c.complaint_no</when>
-            <otherwise>c.created_date</otherwise>
+            <when test="sort == 'created_date'">c.created_date</when>
+            <when test="sort == 'likeCount'">c.like_count</when>
+            <otherwise>c.complaint_no</otherwise>
         </choose>
         <choose>
             <when test="order == 'ASC'">ASC</when>

@@ -46,6 +46,8 @@ public class ComplaintController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "false") boolean myAgencyOnly,
+            @RequestParam(defaultValue = "complaint_no") String sort,
+            @RequestParam(defaultValue = "DESC") String order,
             @RequestParam(required = false) String region) {
 
         /*
@@ -87,6 +89,8 @@ public class ComplaintController {
         params.put("category", category);
         params.put("status", status);
         params.put("region", region);
+        params.put("sort", sort);
+        params.put("order", order);
         params.put("agencyNo", agencyNo); // Will be null if myAgencyOnly is false
         params.put("limit", limit);
         params.put("offset", offset);

@@ -92,7 +92,7 @@ function List() {
         if (val === 'old') {
             newOrder = 'ASC';
         } else if (val === 'likes') {
-            newSort = 'like_count';
+            newSort = 'likeCount';
         }
 
         setSearchParams({ page: '1', search, category, status: statusParams, region: regionParams, sort: newSort, order: newOrder, myAgencyOnly: String(myAgencyOnly) });
