@@ -8,12 +8,17 @@ import com.safeguard.mapper.ComplaintMapper;
 import com.safeguard.mapper.UserMapper;
 import com.safeguard.security.CustomUserDetails;
 import com.safeguard.service.ComplaintService;
+import com.safeguard.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +35,8 @@ public class ComplaintController {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final ComplaintService complaintService;
+    private final FileService fileService;
+    private final ObjectMapper objectMapper;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getComplaints(
@@ -209,16 +216,39 @@ public class ComplaintController {
      * 민원 생성
      * ===============================
      */
-    @PostMapping
+    @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<Map<String, Object>> createComplaint(
-            @RequestBody Map<String, Object> data,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @RequestPart("complaint") String complaintJson,
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @AuthenticationPrincipal CustomUserDetails userDetails) throws JsonProcessingException {
+
+        log.info("Received Complaint Creation Request. JSON: {}", complaintJson);
 
         Long userNo = (userDetails != null) ? userDetails.getUserNo() : 1L;
-        Long complaintNo = complaintService.createComplaint(data, userNo);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> data = objectMapper.readValue(complaintJson, Map.class);
+
+        Long complaintNo = complaintService.createComplaint(data, file, userNo);
 
         return ResponseEntity.ok(Map.of(
                 "complaintNo", complaintNo,
                 "message", "민원이 성공적으로 접수되었습니다."));
+    }
+
+    // 이미지 업로드
+    @PostMapping("/images")
+    public ResponseEntity<Map<String, String>> uploadImage(
+            @RequestParam("image") org.springframework.web.multipart.MultipartFile file) {
+        try {
+            String fileName = fileService.storeFile(file);
+            String imagePath = "/uploads/" + fileName;
+            return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED)
+                    .body(Map.of("imagePath", imagePath));
+        } catch (Exception e) {
+            log.error("Image upload failed", e);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 }

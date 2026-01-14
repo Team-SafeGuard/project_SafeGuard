@@ -9,8 +9,9 @@ export const removeToken = (): void => localStorage.removeItem('token');
 // API 요청 헬퍼
 const apiRequest = async (endpoint: string, options: RequestInit = {}): Promise<any> => {
     const token = getToken();
+    const isFormData = options.body instanceof FormData;
     const headers: HeadersInit = {
-        'Content-Type': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...(options.headers as any),
     };
 
@@ -23,7 +24,18 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}): Promise<
         headers,
     });
 
-    const data = await response.json();
+    const text = await response.text();
+    let data;
+    try {
+        data = text ? JSON.parse(text) : {};
+    } catch (e) {
+        console.error('JSON Parse Error:', e);
+        // JSON 파싱 실패 시, 텍스트가 있다면 에러 메시지로 사용
+        if (!response.ok) {
+            throw new Error(text || 'Network response was not ok');
+        }
+        return { message: text }; // 성공인데 JSON이 아닌 경우 (거의 없음)
+    }
 
     if (!response.ok) {
         throw new Error(
@@ -102,10 +114,13 @@ export const complaintsAPI = {
 
     getDetail: (id: string | number) => apiRequest(`/complaints/${id}`),
 
-    create: (complaintData: any) => apiRequest('/complaints', {
-        method: 'POST',
-        body: JSON.stringify(complaintData),
-    }),
+    create: (complaintData: any) => {
+        const isFormData = complaintData instanceof FormData;
+        return apiRequest('/complaints', {
+            method: 'POST',
+            body: isFormData ? complaintData : JSON.stringify(complaintData),
+        });
+    },
 
     update: (id: string | number, complaintData: any) => apiRequest(`/complaints/${id}`, {
         method: 'PUT',
@@ -143,6 +158,29 @@ export const complaintsAPI = {
         method: 'PATCH',
         body: JSON.stringify({ answer }),
     }),
+
+    uploadImage: async (file: File) => {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const token = getToken();
+        const headers: HeadersInit = {};
+        if (token) {
+            (headers as any)['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(`${API_BASE}/complaints/images`, {
+            method: 'POST',
+            body: formData,
+            headers
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || '이미지 업로드 중 오류가 발생했습니다.');
+        }
+        return data; // { imagePath: '...' } 형태 기대
+    },
 };
 
 // Agencies API
