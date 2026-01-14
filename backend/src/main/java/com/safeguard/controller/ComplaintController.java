@@ -1,6 +1,7 @@
 package com.safeguard.controller;
 
 import com.safeguard.dto.ComplaintDTO;
+import com.safeguard.dto.ComplaintStatsDTO;
 import com.safeguard.dto.UserDTO;
 import com.safeguard.enums.ComplaintStatus;
 import com.safeguard.enums.UserRole;
@@ -283,5 +284,60 @@ public class ComplaintController {
             return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", e.getMessage()));
         }
+    }
+
+    /*
+     * ===============================
+     * 통계 (대시보드)
+     * ===============================
+     */
+    @GetMapping("/stats")
+    public ResponseEntity<ComplaintStatsDTO> getStats() {
+        Long agencyNo = null;
+        var auth = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication();
+
+        if (auth != null && auth.isAuthenticated()
+                && !"anonymousUser".equals(auth.getPrincipal())) {
+            UserDTO user = userMapper.findByUserId(auth.getName()).orElse(null);
+            if (user != null && user.getRole() == UserRole.AGENCY) {
+                agencyNo = user.getAgencyNo();
+            }
+        }
+
+        ComplaintStatsDTO stats = complaintMapper.selectComplaintStats(agencyNo);
+        if (stats == null) {
+            stats = new ComplaintStatsDTO();
+        }
+        return ResponseEntity.ok(stats);
+    }
+
+    /*
+     * ===============================
+     * 좋아요 상위 5개 (필터 지원)
+     * ===============================
+     */
+    @GetMapping("/top-liked")
+    public ResponseEntity<List<ComplaintDTO>> getTopLikedComplaints(
+            @RequestParam(required = false) String status) {
+
+        /*
+         * 1. 로그인 사용자 기준 agencyNo
+         */
+        Long agencyNo = null;
+        var auth = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication();
+
+        if (auth != null && auth.isAuthenticated()
+                && !"anonymousUser".equals(auth.getPrincipal())) {
+
+            UserDTO user = userMapper.findByUserId(auth.getName()).orElse(null);
+            if (user != null && user.getRole() == UserRole.AGENCY) {
+                agencyNo = user.getAgencyNo();
+            }
+        }
+
+        List<ComplaintDTO> result = complaintMapper.selectTopLikedComplaints(status, agencyNo);
+        return ResponseEntity.ok(result);
     }
 }

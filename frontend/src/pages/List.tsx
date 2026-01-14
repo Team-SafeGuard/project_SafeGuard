@@ -102,11 +102,11 @@ function List() {
         setSearchParams({ page: String(newPage), search, category, status: statusParams, region: regionParams, sort, order, myAgencyOnly: String(myAgencyOnly) });
     };
 
-    const getStatusBadge = (status) => {
-        const statusMap = {
+    const getStatusBadge = (status: any) => {
+        const statusMap: any = {
             'UNPROCESSED': { text: '미처리', bg: '#fee2e2', color: '#dc2626' }, // 빨간색
             'IN_PROGRESS': { text: '처리중', bg: '#fef3c7', color: '#d97706' }, // 노란색
-            'COMPLETED': { text: '완료', bg: '#dcfce7', color: '#16a34a' },
+            'COMPLETED': { text: '처리완료', bg: '#dcfce7', color: '#16a34a' },
             'REJECTED': { text: '반려', bg: '#f1f5f9', color: '#64748b' },
             'CANCELLED': { text: '취소', bg: '#f1f5f9', color: '#64748b' }
         };
@@ -244,7 +244,7 @@ function List() {
                                 cursor: 'pointer'
                             }}
                         >
-                            {['전체', '미처리', '처리중', '완료'].map(s => (
+                            {['전체', '미처리', '처리중', '처리완료'].map(s => (
                                 <option key={s} value={s === '전체' ? '전체' : (s === '미처리' ? 'UNPROCESSED' : (s === '처리중' ? 'IN_PROGRESS' : 'COMPLETED'))}>
                                     {s === '전체' ? '접수상태' : s}
                                 </option>
