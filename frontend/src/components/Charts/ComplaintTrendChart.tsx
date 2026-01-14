@@ -38,29 +38,70 @@ const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory }) => {
         ...(visibility.growth ? [{ name: `증감률 (%)`, data: growthData, type: 'line' }] : []),
     ];
 
+    // 선택된 지표에 따라 색상과 스타일 동적 생성
+    const activeColors = [
+        ...(visibility.received ? ['#3B82F6'] : []),
+        ...(visibility.completed ? ['#10B981'] : []),
+        ...(visibility.growth ? ['#FF3B30'] : []), // 더 밝고 선명한 빨간색
+    ];
+
+    const activeStrokeWidths = [
+        ...(visibility.received ? [3] : []),
+        ...(visibility.completed ? [3] : []),
+        ...(visibility.growth ? [3] : []), // 다른 지표와 동일하게 3으로 조정
+    ];
+
+    const activeDashArrays = [
+        ...(visibility.received ? [0] : []),
+        ...(visibility.completed ? [0] : []),
+        ...(visibility.growth ? [0] : []),
+    ];
+
+    const activeOpacitiesFrom = [
+        ...(visibility.received ? [0.45] : []),
+        ...(visibility.completed ? [0.45] : []),
+        ...(visibility.growth ? [1.0] : []), // 증감률은 100% 불투명하게
+    ];
+
+    const activeOpacitiesTo = [
+        ...(visibility.received ? [0.1] : []),
+        ...(visibility.completed ? [0.1] : []),
+        ...(visibility.growth ? [1.0] : []), // 증감률은 100% 불투명하게
+    ];
+
     const options = {
         legend: { show: false },
-        colors: ['#3B82F6', '#10B981', '#EF4444'],
+        colors: activeColors,
         chart: {
             fontFamily: 'Pretendard, sans-serif',
             height: 350,
             type: 'line' as const,
-            dropShadow: { enabled: true, color: '#623CEA14', top: 10, blur: 4, left: 0, opacity: 0.1 },
+            dropShadow: {
+                enabled: true,
+                color: '#000',
+                top: 5,
+                blur: 8,
+                left: 0,
+                opacity: 0.15,
+                enabledOnSeries: visibility.growth ? [activeColors.length - 1] : [] // 증감률 선에만 그림자 효과를 주어 '앞에 있는 느낌' 강화
+            },
             toolbar: { show: false },
         },
         stroke: {
-            width: visibility.growth ? [3, 3, 4] : [3, 3],
+            width: activeStrokeWidths,
             curve: 'smooth' as const,
-            dashArray: [0, 0, 5] // 증감률은 점선으로 표현하여 구분감 부여
+            dashArray: activeDashArrays
         },
         fill: {
             type: 'gradient',
             gradient: {
-                shadeIntensity: 1,
-                opacityFrom: 0.45,
-                opacityTo: 0.05,
-                stops: [20, 100, 100, 100],
-                // 각 시리즈별 그라데이션 색상을 명시적으로 제어 (Recharts와 달리 ApexCharts는 colors 배열을 따름)
+                shade: 'light',
+                type: 'vertical',
+                shadeIntensity: 0.5,
+                inverseColors: false,
+                opacityFrom: activeOpacitiesFrom, // 동적 불투명도 적용
+                opacityTo: activeOpacitiesTo,
+                stops: [0, 100]
             }
         },
         grid: {
@@ -73,9 +114,9 @@ const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory }) => {
         markers: {
             size: 5,
             colors: '#fff',
-            strokeColors: ['#3B82F6', '#10B981', '#EF4444'],
+            strokeColors: activeColors,
             strokeWidth: 3,
-            hover: { size: 8 }
+            hover: { size: 9 }
         },
         xaxis: {
             type: 'category' as const,
@@ -93,8 +134,8 @@ const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory }) => {
             {
                 opposite: true,
                 show: visibility.growth,
-                title: { text: '증감률 (%)', style: { color: '#EF4444', fontWeight: 800 } },
-                labels: { style: { colors: '#EF4444', fontWeight: 700 } }
+                title: { text: '증감률 (%)', style: { color: '#FF3B30', fontWeight: 800 } },
+                labels: { style: { colors: '#FF3B30', fontWeight: 700 } }
             }
         ],
         tooltip: {
@@ -103,8 +144,8 @@ const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory }) => {
             intersect: false,
             y: {
                 formatter: (val: number, { seriesIndex }: any) => {
-                    // 데이터 값 출력시 증감률은 %로 표시
-                    const isGrowthIndex = visibility.growth && seriesIndex === series.length - 1;
+                    // 현재 활성화된 시리즈 중 증감률의 인덱스 확인
+                    const isGrowthIndex = visibility.growth && seriesIndex === activeColors.length - 1;
                     if (isGrowthIndex) {
                         return `${val}%`;
                     }
@@ -166,7 +207,7 @@ const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory }) => {
                         opacity: visibility.growth ? 1 : 0.4, transition: 'all 0.2s'
                     }}
                 >
-                    <div style={{ width: '16px', height: '16px', borderRadius: '4px', backgroundColor: '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: '16px', height: '16px', borderRadius: '4px', backgroundColor: '#FF3B30', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {visibility.growth && <div style={{ width: '6px', height: '6px', backgroundColor: 'white', borderRadius: '1px' }}></div>}
                     </div>
                     <span style={{ fontSize: '15px', fontWeight: '900', color: '#1e293b' }}>증감률 (%)</span>

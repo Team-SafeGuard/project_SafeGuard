@@ -97,8 +97,7 @@ const ComplaintCategoryChart: React.FC<ChartTwoProps> = ({ selectedCategory, onS
 
             <div className="mt-4 pt-6 border-t border-slate-100 flex-1 flex flex-column">
                 <div className="flex items-center justify-center gap-2 mb-8">
-                    <span style={{ fontSize: '12px', color: '#94A3B8' }}>▼</span>
-                    <h6 style={{ fontSize: '13px', fontWeight: '800', color: '#64748B', letterSpacing: '-0.02em' }}>분류별 민원신청 건수 및 전일대비 증감률(%)</h6>
+                    <h6 style={{ fontSize: '13px', fontWeight: '800', color: '#64748B', letterSpacing: '-0.02em' }}> ▼ 분류별 민원신청 건수 및 전일대비 증감률(%)</h6>
                 </div>
 
                 <div className="max-h-[520px] overflow-auto pr-3 custom-scrollbar">
