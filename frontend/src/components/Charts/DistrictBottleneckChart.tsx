@@ -1,42 +1,24 @@
+/**
+ * 자치구별 미처리 또는 지연된 민원 건수 TOP 10을 보여주는 병목 분석 차트 컴포넌트입니다.
+ */
 import React from 'react';
 import ReactApexChart from 'react-apexcharts';
 
 interface DistrictBottleneckChartProps {
     type: 'unprocessed' | 'overdue';
+    data: { name: string; count: number }[];
 }
 
-const DistrictBottleneckChart: React.FC<DistrictBottleneckChartProps> = ({ type }) => {
-    // 임시 데이터 (실제 데이터 연동 필요)
-    const unprocessedData = [
-        { x: '강남구', y: 145 },
-        { x: '서초구', y: 122 },
-        { x: '송파구', y: 118 },
-        { x: '영등포구', y: 105 },
-        { x: '강서구', y: 98 },
-        { x: '마포구', y: 85 },
-        { x: '관악구', y: 76 },
-        { x: '노원구', y: 72 },
-        { x: '은평구', y: 68 },
-        { x: '용산구', y: 64 },
-    ];
+const DistrictBottleneckChart: React.FC<DistrictBottleneckChartProps> = ({ type, data }) => {
+    // 실제 데이터 매핑
+    const currentData = data.map(item => ({ x: item.name, y: item.count }));
 
-    const overdueData = [
-        { x: '강남구', y: 24 },
-        { x: '동작구', y: 18 },
-        { x: '강서구', y: 15 },
-        { x: '종로구', y: 14 },
-        { x: '마포구', y: 12 },
-        { x: '서초구', y: 10 },
-        { x: '구로구', y: 9 },
-        { x: '금천구', y: 8 },
-        { x: '성동구', y: 7 },
-        { x: '중구', y: 6 },
-    ];
 
-    const currentData = type === 'unprocessed' ? unprocessedData : overdueData;
     const mainColor = type === 'unprocessed' ? '#3B82F6' : '#EF4444';
     const bgColor = type === 'unprocessed' ? '#EFF6FF' : '#FEF2F2';
     const title = type === 'unprocessed' ? '구별 미처리 TOP 10' : '구별 지연(Overdue) TOP 10';
+    const maxY = Math.max(...currentData.map((d) => d.y));
+    const xMax = Math.ceil(maxY * 1.3); // 1.2~1.35 사이로 취향 조절
 
     const options = {
         chart: {
@@ -48,7 +30,7 @@ const DistrictBottleneckChart: React.FC<DistrictBottleneckChartProps> = ({ type 
             bar: {
                 borderRadius: 4,
                 horizontal: true,
-                barHeight: '60%',
+                barHeight: '85%',
                 distributed: false,
                 dataLabels: { position: 'top' }
             }
@@ -59,22 +41,24 @@ const DistrictBottleneckChart: React.FC<DistrictBottleneckChartProps> = ({ type 
             textAnchor: 'start' as const,
             style: { colors: ['#1e293b'], fontWeight: 800 },
             formatter: (val: number) => `${val}건`,
-            offsetX: 10
+            offsetX: 14
         },
         xaxis: {
             categories: currentData.map(d => d.x),
             labels: { show: false },
             axisBorder: { show: false },
-            axisTicks: { show: false }
+            axisTicks: { show: false },
+            max: xMax,
         },
         yaxis: {
             labels: {
-                style: { colors: '#475569', fontSize: '14px', fontWeight: 800 }
+                style: { colors: '#475569', fontSize: '14px', fontWeight: 800 },
+                padding: 14,
             }
         },
         grid: {
             show: false,
-            padding: { left: 0, right: 40 }
+            padding: { left: 10, right: 30 }
         },
         tooltip: {
             theme: 'light',
@@ -86,6 +70,8 @@ const DistrictBottleneckChart: React.FC<DistrictBottleneckChartProps> = ({ type 
         name: type === 'unprocessed' ? '미처리 건수' : '지연 건수',
         data: currentData.map(d => d.y)
     }];
+
+
 
     return (
         <div style={{

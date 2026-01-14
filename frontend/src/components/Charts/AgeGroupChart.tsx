@@ -1,16 +1,26 @@
+/**
+ * 연령별 민원접수 현황을 보여주는 바 차트 컴포넌트입니다.
+ */
 import React from 'react';
 import ReactApexChart from 'react-apexcharts';
 
-const AgeGroupChart: React.FC = () => {
-    const series = [{
-        name: '민원 접수 건수',
-        data: [120, 250, 480, 520, 310, 150]
-    }];
+interface AgeGroupChartProps {
+    /** 관리자 대시보드로부터 전달받은 실제 연령대별 통계 데이터 */
+    data?: Array<{ ageGroup?: string; agegroup?: string; count: number }>;
+}
 
-    const options = {
+/**
+ * 연령대별 민원 접수 분포 차트
+ * (한글 기능 설명: 민원인 정보를 기반으로 연령대별 통계를 바 차트로 시각화)
+ */
+const AgeGroupChart: React.FC<AgeGroupChartProps> = ({ data }) => {
+    // 실제 데이터 매핑 (기본값 제공, PostgreSQL 소문자 필드명 대응)
+    const chartCategories = data && data.length > 0 ? data.map(d => d.agegroup || d.ageGroup) : ['10대', '20대', '30대', '40대', '50대', '60대+'];
+    const chartSeries = data && data.length > 0 ? data.map(d => Number(d.count)) : [15, 45, 120, 80, 50, 30];
+
+    const options: any = {
         chart: {
             type: 'bar' as const,
-            height: '100%',
             toolbar: { show: false },
             fontFamily: 'Satoshi, sans-serif',
         },
@@ -25,37 +35,10 @@ const AgeGroupChart: React.FC = () => {
         dataLabels: {
             enabled: true,
             formatter: (val: number) => val.toLocaleString(),
-            style: {
-                fontSize: '12px',
-                fontWeight: 900,
-                colors: ['#334155']
-            }
+            style: { fontSize: '12px' }
         },
-        legend: { show: false },
         xaxis: {
-            categories: ['10대', '20대', '30대', '40대', '50대', '60대+'],
-            axisBorder: { show: false },
-            axisTicks: { show: false },
-            labels: {
-                style: {
-                    colors: '#64748B',
-                    fontSize: '12px',
-                    fontWeight: 700
-                }
-            }
-        },
-        yaxis: {
-            title: {
-                text: '접수 건수',
-                style: { color: '#64748B', fontWeight: 800 }
-            },
-            labels: {
-                style: { colors: '#64748B', fontWeight: 700 }
-            }
-        },
-        grid: {
-            borderColor: '#f1f5f9',
-            strokeDashArray: 4,
+            categories: chartCategories,
         },
         tooltip: {
             theme: 'light',
@@ -64,6 +47,11 @@ const AgeGroupChart: React.FC = () => {
             }
         }
     };
+
+    const series = [{
+        name: '민원 건수',
+        data: chartSeries
+    }];
 
     return (
         <div style={{
@@ -81,7 +69,7 @@ const AgeGroupChart: React.FC = () => {
                 <h5 style={{ fontSize: '20px', fontWeight: '950', color: '#1e293b' }}>연령별 민원접수 현황</h5>
             </div>
 
-            <div id="ageChart" style={{ flex: 1, minHeight: 0 }}>
+            <div style={{ flex: 1, minHeight: '300px' }}>
                 <ReactApexChart options={options} series={series} type="bar" height="100%" />
             </div>
         </div>
