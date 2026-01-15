@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactApexChart from 'react-apexcharts';
 
-const AgeGroupChart: React.FC = () => {
+const AgeGroupChart: React.FC<{ refreshKey?: number }> = ({ refreshKey }) => {
     const [series, setSeries] = useState([{
         name: '민원 접수 건수',
         data: [] as number[]
@@ -25,7 +25,7 @@ const AgeGroupChart: React.FC = () => {
                 }
             })
             .catch(err => console.error("Failed to fetch age group stats:", err));
-    }, []);
+    }, [refreshKey]);
 
 
     const options = {

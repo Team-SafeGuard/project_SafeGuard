@@ -3,6 +3,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import ReactApexChart from 'react-apexcharts';
+import { RefreshCcw } from 'lucide-react';
 
 
 
@@ -12,9 +13,10 @@ import ReactApexChart from 'react-apexcharts';
 interface ChartTwoProps {
     selectedCategory: string;
     onSelect: (category: string) => void;
+    refreshKey?: number;
 }
 
-const ComplaintCategoryChart: React.FC<ChartTwoProps> = ({ selectedCategory, onSelect }) => {
+const ComplaintCategoryChart: React.FC<ChartTwoProps> = ({ selectedCategory, onSelect, refreshKey }) => {
     const [categoryData, setCategoryData] = useState<any[]>([]);
 
     useEffect(() => {
@@ -41,7 +43,7 @@ const ComplaintCategoryChart: React.FC<ChartTwoProps> = ({ selectedCategory, onS
                 }
             })
             .catch(err => console.error("Failed to fetch category stats:", err));
-    }, [selectedCategory]);
+    }, [selectedCategory, refreshKey]);
 
     // Derived state for chart
     const top5 = categoryData.slice(0, 5);
@@ -116,6 +118,32 @@ const ComplaintCategoryChart: React.FC<ChartTwoProps> = ({ selectedCategory, onS
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
                 <div style={{ width: '4px', height: '20px', backgroundColor: '#FF8787', borderRadius: '2px', flexShrink: 0 }}></div>
                 <h5 style={{ fontSize: '20px', fontWeight: '950', color: '#1e293b' }}>분류별 민원 통계</h5>
+                {selectedCategory !== '전체' && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onSelect('전체');
+                        }}
+                        style={{
+                            marginLeft: 'auto',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            color: '#64748B',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            transition: 'background-color 0.2s'
+                        }}
+                        className="hover:bg-slate-100/80"
+                    >
+                        <RefreshCcw size={14} /> 전체 보기
+                    </button>
+                )}
             </div>
 
             <div
@@ -150,7 +178,7 @@ const ComplaintCategoryChart: React.FC<ChartTwoProps> = ({ selectedCategory, onS
                     <h6 style={{ fontSize: '13px', fontWeight: '800', color: '#64748B', letterSpacing: '-0.02em' }}> ▼ 분류별 민원신청 건수 및 전일대비 증감률(%)</h6>
                 </div>
 
-                <div className="custom-scrollbar" style={{ height: '520px', overflowY: 'auto', paddingRight: '12px' }}>
+                <div className="custom-scrollbar" style={{ height: '680px', overflowY: 'auto', paddingRight: '12px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {categoryData.map((item, i) => (
                             <div

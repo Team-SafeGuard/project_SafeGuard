@@ -6,9 +6,10 @@ import ReactApexChart from 'react-apexcharts';
 
 interface DistrictBottleneckChartProps {
     type: 'unprocessed' | 'overdue';
+    refreshKey?: number;
 }
 
-const DistrictBottleneckChart: React.FC<DistrictBottleneckChartProps> = ({ type }) => {
+const DistrictBottleneckChart: React.FC<DistrictBottleneckChartProps> = ({ type, refreshKey }) => {
     const [data, setData] = useState<{ x: string, y: number }[]>([]);
 
     useEffect(() => {
@@ -31,7 +32,7 @@ const DistrictBottleneckChart: React.FC<DistrictBottleneckChartProps> = ({ type 
                 setData(formatted);
             })
             .catch(err => console.error("Failed to fetch bottleneck stats:", err));
-    }, [type]);
+    }, [type, refreshKey]);
 
 
 

@@ -347,7 +347,15 @@
         <result property="completionRate" column="completion_rate"/>
         <result property="safetyRiskRate" column="safety_risk_rate"/>
         <result property="longTermUnprocessedRate" column="long_term_unprocessed_rate"/>
-        </resultMap>
+        
+        <!-- Summary Bar용 신규 매핑 -->
+        <result property="todayCount" column="todayCount"/>
+        <result property="yesterdayCount" column="yesterdayCount"/>
+        <result property="monthCount" column="monthCount"/>
+        <result property="lastMonthCount" column="lastMonthCount"/>
+        <result property="yearCount" column="yearCount"/>
+        <result property="lastYearCount" column="lastYearCount"/>
+    </resultMap>
 
     <!-- 통계(요약): 전체 건수, 상태별(UNPROCESSED, IN_PROGRESS 등) 카운트 및 SLA 준수율 조회 -->
     <select id="selectComplaintStats" resultMap="StatsResultMap">
@@ -374,6 +382,14 @@
                     WHERE extract(dow from d) NOT IN (0, 6)
                 ) > 3 THEN c.complaint_no 
             END) AS overdue,
+            
+            -- 기간별 접수 건수 (Summary Bar용)
+            COUNT(DISTINCT CASE WHEN CAST(c.created_date AS DATE) = CAST(NOW() AS DATE) THEN c.complaint_no END) AS todayCount,
+            COUNT(DISTINCT CASE WHEN CAST(c.created_date AS DATE) = CAST(NOW() - INTERVAL '1 day' AS DATE) THEN c.complaint_no END) AS yesterdayCount,
+            COUNT(DISTINCT CASE WHEN TO_CHAR(c.created_date, 'YYYY-MM') = TO_CHAR(NOW(), 'YYYY-MM') THEN c.complaint_no END) AS monthCount,
+            COUNT(DISTINCT CASE WHEN TO_CHAR(c.created_date, 'YYYY-MM') = TO_CHAR(NOW() - INTERVAL '1 month', 'YYYY-MM') THEN c.complaint_no END) AS lastMonthCount,
+            COUNT(DISTINCT CASE WHEN TO_CHAR(c.created_date, 'YYYY') = TO_CHAR(NOW(), 'YYYY') THEN c.complaint_no END) AS yearCount,
+            COUNT(DISTINCT CASE WHEN TO_CHAR(c.created_date, 'YYYY') = TO_CHAR(NOW() - INTERVAL '1 year', 'YYYY') THEN c.complaint_no END) AS lastYearCount,
 
             COALESCE(ROUND(
                 AVG(EXTRACT(EPOCH FROM (c.completed_date - c.created_date)) / 86400.0) FILTER (WHERE c.status = 'COMPLETED'), 1

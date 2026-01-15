@@ -13,6 +13,7 @@ import { HelpCircle } from 'lucide-react';
 interface ChartOneProps {
     selectedCategory: string;
     timeBasis: 'DAY' | 'MONTH' | 'YEAR';
+    refreshKey?: number;
 }
 
 type TrendRow = { date: string; received: number; completed: number; backlog: number; slaRate: number; completionRate: number };
@@ -111,7 +112,7 @@ const KpiCard: React.FC<{
     );
 };
 
-const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory, timeBasis }) => {
+const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory, timeBasis, refreshKey }) => {
     const [trendData, setTrendData] = useState<TrendRow[]>([]);
     const [backlogStats, setBacklogStats] = useState<BacklogStats>({
         current: 0,
@@ -190,7 +191,7 @@ const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory, timeBa
                 setBacklogStats(bStats);
             })
             .catch((err) => console.error('Failed to fetch dashboard trends:', err));
-    }, [selectedCategory, timeBasis]);
+    }, [selectedCategory, timeBasis, refreshKey]);
 
     const dates = useMemo(() => trendData.map((d) => d.date), [trendData]);
     const receivedData = useMemo(() => trendData.map((d) => d.received), [trendData]);
@@ -265,16 +266,21 @@ const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory, timeBa
 
 
     const backlogSubText = useMemo(() => {
-        if (backlogStats.changePercent === null) return '전월 대비 N/A';
+        if (backlogStats.changePercent === null) return <span style={{ color: '#94A3B8' }}>변동 없음</span>;
         const arrow = backlogStats.changeType === 'increase' ? '▲' : '▼';
-        const sign = backlogStats.changeType === 'increase' ? '+' : '-';
-        const color = backlogStats.changeType === 'increase' ? '#EF4444' : '#10B981';
+        // Color for the text itself can still indicate trend, but the Card color should be stable
+        const color = backlogStats.changeType === 'increase'
+            ? (backlogStats.changePercent > 10 ? '#EF4444' : '#F59E0B')
+            : '#3B82F6';
+
+        const periodLabel = timeBasis === 'DAY' ? '전일 대비' : timeBasis === 'YEAR' ? '전년 대비' : '전월 대비';
+
         return (
-            <span style={{ color, fontWeight: 800 }}>
-                전월 대비 {arrow} {sign}{Math.abs(backlogStats.diff)}건 ({backlogStats.changePercent}%)
+            <span style={{ color }}>
+                {periodLabel} {arrow} {backlogStats.changePercent}%
             </span>
         );
-    }, [backlogStats]);
+    }, [backlogStats, timeBasis]); // Added timeBasis to dependencies
 
     return (
         <div
@@ -306,23 +312,8 @@ const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory, timeBa
                 <KpiCard
                     title="현재 미처리 건수"
                     value={`${backlogStats.current} 건`}
-                    sub={(() => {
-                        if (backlogStats.changePercent === null) return <span style={{ color: '#94A3B8' }}>전월 대비 N/A</span>;
-                        const arrow = backlogStats.changeType === 'increase' ? '▲' : '▼';
-                        const color = backlogStats.changeType === 'increase'
-                            ? (backlogStats.changePercent > 10 ? '#EF4444' : '#F59E0B')
-                            : '#3B82F6';
-                        return (
-                            <span style={{ color }}>
-                                전월 대비 {arrow} {backlogStats.changePercent}%
-                            </span>
-                        );
-                    })()}
-                    color={(() => {
-                        if (backlogStats.changePercent === null) return '#3B82F6';
-                        if (backlogStats.changeType === 'decrease') return '#3B82F6'; // 정상
-                        return backlogStats.changePercent > 10 ? '#EF4444' : '#F59E0B'; // 위험 vs 주의
-                    })()}
+                    sub={backlogSubText}
+                    color='#3B82F6' // Static Blue to avoid confusion
                     criteria={`현재 처리되지 않은 민원 총 건수입니다.\n해당 유형의 행정 업무 부담 규모를 나타냅니다.`}
                 />
 

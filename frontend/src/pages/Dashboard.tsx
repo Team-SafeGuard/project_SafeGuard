@@ -10,6 +10,7 @@ import ComplaintTrendChart from '../components/Charts/ComplaintTrendChart';
 import ComplaintCategoryChart from '../components/Charts/ComplaintCategoryChart';
 import AgeGroupChart from '../components/Charts/AgeGroupChart';
 import DistrictBottleneckChart from '../components/Charts/DistrictBottleneckChart';
+import ComplaintGrowthTrendChart from '../components/Charts/ComplaintGrowthTrendChart';
 
 
 
@@ -35,7 +36,26 @@ const Dashboard = () => {
     const [selectedCategory, setSelectedCategory] = useState('전체');
     const [timeBasis, setTimeBasis] = useState<'DAY' | 'MONTH' | 'YEAR'>('MONTH');
     const [currentPage, setCurrentPage] = useState(1);
+
     const ITEMS_PER_PAGE = 5;
+
+    // Auto-refresh Timer
+    const [refreshKey, setRefreshKey] = useState(0);
+    const [timeLeft, setTimeLeft] = useState(30);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTimeLeft((prev) => {
+                if (prev <= 1) {
+                    setRefreshKey((k) => k + 1);
+                    return 30; // Reset to 30s
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, []);
 
     const fetchDashboardData = useCallback(async () => {
         try {
@@ -57,7 +77,7 @@ const Dashboard = () => {
         } catch (error) {
             console.error('Failed to fetch dashboard stats:', error);
         }
-    }, [selectedCategory, timeBasis]);
+    }, [selectedCategory, timeBasis, refreshKey]); // Refresh when refreshKey changes
 
     useEffect(() => {
         fetchDashboardData();
@@ -129,7 +149,24 @@ const Dashboard = () => {
             <div className="dash-container">
                 {/* 상단 타이틀 및 필터 */}
                 <div className="dash-header">
-                    <h1 className="dash-title">관리자 대시보드</h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <h1 className="dash-title">관리자 대시보드</h1>
+                        <div style={{
+                            fontSize: '14px',
+                            fontWeight: 700,
+                            color: '#64748B',
+                            backgroundColor: '#F1F5F9',
+                            padding: '6px 12px',
+                            borderRadius: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            border: '1px solid #E2E8F0'
+                        }}>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22C55E' }}></div>
+                            {timeLeft}초 후 갱신
+                        </div>
+                    </div>
                     <div style={{ display: 'flex', gap: '8px', backgroundColor: '#E2E8F0', padding: '4px', borderRadius: '12px' }}>
                         {[
                             { label: '일별', value: 'DAY' },
@@ -175,7 +212,7 @@ const Dashboard = () => {
 
                     <h3 style={{ marginBottom: '28px', color: '#1e293b', fontWeight: '900', fontSize: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ width: '4px', height: '20px', backgroundColor: '#3B82F6', borderRadius: '2px' }}></span>
-                        민원 처리 현황
+                        민원 처리 현황 {selectedCategory !== '전체' && <span style={{ color: '#3B82F6', marginLeft: 4 }}>[ {selectedCategory} ]</span>}
                         <div
                             style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', marginLeft: '4px', cursor: 'help' }}
                             onMouseEnter={() => setShowSlaTooltip(true)}
@@ -270,25 +307,30 @@ const Dashboard = () => {
                     <div className="dash-main !mb-0">
                         {/* Left: Donut Chart -> Replaced with ChartTwo */}
                         <div className="dash-left">
-                            <ComplaintCategoryChart selectedCategory={selectedCategory} onSelect={setSelectedCategory} />
+                            <ComplaintCategoryChart selectedCategory={selectedCategory} onSelect={setSelectedCategory} refreshKey={refreshKey} />
                         </div>
 
-                        {/* Right: Trend Chart + Age Group Chart */}
+                        {/* Right: Trend Chart + Growth Trend Chart (Swapped AgeGroupChart) */}
                         <div className="dash-right">
-                            <ComplaintTrendChart selectedCategory={selectedCategory} timeBasis={timeBasis} />
+                            <ComplaintTrendChart selectedCategory={selectedCategory} timeBasis={timeBasis} refreshKey={refreshKey} />
                             <div style={{ flex: 1 }}>
-                                <AgeGroupChart />
+                                <ComplaintGrowthTrendChart selectedCategory={selectedCategory} timeBasis={timeBasis} refreshKey={refreshKey} />
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* 3. Bottom Grid: District Bottleneck Ranking (Bottleneck Analysis) */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px', marginBottom: '40px' }}>
-                    <DistrictBottleneckChart type="unprocessed" />
-                    <DistrictBottleneckChart type="overdue" />
+                {/* 3. Age Group Chart (Moved here) */}
+                <div style={{ marginBottom: '32px' }}>
+                    <AgeGroupChart refreshKey={refreshKey} />
                 </div>
-                {/* 4. Delayed Complaint List Section (Drill-down) */}
+
+                {/* 4. Bottom Grid: District Bottleneck Ranking (Bottleneck Analysis) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px', marginBottom: '40px' }}>
+                    <DistrictBottleneckChart type="unprocessed" refreshKey={refreshKey} />
+                    <DistrictBottleneckChart type="overdue" refreshKey={refreshKey} />
+                </div>
+                {/* 5. Delayed Complaint List Section (Drill-down) */}
                 <section ref={overdueListRef} style={{ marginBottom: '60px' }}>
                     <div className="dash-card shadow-2xl" style={{ border: '2px solid #FB7185', borderRadius: '16px', overflow: 'hidden', backgroundColor: 'white' }}>
                         <div style={{ backgroundColor: '#FFF1F2', padding: '24px 32px', borderBottom: '1px solid #FECDD3', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
