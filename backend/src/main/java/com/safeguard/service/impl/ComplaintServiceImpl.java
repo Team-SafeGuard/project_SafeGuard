@@ -98,8 +98,17 @@ public class ComplaintServiceImpl implements ComplaintService {
         // 코드가 없는 경우 기관명으로 재검색 (Fallback 로직)
         if (aiAgencyNo == null) {
             Object nameObj = data.getOrDefault("agencyName", data.getOrDefault("agency_name", data.get("agency")));
-            if (nameObj != null && !nameObj.toString().isEmpty()) {
-                String searchName = nameObj.toString();
+            String searchName = (nameObj != null) ? nameObj.toString() : null;
+
+            // 만약 이름도 없다면 카테고리를 기반으로 매핑 시도 (Fallback)
+            if (searchName == null || searchName.isEmpty() || "-".equals(searchName)) {
+                String category = (String) data.get("category");
+                searchName = getCentralAgencyByCategory(category);
+                logToFile("DEBUG: [ComplaintService] Falling back to category-based mapping: " + category + " -> " + searchName);
+            }
+
+            if (searchName != null && !searchName.isEmpty()) {
+                logToFile("DEBUG: [ComplaintService] Finding AI Agency by Name: " + searchName);
                 Agency match = agencyMapper.selectAgencyByName(searchName);
                 if (match != null) {
                     aiAgencyNo = match.getAgencyNo();
@@ -155,6 +164,18 @@ public class ComplaintServiceImpl implements ComplaintService {
         }
 
         return complaintNo;
+    }
+
+    private String getCentralAgencyByCategory(String category) {
+        if (category == null) return null;
+        switch (category) {
+            case "도로": return "국토교통부";
+            case "행정·안전": return "행정안전부";
+            case "교통": return "경찰청";
+            case "주택·건축": return "행정안전부";
+            case "환경": return "기후에너지환경부";
+            default: return null;
+        }
     }
 
     /**

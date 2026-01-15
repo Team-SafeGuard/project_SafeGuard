@@ -304,6 +304,7 @@ export const generateTitle = async (text: string, address: string, type: string)
     return await response.json();
 };
 
+// Image Analysis API (Back-end Proxy)
 /**
  * AI 이미지 분석 및 객체 인식 API
  */
@@ -311,13 +312,17 @@ export const analyzeImage = async (file: File) => {
     const formData = new FormData();
     formData.append('image', file);
 
-    const response = await fetch(`${API_BASE}/analyze-image`, {
+    const response = await fetch(`${API_BASE}/yolo/analyze`, {
         method: 'POST',
         body: formData,
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'AI 이미지 분석 오류');
+
+    if (!response.ok) {
+        throw new Error(data.message || 'AI 분석 중 오류가 발생했습니다.');
+    }
+
     return data;
 };
 
