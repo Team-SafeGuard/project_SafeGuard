@@ -6,6 +6,7 @@ import com.safeguard.service.FileService;
 import com.safeguard.entity.Agency;
 import com.safeguard.entity.Complaint;
 import com.safeguard.entity.SpatialFeature;
+import com.safeguard.dto.ComplaintDTO;
 import com.safeguard.enums.ComplaintStatus;
 import com.safeguard.mapper.ComplaintMapper;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.FileWriter;
 import java.io.PrintWriter;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.io.IOException;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.HashMap;
+import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
@@ -104,7 +101,8 @@ public class ComplaintServiceImpl implements ComplaintService {
             if (searchName == null || searchName.isEmpty() || "-".equals(searchName)) {
                 String category = (String) data.get("category");
                 searchName = getCentralAgencyByCategory(category);
-                logToFile("DEBUG: [ComplaintService] Falling back to category-based mapping: " + category + " -> " + searchName);
+                logToFile("DEBUG: [ComplaintService] Falling back to category-based mapping: " + category + " -> "
+                        + searchName);
             }
 
             if (searchName != null && !searchName.isEmpty()) {
@@ -167,14 +165,21 @@ public class ComplaintServiceImpl implements ComplaintService {
     }
 
     private String getCentralAgencyByCategory(String category) {
-        if (category == null) return null;
+        if (category == null)
+            return null;
         switch (category) {
-            case "도로": return "국토교통부";
-            case "행정·안전": return "행정안전부";
-            case "교통": return "경찰청";
-            case "주택·건축": return "행정안전부";
-            case "환경": return "기후에너지환경부";
-            default: return null;
+            case "도로":
+                return "국토교통부";
+            case "행정·안전":
+                return "행정안전부";
+            case "교통":
+                return "경찰청";
+            case "주택·건축":
+                return "행정안전부";
+            case "환경":
+                return "기후에너지환경부";
+            default:
+                return null;
         }
     }
 
@@ -284,5 +289,31 @@ public class ComplaintServiceImpl implements ComplaintService {
         result.put("analysisResult", c.getAnalysisResult());
 
         return result;
+    }
+
+    @Override
+    @Transactional
+    public void deleteComplaint(Long complaintNo, Long userNo, String role, Long agencyNo) {
+        // 1. 권한 체크: AGENCY 만 가능
+        if (role == null || !role.equals("AGENCY")) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN, "삭제 권한이 없습니다. (기관 담당자만 가능)");
+        }
+
+        // 2. 민원 존재 확인
+        ComplaintDTO c = complaintMapper.findByComplaintNo(complaintNo, userNo, agencyNo)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "민원을 찾을 수 없습니다."));
+
+        // 3. 담당 기관 체크 (isAssignedToMe 활용)
+        // findByComplaintNo 호출 시 agencyNo를 넘기면 isAssignedToMe가 계산됨
+        if (Boolean.FALSE.equals(c.getIsAssignedToMe())) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN, "타 기관 소관의 민원은 삭제할 수 없습니다.");
+        }
+
+        // 4. Soft Delete 수행
+        complaintMapper.updateStatus(complaintNo, ComplaintStatus.DELETED.name());
+        log.info("민원 삭제 처리 완료 (Soft Delete) - ID: {}, User: {}, Agency: {}", complaintNo, userNo, agencyNo);
     }
 }

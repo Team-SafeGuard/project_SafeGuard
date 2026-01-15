@@ -5,5 +5,6 @@ public enum ComplaintStatus {
     IN_PROGRESS,
     COMPLETED,
     REJECTED,
-    CANCELLED
+    CANCELLED,
+    DELETED
 }

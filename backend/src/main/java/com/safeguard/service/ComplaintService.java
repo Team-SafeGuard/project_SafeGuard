@@ -10,6 +10,12 @@ public interface ComplaintService {
     Long createComplaint(Map<String, Object> data, org.springframework.web.multipart.MultipartFile file, Long userNo);
 
     /**
+     * 민원 삭제 (Soft Delete)
+     * - AGENCY 권한 및 당당 기관 일치 여부 확인 필수
+     */
+    void deleteComplaint(Long complaintNo, Long userNo, String role, Long agencyNo);
+
+    /**
      * 대시보드용 각종 통계 데이터를 조회한다.
      * (한글 기능 설명: 요약 통계, 카테고리 분포, 월별 트렌드, 기관별 병목, 지연 민원 등 포함)
      * 
