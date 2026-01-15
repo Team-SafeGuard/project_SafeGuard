@@ -87,6 +87,7 @@
         FROM app_user
         WHERE name = #{name}
           AND phone = #{phone}
+          AND birth_date = #{birthDate}
     </select>
 
     <!-- 아이디 + 전화번호로 조회 (비밀번호 찾기) -->
@@ -95,6 +96,7 @@
         FROM app_user
         WHERE user_id = #{userId}
           AND phone = #{phone}
+          AND birth_date = #{birthDate}
     </select>
 
     <!-- 회원 정보 수정 -->

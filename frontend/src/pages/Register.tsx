@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../utils/api';
+import Modal from '../components/common/Modal';
 
 // 기관 데이터
 const LOCAL_AGENCIES = [
@@ -63,9 +64,42 @@ function Register() {
         phone: '',
         agencyNo: '' // 기관 회원일 경우 설정됨
     });
-    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [isIdChecked, setIsIdChecked] = useState(false); // 아이디 중복 확인 상태
+
+    // 인증 모달 상태
+    const [authModalOpen, setAuthModalOpen] = useState(false);
+    const [pendingUserType, setPendingUserType] = useState('INDIVIDUAL');
+    const [adminKeyInput, setAdminKeyInput] = useState('');
+
+    // 모달 상태 관리
+    const [modalConfig, setModalConfig] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        callback?: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        callback: undefined
+    });
+
+    const showAlert = (title: string, message: string, callback?: () => void) => {
+        setModalConfig({
+            isOpen: true,
+            title,
+            message,
+            callback
+        });
+    };
+
+    const closeModal = () => {
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+        if (modalConfig.callback) {
+            modalConfig.callback();
+        }
+    };
 
     // Daum 우편번호 스크립트 로드
     useEffect(() => {
@@ -84,7 +118,7 @@ function Register() {
 
     const handleSearchAddress = () => {
         if (!window.daum || !window.daum.Postcode) {
-            alert('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+            showAlert('알림', '주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
             return;
         }
 
@@ -111,66 +145,102 @@ function Register() {
 
     const handleUserTypeChange = (e) => {
         const type = e.target.value;
-        setUserType(type);
-        // 회원 유형 변경 시 기관 선택 초기화
-        setFormData(prev => ({ ...prev, agencyNo: '' }));
+        if (type === 'INDIVIDUAL') {
+            setUserType(type);
+            setFormData(prev => ({ ...prev, agencyNo: '' }));
+        } else {
+            // 기관 선택 시 인증 모달 표시
+            setPendingUserType(type);
+            setAdminKeyInput('');
+            setAuthModalOpen(true);
+        }
+    };
+
+    const handleAuthSubmit = () => {
+        if (adminKeyInput === 'admin1234') {
+            setUserType(pendingUserType);
+            setFormData(prev => ({ ...prev, agencyNo: '' }));
+            setAuthModalOpen(false);
+        } else {
+            showAlert('인증 실패', '관리자 키가 일치하지 않습니다.');
+            // 실패 시 선택을 개인으로 되돌리거나, 기존 선택 유지 (여기서는 기존 선택 유지하되 변경되지 않음)
+        }
+    };
+
+    const closeAuthModal = () => {
+        setAuthModalOpen(false);
+        // 모달 닫으면 변경 사항 없음 (기존 userType 유지)
+    };
+
+    // 휴대전화 번호 자동 포맷팅
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^0-9]/g, '');
+        let formatted = '';
+
+        if (value.length <= 3) {
+            formatted = value;
+        } else if (value.length <= 7) {
+            formatted = `${value.slice(0, 3)}-${value.slice(3)}`;
+        } else {
+            formatted = `${value.slice(0, 3)}-${value.slice(3, 7)}-${value.slice(7, 11)}`;
+        }
+
+        setFormData(prev => ({ ...prev, phone: formatted }));
     };
 
     const handleIdCheck = async () => {
         if (!formData.userId) {
-            alert('아이디를 입력해주세요.');
+            showAlert('알림', '아이디를 입력해주세요.');
             return;
         }
 
         // 아이디 유효성 검사 (영문, 숫자만 허용)
         const idRegex = /^[a-zA-Z0-9]+$/;
         if (!idRegex.test(formData.userId)) {
-            alert('아이디는 영문과 숫자만 사용 가능합니다.');
+            showAlert('알림', '아이디는 영문과 숫자만 사용 가능합니다.');
             return;
         }
         try {
             const response = await authAPI.checkIdDuplicate(formData.userId);
             if (response.isDuplicate) {
-                alert('이미 사용 중인 아이디입니다.');
+                showAlert('알림', '이미 사용 중인 아이디입니다.');
                 setIsIdChecked(false);
             } else {
-                alert('사용 가능한 아이디입니다.');
                 setIsIdChecked(true);
             }
         } catch (error) {
             console.error(error);
-            alert('중복 확인 중 오류가 발생했습니다.');
+            showAlert('오류', '중복 확인 중 오류가 발생했습니다.');
             setIsIdChecked(false);
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
 
         if (!isIdChecked) {
-            setError('아이디 중복 확인을 해주세요.');
+            showAlert('알림', '아이디 중복 확인을 해주세요.');
             return;
         }
 
         if (formData.password !== formData.passwordConfirm) {
-            setError('비밀번호가 일치하지 않습니다.');
+            showAlert('오류', '비밀번호가 일치하지 않습니다.');
             return;
         }
 
         // 비밀번호 유효성 검사 규칙
         const { password } = formData;
         if (password.length < 8) {
-            setError('비밀번호는 8자 이상이어야 합니다.');
+            showAlert('오류', '비밀번호는 8자 이상이어야 합니다.');
             return;
         }
         if (password.includes(' ')) {
-            setError('비밀번호에 공백을 포함할 수 없습니다.');
+            showAlert('오류', '비밀번호에 공백을 포함할 수 없습니다.');
             return;
         }
         const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
         if (!specialCharRegex.test(password)) {
-            setError('비밀번호는 특수문자를 최소 1개 이상 포함해야 합니다.');
+            showAlert('오류', '비밀번호는 특수문자를 최소 1개 이상 포함해야 합니다.');
             return;
         }
 
@@ -178,13 +248,20 @@ function Register() {
         const today = new Date();
         const selectedDate = new Date(formData.birthDate);
         if (selectedDate > today) {
-            setError('생년월일은 미래 날짜일 수 없습니다.');
+            showAlert('오류', '생년월일은 미래 날짜일 수 없습니다.');
             return;
         }
 
         // 기관 선택 유효성 검사
         if ((userType === 'AGENCY_CENTRAL' || userType === 'AGENCY_LOCAL') && !formData.agencyNo) {
-            setError('소속 기관을 선택해주세요.');
+            showAlert('오류', '소속 기관을 선택해주세요.');
+            return;
+        }
+
+        // 휴대전화 유효성 검사
+        const phoneRegex = /^01(?:0|1|[6-9])-(?:\d{3}|\d{4})-\d{4}$/;
+        if (!phoneRegex.test(formData.phone)) {
+            showAlert('오류', '올바른 휴대전화 번호 형식이 아닙니다.\n(예: 010-1234-5678)');
             return;
         }
 
@@ -204,11 +281,14 @@ function Register() {
             console.log("Registering:", registerData); // 디버그 로그
 
             await authAPI.register(registerData);
-            alert('회원가입이 완료되었습니다. 로그인해주세요.');
-            navigate('/login');
+
+            // 회원가입 성공 모달 -> 확인 클릭 시 로그인 페이지로 이동
+            showAlert('회원가입 성공', '회원가입이 완료되었습니다. 로그인해주세요.', () => {
+                navigate('/login');
+            });
         } catch (err: any) {
             console.error(err);
-            setError(err.message || '회원가입 중 오류가 발생했습니다.');
+            showAlert('오류', err.message || '회원가입 중 오류가 발생했습니다.');
         } finally {
             setLoading(false);
         }
@@ -304,21 +384,6 @@ function Register() {
 
                 {/* 폼 */}
                 <form onSubmit={handleSubmit} style={{ padding: '40px' }}>
-                    {error && (
-                        <div style={{
-                            padding: '14px 18px',
-                            backgroundColor: '#fef2f2',
-                            border: '1px solid #fecaca',
-                            borderRadius: '12px',
-                            color: '#dc2626',
-                            marginBottom: '20px',
-                            fontSize: '0.9rem',
-                            textAlign: 'center'
-                        }}>
-                            ⚠️ {error}
-                        </div>
-                    )}
-
                     {/* 회원 유형 선택 (라디오 버튼) */}
                     <div style={{ marginBottom: '24px' }}>
                         <label style={labelStyle}>회원 유형 <span style={{ color: '#ef4444' }}>*</span></label>
@@ -449,65 +514,34 @@ function Register() {
                         )}
                     </div>
 
-                    {/* 비밀번호 & 유효성 규칙 위치 변경 */}
+                    {/* 비밀번호 */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
                         <div>
-                            <div style={{ marginBottom: '16px' }}>
-                                <label style={labelStyle}>비밀번호 <span style={{ color: '#ef4444' }}>*</span></label>
-                                <input
-                                    type="password"
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    required
-                                    placeholder="비밀번호"
-                                    style={inputStyle}
-                                />
-                            </div>
-                            <div>
-                                <label style={labelStyle}>비밀번호 확인 <span style={{ color: '#ef4444' }}>*</span></label>
-                                <input
-                                    type="password"
-                                    name="passwordConfirm"
-                                    value={formData.passwordConfirm}
-                                    onChange={handleChange}
-                                    required
-                                    placeholder="비밀번호 확인"
-                                    style={inputStyle}
-                                />
+                            <label style={labelStyle}>비밀번호 <span style={{ color: '#ef4444' }}>*</span></label>
+                            <input
+                                type="password"
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                required
+                                placeholder="비밀번호"
+                                style={inputStyle}
+                            />
+                            <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '6px', marginLeft: '4px' }}>
+                                * 8자 이상, 특수문자 포함
                             </div>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            {/* 레이아웃 간격: 입력 필드 상단과 상자를 맞추기 위한 숨겨진 라벨 */}
-                            <label style={{ ...labelStyle, visibility: 'hidden' }}>비밀번호 생성 규칙</label>
-
-                            {/* 비밀번호 유효성 가이드 */}
-                            <div style={{
-                                fontSize: '0.85rem',
-                                padding: '16px',
-                                backgroundColor: '#f9fafb',
-                                borderRadius: '12px',
-                                border: '1px solid #e2e8f0',
-                                flex: 1,
-                                boxSizing: 'border-box',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'center'
-                            }}>
-                                <div style={{ fontWeight: '600', marginBottom: '8px', color: '#64748b' }}>비밀번호 생성 규칙</div>
-                                <div style={{ color: formData.password.length >= 8 ? '#10b981' : '#94a3b8', display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-                                    <span style={{ marginRight: '6px' }}>{formData.password.length >= 8 ? '✓' : '•'}</span>
-                                    8자 이상
-                                </div>
-                                <div style={{ color: !formData.password.includes(' ') && formData.password.length > 0 ? '#10b981' : '#94a3b8', display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-                                    <span style={{ marginRight: '6px' }}>{!formData.password.includes(' ') && formData.password.length > 0 ? '✓' : '•'}</span>
-                                    공백 미포함
-                                </div>
-                                <div style={{ color: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? '#10b981' : '#94a3b8', display: 'flex', alignItems: 'center' }}>
-                                    <span style={{ marginRight: '6px' }}>{/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? '✓' : '•'}</span>
-                                    특수문자 포함 (!@#$%^&* 등)
-                                </div>
-                            </div>
+                        <div>
+                            <label style={labelStyle}>비밀번호 확인 <span style={{ color: '#ef4444' }}>*</span></label>
+                            <input
+                                type="password"
+                                name="passwordConfirm"
+                                value={formData.passwordConfirm}
+                                onChange={handleChange}
+                                required
+                                placeholder="비밀번호 확인"
+                                style={inputStyle}
+                            />
                         </div>
                     </div>
 
@@ -584,10 +618,11 @@ function Register() {
                             type="tel"
                             name="phone"
                             value={formData.phone}
-                            onChange={handleChange}
+                            onChange={handlePhoneChange}
                             required
-                            placeholder="예: 01012345678"
+                            placeholder="예: 010-1234-5678"
                             style={inputStyle}
+                            maxLength={13}
                         />
                     </div>
 
@@ -641,6 +676,45 @@ function Register() {
                     </div>
                 </form>
             </div>
+
+            {/* 관리자 인증 모달 */}
+            <Modal
+                isOpen={authModalOpen}
+                onClose={closeAuthModal}
+                title="관리자 인증"
+                confirmText="인증하기"
+                onConfirm={handleAuthSubmit}
+            >
+                <div>
+                    <p style={{ marginBottom: '12px' }}>
+                        기관 회원으로 가입하려면 관리자 인증 키가 필요합니다.
+                    </p>
+                    <input
+                        type="password"
+                        value={adminKeyInput}
+                        onChange={(e) => setAdminKeyInput(e.target.value)}
+                        placeholder="관리자 키 입력"
+                        style={{
+                            width: '100%',
+                            padding: '12px',
+                            border: '2px solid #e2e8f0',
+                            borderRadius: '8px',
+                            fontSize: '1rem',
+                            outline: 'none',
+                            boxSizing: 'border-box'
+                        }}
+                    />
+                </div>
+            </Modal>
+
+            {/* 공통 모달 적용 */}
+            <Modal
+                isOpen={modalConfig.isOpen}
+                onClose={closeModal}
+                title={modalConfig.title}
+            >
+                {modalConfig.message}
+            </Modal>
         </div>
     );
 }

@@ -64,19 +64,25 @@ public class AuthController {
      */
     @PostMapping("/find-id")
     public ResponseEntity<?> findId(@RequestBody Map<String, String> request) {
-        String userId = authService.findId(request.get("name"), request.get("phone"));
+        String userId = authService.findId(
+                request.get("name"),
+                request.get("phone"),
+                request.get("birthDate"));
         return ResponseEntity.ok(Map.of("userId", userId));
     }
 
     /**
      * 비밀번호 재설정을 위한 사용자 검증
      * 
-     * @param request 아이디, 전화번호
+     * @param request 아이디, 전화번호, 생년월일
      * @return 성공 메시지
      */
     @PostMapping("/verify-reset")
     public ResponseEntity<?> verifyReset(@RequestBody Map<String, String> request) {
-        authService.verifyUserForReset(request.get("userId"), request.get("phone"));
+        authService.verifyUserForReset(
+                request.get("userId"),
+                request.get("phone"),
+                request.get("birthDate"));
         return ResponseEntity.ok(Map.of("message", "사용자 검증이 완료되었습니다."));
     }
 
@@ -91,7 +97,8 @@ public class AuthController {
         authService.updatePassword(
                 request.get("userId"),
                 request.get("phone"),
-                request.get("newPassword"));
+                request.get("newPassword"),
+                request.get("birthDate")); // birthDate 추가
         return ResponseEntity.ok(Map.of("message", "비밀번호가 성공적으로 변경되었습니다."));
     }
 
