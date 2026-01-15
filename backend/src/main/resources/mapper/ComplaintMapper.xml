@@ -99,12 +99,7 @@
                 ELSE NULL
             END) AS regionName,
             (
-                SELECT
-                    CASE
-                        WHEN COUNT(*) > 1 THEN CONCAT(MIN(a2.agency_name), ' 외 ', COUNT(*) - 1, '곳')
-                        WHEN COUNT(*) = 1 THEN MIN(a2.agency_name)
-                        ELSE NULL
-                    END
+                SELECT STRING_AGG(a2.agency_name, ', ')
                 FROM agency a2
                 JOIN complaint_agency ca2 ON ca2.agency_no = a2.agency_no
                 WHERE ca2.complaint_no = c.complaint_no
@@ -181,9 +176,10 @@
             </if>
             <!-- [수정] 지역 필터: region_code 사용 -->
             <if test="region != null and region != '전체'">
-                AND a.agency_type = 'LOCAL'
                 AND a.region_code = #{region}
             </if>
+            <!-- [추가] 삭제된 민원 제외 -->
+            AND c.status != 'DELETED'
         </where>
     </sql>
 
@@ -216,7 +212,7 @@
         ORDER BY
         <choose>
             <when test="sort == 'created_date'">c.created_date</when>
-            <when test="sort == 'likeCount'">c.like_count</when>
+            <when test="sort == 'likeCount'">c.like_count DESC, c.complaint_no</when>
             <otherwise>c.complaint_no</otherwise>
         </choose>
         <choose>
@@ -333,7 +329,7 @@
                 AND ca.agency_no = #{agencyNo}
             </if>
         </where>
-        ORDER BY c.like_count DESC
+        ORDER BY c.like_count DESC, c.complaint_no DESC
         LIMIT 5
     </select>
 

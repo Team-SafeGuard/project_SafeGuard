@@ -10,8 +10,8 @@ function List() {
     const page = parseInt(searchParams.get('page') || '1');
     const search = searchParams.get('search') || '';
     const category = searchParams.get('category') || '전체';
-    const sort = searchParams.get('sort') || 'complaint_no';
-    const order = searchParams.get('order') || 'ASC';
+    const sort = searchParams.get('sort') || 'created_date'; // Default to created_date for 'recent'
+    const order = searchParams.get('order') || 'DESC'; // Default to DESC
     const statusParams = searchParams.get('status') || '전체';
     const regionParams = searchParams.get('region') || '전체';
     const myAgencyOnly = searchParams.get('myAgencyOnly') === 'true';
@@ -102,6 +102,56 @@ function List() {
         setSearchParams({ page: String(newPage), search, category, status: statusParams, region: regionParams, sort, order, myAgencyOnly: String(myAgencyOnly) });
     };
 
+    const downloadExcel = () => {
+        if (complaints.length === 0) {
+            alert('데이터가 없습니다.');
+            return;
+        }
+
+        // CSV Header
+        const headers = ['민원번호', '제목', '카테고리', '지역', '상태', '작성일', '좋아요'];
+        const rows = complaints.map((c: any) => [
+            c.complaintNo,
+            `"${c.title.replace(/"/g, '""')}"`, // Escape quotes
+            c.category,
+            c.regionName || '-',
+            c.status,
+            formatDate(c.createdDate),
+            c.likeCount
+        ]);
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.join(','))
+        ].join('\n');
+
+        // Add BOM for Excel UTF-8 compatibility
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `complaints_export_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const handleDelete = async (e: React.MouseEvent, complaintNo: number) => {
+        e.stopPropagation(); // Prevent row click navigation
+        if (!window.confirm('정말 이 민원을 삭제하시겠습니까? (삭제 후 복구 불가)')) {
+            return;
+        }
+
+        try {
+            await complaintsAPI.delete(complaintNo);
+            alert('민원이 삭제되었습니다.');
+            // Refresh list
+            fetchComplaints();
+        } catch (err: any) {
+            alert(err.message || '삭제 중 오류가 발생했습니다.');
+        }
+    };
+
     const getStatusBadge = (status: any) => {
         const statusMap: any = {
             'UNPROCESSED': { text: '미처리', bg: '#fee2e2', color: '#dc2626' }, // 빨간색
@@ -151,22 +201,43 @@ function List() {
                             </h1>
                             <p style={{ color: '#64748b', marginTop: '8px' }}>등록된 민원 현황을 확인하세요</p>
                         </div>
-                        <button
-                            onClick={() => navigate('/')}
-                            style={{
-                                padding: '14px 28px',
-                                background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '12px',
-                                fontSize: '1rem',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                boxShadow: '0 4px 14px rgba(124, 58, 237, 0.4)'
-                            }}
-                        >
-                            ➕ 새 민원 등록
-                        </button>
+                        {localStorage.getItem('role') !== 'AGENCY' && (
+                            <button
+                                onClick={() => navigate('/')}
+                                style={{
+                                    padding: '14px 28px',
+                                    background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 14px rgba(124, 58, 237, 0.4)'
+                                }}
+                            >
+                                ➕ 새 민원 등록
+                            </button>
+                        )}
+                        {localStorage.getItem('role') === 'AGENCY' && (
+                            <button
+                                onClick={downloadExcel}
+                                style={{
+                                    marginLeft: '10px',
+                                    padding: '14px 28px',
+                                    backgroundColor: '#10b981',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)'
+                                }}
+                            >
+                                📊 엑셀 다운로드
+                            </button>
+                        )}
                     </div>
 
                     <div style={{
@@ -307,7 +378,7 @@ function List() {
                         <div style={{ width: '2px', height: '30px', backgroundColor: '#e2e8f0', margin: '0 8px' }}></div>
 
                         <select
-                            value={sort === 'like_count' ? 'likes' : (sort === 'complaint_no' ? (order === 'ASC' ? 'id_asc' : 'id_desc') : (order === 'ASC' ? 'old' : 'recent'))}
+                            value={sort === 'likeCount' ? 'likes' : (sort === 'complaint_no' ? (order === 'ASC' ? 'id_asc' : 'id_desc') : (order === 'ASC' ? 'old' : 'recent'))}
                             onChange={handleSortChange}
                             style={{
                                 padding: '12px 16px',
@@ -412,18 +483,42 @@ function List() {
                                                 {!c.isPublic && <span style={{ marginLeft: '8px', fontSize: '0.8rem' }}>🔒</span>}
                                             </td>
                                             <td style={{ padding: '18px 20px', borderBottom: '1px solid #f1f5f9' }}>
-                                                <span style={{
-                                                    padding: '4px 10px',
-                                                    backgroundColor: c.regionName ? '#e0f2fe' : 'transparent',
-                                                    borderRadius: '6px',
-                                                    fontSize: '0.8rem',
-                                                    color: c.regionName ? '#0369a1' : '#94a3b8'
-                                                }}>{c.regionName || ''}</span>
+                                                <span
+                                                    onClick={() => {
+                                                        if (c.regionCode) {
+                                                            navigate(`/list?region=${c.regionCode}`);
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        padding: '4px 10px',
+                                                        backgroundColor: c.regionName ? '#e0f2fe' : 'transparent',
+                                                        borderRadius: '6px',
+                                                        fontSize: '0.8rem',
+                                                        color: c.regionName ? '#0369a1' : '#94a3b8',
+                                                        cursor: c.regionCode ? 'pointer' : 'default'
+                                                    }}>{c.regionName || ''}</span>
                                             </td>
                                             <td style={{ padding: '18px 20px', borderBottom: '1px solid #f1f5f9' }}>{getStatusBadge(c.status)}</td>
                                             <td style={{ padding: '18px 20px', color: '#94a3b8', fontSize: '0.9rem', borderBottom: '1px solid #f1f5f9' }}>{formatDate(c.createdDate)}</td>
                                             <td style={{ padding: '18px 20px', borderBottom: '1px solid #f1f5f9' }}>
                                                 <span style={{ color: '#ef4444', fontWeight: '600' }}>❤️ {c.likeCount}</span>
+                                                {localStorage.getItem('role') === 'AGENCY' && String(c.agencyNo) === String(localStorage.getItem('agencyNo')) && (
+                                                    <button
+                                                        onClick={(e) => handleDelete(e, c.complaintNo)}
+                                                        style={{
+                                                            marginLeft: '10px',
+                                                            padding: '4px 8px',
+                                                            backgroundColor: '#fee2e2',
+                                                            color: '#dc2626',
+                                                            border: 'none',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.8rem',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        삭제
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}

@@ -211,7 +211,7 @@ function Detail() {
                         </h2>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                            <div style={{ display: 'flex', gap: '24px', color: '#64748b', fontSize: '0.95rem', flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', gap: '16px', color: '#64748b', fontSize: '0.95rem', flexWrap: 'wrap', rowGap: '8px' }}>
                                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                     <span>👤</span> {report.authorName}
                                 </div>
@@ -222,7 +222,20 @@ function Detail() {
                                     <span>📂</span> {report.category}
                                 </div>
                                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                    <span>📍</span> {report.address}
+                                    <span>📍</span>
+                                    <span
+                                        onClick={() => {
+                                            if (report.regionCode) {
+                                                navigate(`/list?region=${report.regionCode}`);
+                                            }
+                                        }}
+                                        style={{
+                                            cursor: report.regionCode ? 'pointer' : 'default',
+                                            textDecoration: report.regionCode ? 'underline' : 'none'
+                                        }}
+                                    >
+                                        {report.regionName || report.address}
+                                    </span>
                                 </div>
                                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                     <span>🏛️</span>
@@ -230,54 +243,106 @@ function Detail() {
                                         fontWeight: '600',
                                         color: '#334155'
                                     }}>
-                                        {report.assignedAgencyText || '-'}
+                                        {(() => {
+                                            if (!report.assignedAgencyText) return '-';
+                                            // Split by comma, trim, filter empty
+                                            const agencies = report.assignedAgencyText.split(',').map((s: string) => s.trim()).filter((s: string) => s);
+                                            // Take up to 3 agencies and join with comma
+                                            return agencies.slice(0, 3).join(', ');
+                                        })()}
                                     </span>
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '10px' }}>
+
+
+                            {/* Action Buttons Container */}
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginTop: '60px', paddingTop: '30px', borderTop: '1px solid #f1f5f9' }}>
                                 <button
                                     onClick={() => handleReaction('LIKE')}
                                     disabled={report.isMyPost}
                                     style={{
-                                        padding: '10px 20px',
-                                        backgroundColor: report.myReaction === 'LIKE' ? '#fff1f2' : (report.isMyPost ? '#f3f4f6' : '#f8fafc'),
-                                        color: report.myReaction === 'LIKE' ? '#e11d48' : (report.isMyPost ? '#9ca3af' : '#64748b'),
-                                        border: report.myReaction === 'LIKE' ? '1px solid #fda4af' : '1px solid #e2e8f0',
-                                        borderRadius: '12px',
-                                        fontWeight: '600',
-                                        cursor: report.isMyPost ? 'not-allowed' : 'pointer',
+                                        width: '64px',
+                                        height: '64px',
+                                        borderRadius: '50%',
+                                        backgroundColor: report.myReaction === 'LIKE' ? '#dcfce7' : 'white',
+                                        color: report.myReaction === 'LIKE' ? '#16a34a' : '#64748b',
+                                        border: report.myReaction === 'LIKE' ? '2px solid #86efac' : '1px solid #e2e8f0',
                                         display: 'flex',
+                                        flexDirection: 'column',
                                         alignItems: 'center',
-                                        gap: '8px',
-                                        transition: 'all 0.2s',
-                                        fontSize: '0.95rem'
+                                        justifyContent: 'center',
+                                        boxShadow: report.myReaction === 'LIKE' ? '0 4px 12px rgba(22, 163, 74, 0.2)' : '0 2px 4px rgba(0,0,0,0.05)',
+                                        cursor: report.isMyPost ? 'not-allowed' : 'pointer',
+                                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
                                     }}
+                                    onMouseOver={(e) => { if (!report.isMyPost && report.myReaction !== 'LIKE') { e.currentTarget.style.backgroundColor = '#f8fafc'; e.currentTarget.style.transform = 'translateY(-2px)'; } }}
+                                    onMouseOut={(e) => { if (!report.isMyPost && report.myReaction !== 'LIKE') { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.transform = 'none'; } }}
                                 >
-                                    <span style={{ fontSize: '1.1rem' }}>{report.myReaction === 'LIKE' ? '❤️' : '🤍'}</span>
-                                    <span>공감 {report.likeCount || 0}</span>
+                                    <span style={{ fontSize: '1.5rem', marginBottom: '2px' }}>👍</span>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: '700' }}>{report.likeCount || 0}</span>
                                 </button>
+
                                 <button
                                     onClick={() => handleReaction('DISLIKE')}
                                     disabled={report.isMyPost}
                                     style={{
-                                        padding: '10px 20px',
-                                        backgroundColor: report.myReaction === 'DISLIKE' ? '#eff6ff' : (report.isMyPost ? '#f3f4f6' : '#f8fafc'),
-                                        color: report.myReaction === 'DISLIKE' ? '#2563eb' : (report.isMyPost ? '#9ca3af' : '#64748b'),
-                                        border: report.myReaction === 'DISLIKE' ? '1px solid #bfdbfe' : '1px solid #e2e8f0',
-                                        borderRadius: '12px',
-                                        fontWeight: '600',
-                                        cursor: report.isMyPost ? 'not-allowed' : 'pointer',
+                                        width: '64px',
+                                        height: '64px',
+                                        borderRadius: '50%',
+                                        backgroundColor: report.myReaction === 'DISLIKE' ? '#fee2e2' : 'white',
+                                        color: report.myReaction === 'DISLIKE' ? '#dc2626' : '#64748b',
+                                        border: report.myReaction === 'DISLIKE' ? '2px solid #fca5a5' : '1px solid #e2e8f0',
                                         display: 'flex',
+                                        flexDirection: 'column',
                                         alignItems: 'center',
-                                        gap: '8px',
-                                        transition: 'all 0.2s',
-                                        fontSize: '0.95rem'
+                                        justifyContent: 'center',
+                                        boxShadow: report.myReaction === 'DISLIKE' ? '0 4px 12px rgba(220, 38, 38, 0.2)' : '0 2px 4px rgba(0,0,0,0.05)',
+                                        cursor: report.isMyPost ? 'not-allowed' : 'pointer',
+                                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
                                     }}
+                                    onMouseOver={(e) => { if (!report.isMyPost && report.myReaction !== 'DISLIKE') { e.currentTarget.style.backgroundColor = '#f8fafc'; e.currentTarget.style.transform = 'translateY(-2px)'; } }}
+                                    onMouseOut={(e) => { if (!report.isMyPost && report.myReaction !== 'DISLIKE') { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.transform = 'none'; } }}
                                 >
-                                    <span style={{ fontSize: '1.1rem' }}>{report.myReaction === 'DISLIKE' ? '👎' : '👎'}</span>
-                                    <span>비공감 {report.dislikeCount || 0}</span>
+                                    <span style={{ fontSize: '1.5rem', marginBottom: '2px' }}>👎</span>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: '700' }}>{report.dislikeCount || 0}</span>
                                 </button>
+
+                                {user && user.role === 'AGENCY' && String(report.agencyNo) === String(user.agencyNo) && (
+                                    <button
+                                        onClick={async () => {
+                                            if (window.confirm('정말 삭제하시겠습니까? (복구 불가)')) {
+                                                try {
+                                                    await complaintsAPI.delete(id);
+                                                    alert('삭제되었습니다.');
+                                                    navigate('/list');
+                                                } catch (err: any) {
+                                                    alert(err.message || '삭제 실패');
+                                                }
+                                            }
+                                        }}
+                                        style={{
+                                            padding: '8px 16px',
+                                            backgroundColor: '#fff1f2',
+                                            color: '#e11d48',
+                                            border: '1px solid #fda4af',
+                                            borderRadius: '8px',
+                                            fontWeight: '600',
+                                            fontSize: '0.85rem',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            marginLeft: '12px',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#fee2e2'; }}
+                                        onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#fff1f2'; }}
+                                    >
+                                        <span>🗑️</span>
+                                        <span>민원 삭제</span>
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -376,7 +441,7 @@ function Detail() {
                         <div>
                             <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '16px', color: '#1e293b', paddingLeft: '12px', borderLeft: '4px solid #22c55e' }}>담당자 답변</h3>
 
-                            {user && user.role === 'AGENCY' ? (
+                            {user && user.role === 'AGENCY' && String(report.agencyNo) === String(user.agencyNo) ? (
                                 (!report.answer || isEditing) ? (
                                     <div style={{ backgroundColor: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
                                         <div style={{ marginBottom: '12px', fontWeight: '600', color: '#475569' }}>답변 작성</div>
@@ -486,7 +551,7 @@ function Detail() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div >
             </div >
         </div >
     );
