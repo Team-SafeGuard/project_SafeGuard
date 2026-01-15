@@ -191,37 +191,42 @@ function Detail() {
                 <div style={{ backgroundColor: 'white', borderRadius: '24px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', overflow: 'hidden' }}>
 
                     {/* Title Header */}
-                    <div style={{ padding: '40px 40px 30px', borderBottom: '1px solid #f1f5f9' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                            <span style={{
-                                padding: '6px 14px',
-                                borderRadius: '999px',
-                                backgroundColor: report.status === 'COMPLETED' ? '#dcfce7' : '#e0e7ff',
-                                color: report.status === 'COMPLETED' ? '#166534' : '#4338ca',
-                                fontSize: '0.85rem',
-                                fontWeight: '700'
-                            }}>
-                                {statusMap[report.status] || report.status}
-                            </span>
-                            <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>No. {report.complaintNo}</span>
-                        </div>
+                    <div style={{ padding: '32px 40px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px' }}>
 
-                        <h2 style={{ fontSize: '2rem', fontWeight: '800', color: '#1e293b', marginBottom: '20px', lineHeight: '1.3' }}>
-                            {report.title}
-                        </h2>
+                        {/* LEFT: Info Block */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                                <span style={{
+                                    padding: '4px 10px',
+                                    borderRadius: '6px',
+                                    backgroundColor: report.status === 'COMPLETED' ? '#dcfce7' : '#e0e7ff',
+                                    color: report.status === 'COMPLETED' ? '#166534' : '#4338ca',
+                                    fontSize: '0.8rem',
+                                    fontWeight: '700'
+                                }}>
+                                    {statusMap[report.status] || report.status}
+                                </span>
+                                <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>No. {report.complaintNo}</span>
+                            </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                            <div style={{ display: 'flex', gap: '16px', color: '#64748b', fontSize: '0.95rem', flexWrap: 'wrap', rowGap: '8px' }}>
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#1e293b', marginBottom: '12px', lineHeight: '1.3' }}>
+                                {report.title}
+                            </h2>
+
+                            <div style={{ display: 'flex', gap: '12px', color: '#64748b', fontSize: '0.9rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                                     <span>👤</span> {report.authorName}
                                 </div>
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <div style={{ width: '1px', height: '12px', backgroundColor: '#e2e8f0' }}></div>
+                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                                     <span>📅</span> {formatDate(report.createdDate)}
                                 </div>
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <div style={{ width: '1px', height: '12px', backgroundColor: '#e2e8f0' }}></div>
+                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                                     <span>📂</span> {report.category}
                                 </div>
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <div style={{ width: '1px', height: '12px', backgroundColor: '#e2e8f0' }}></div>
+                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                                     <span>📍</span>
                                     <span
                                         onClick={() => {
@@ -237,7 +242,8 @@ function Detail() {
                                         {report.regionName || report.address}
                                     </span>
                                 </div>
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <div style={{ width: '1px', height: '12px', backgroundColor: '#e2e8f0' }}></div>
+                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                                     <span>🏛️</span>
                                     <span style={{
                                         fontWeight: '600',
@@ -245,105 +251,100 @@ function Detail() {
                                     }}>
                                         {(() => {
                                             if (!report.assignedAgencyText) return '-';
-                                            // Split by comma, trim, filter empty
                                             const agencies = report.assignedAgencyText.split(',').map((s: string) => s.trim()).filter((s: string) => s);
-                                            // Take up to 3 agencies and join with comma
                                             return agencies.slice(0, 3).join(', ');
                                         })()}
                                     </span>
                                 </div>
                             </div>
+                        </div>
 
+                        {/* RIGHT: Actions Block */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+                            <button
+                                onClick={() => handleReaction('LIKE')}
+                                disabled={report.isMyPost}
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '56px',
+                                    height: '56px',
+                                    borderRadius: '50%',
+                                    backgroundColor: report.myReaction === 'LIKE' ? '#dcfce7' : '#f8fafc',
+                                    color: report.myReaction === 'LIKE' ? '#16a34a' : '#64748b',
+                                    border: report.myReaction === 'LIKE' ? '2px solid #86efac' : '1px solid #e2e8f0',
+                                    cursor: report.isMyPost ? 'not-allowed' : 'pointer',
+                                    transition: 'all 0.2s',
+                                    boxShadow: report.myReaction === 'LIKE' ? '0 4px 12px rgba(22, 163, 74, 0.2)' : 'none'
+                                }}
+                                onMouseOver={(e) => { if (!report.isMyPost && report.myReaction !== 'LIKE') { e.currentTarget.style.backgroundColor = '#f1f5f9'; } }}
+                                onMouseOut={(e) => { if (!report.isMyPost && report.myReaction !== 'LIKE') { e.currentTarget.style.backgroundColor = '#f8fafc'; } }}
+                            >
+                                <span style={{ fontSize: '1.25rem', marginBottom: '2px' }}>👍</span>
+                                <span style={{ fontSize: '0.75rem', fontWeight: '700' }}>{report.likeCount || 0}</span>
+                            </button>
 
+                            <button
+                                onClick={() => handleReaction('DISLIKE')}
+                                disabled={report.isMyPost}
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '56px',
+                                    height: '56px',
+                                    borderRadius: '50%',
+                                    backgroundColor: report.myReaction === 'DISLIKE' ? '#fee2e2' : '#f8fafc',
+                                    color: report.myReaction === 'DISLIKE' ? '#dc2626' : '#64748b',
+                                    border: report.myReaction === 'DISLIKE' ? '2px solid #fca5a5' : '1px solid #e2e8f0',
+                                    cursor: report.isMyPost ? 'not-allowed' : 'pointer',
+                                    transition: 'all 0.2s',
+                                    boxShadow: report.myReaction === 'DISLIKE' ? '0 4px 12px rgba(220, 38, 38, 0.2)' : 'none'
+                                }}
+                                onMouseOver={(e) => { if (!report.isMyPost && report.myReaction !== 'DISLIKE') { e.currentTarget.style.backgroundColor = '#f1f5f9'; } }}
+                                onMouseOut={(e) => { if (!report.isMyPost && report.myReaction !== 'DISLIKE') { e.currentTarget.style.backgroundColor = '#f8fafc'; } }}
+                            >
+                                <span style={{ fontSize: '1.25rem', marginBottom: '2px' }}>👎</span>
+                                <span style={{ fontSize: '0.75rem', fontWeight: '700' }}>{report.dislikeCount || 0}</span>
+                            </button>
 
-                            {/* Action Buttons Container */}
-                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginTop: '60px', paddingTop: '30px', borderTop: '1px solid #f1f5f9' }}>
+                            {user && user.role === 'AGENCY' && String(report.agencyNo) === String(user.agencyNo) && (
                                 <button
-                                    onClick={() => handleReaction('LIKE')}
-                                    disabled={report.isMyPost}
-                                    style={{
-                                        width: '64px',
-                                        height: '64px',
-                                        borderRadius: '50%',
-                                        backgroundColor: report.myReaction === 'LIKE' ? '#dcfce7' : 'white',
-                                        color: report.myReaction === 'LIKE' ? '#16a34a' : '#64748b',
-                                        border: report.myReaction === 'LIKE' ? '2px solid #86efac' : '1px solid #e2e8f0',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        boxShadow: report.myReaction === 'LIKE' ? '0 4px 12px rgba(22, 163, 74, 0.2)' : '0 2px 4px rgba(0,0,0,0.05)',
-                                        cursor: report.isMyPost ? 'not-allowed' : 'pointer',
-                                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
-                                    }}
-                                    onMouseOver={(e) => { if (!report.isMyPost && report.myReaction !== 'LIKE') { e.currentTarget.style.backgroundColor = '#f8fafc'; e.currentTarget.style.transform = 'translateY(-2px)'; } }}
-                                    onMouseOut={(e) => { if (!report.isMyPost && report.myReaction !== 'LIKE') { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.transform = 'none'; } }}
-                                >
-                                    <span style={{ fontSize: '1.5rem', marginBottom: '2px' }}>👍</span>
-                                    <span style={{ fontSize: '0.75rem', fontWeight: '700' }}>{report.likeCount || 0}</span>
-                                </button>
-
-                                <button
-                                    onClick={() => handleReaction('DISLIKE')}
-                                    disabled={report.isMyPost}
-                                    style={{
-                                        width: '64px',
-                                        height: '64px',
-                                        borderRadius: '50%',
-                                        backgroundColor: report.myReaction === 'DISLIKE' ? '#fee2e2' : 'white',
-                                        color: report.myReaction === 'DISLIKE' ? '#dc2626' : '#64748b',
-                                        border: report.myReaction === 'DISLIKE' ? '2px solid #fca5a5' : '1px solid #e2e8f0',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        boxShadow: report.myReaction === 'DISLIKE' ? '0 4px 12px rgba(220, 38, 38, 0.2)' : '0 2px 4px rgba(0,0,0,0.05)',
-                                        cursor: report.isMyPost ? 'not-allowed' : 'pointer',
-                                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
-                                    }}
-                                    onMouseOver={(e) => { if (!report.isMyPost && report.myReaction !== 'DISLIKE') { e.currentTarget.style.backgroundColor = '#f8fafc'; e.currentTarget.style.transform = 'translateY(-2px)'; } }}
-                                    onMouseOut={(e) => { if (!report.isMyPost && report.myReaction !== 'DISLIKE') { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.transform = 'none'; } }}
-                                >
-                                    <span style={{ fontSize: '1.5rem', marginBottom: '2px' }}>👎</span>
-                                    <span style={{ fontSize: '0.75rem', fontWeight: '700' }}>{report.dislikeCount || 0}</span>
-                                </button>
-
-                                {user && user.role === 'AGENCY' && String(report.agencyNo) === String(user.agencyNo) && (
-                                    <button
-                                        onClick={async () => {
-                                            if (window.confirm('정말 삭제하시겠습니까? (복구 불가)')) {
-                                                try {
-                                                    await complaintsAPI.delete(id);
-                                                    alert('삭제되었습니다.');
-                                                    navigate('/list');
-                                                } catch (err: any) {
-                                                    alert(err.message || '삭제 실패');
-                                                }
+                                    onClick={async () => {
+                                        if (window.confirm('정말 삭제하시겠습니까? (복구 불가)')) {
+                                            try {
+                                                await complaintsAPI.delete(id);
+                                                alert('삭제되었습니다.');
+                                                navigate('/list');
+                                            } catch (err: any) {
+                                                alert(err.message || '삭제 실패');
                                             }
-                                        }}
-                                        style={{
-                                            padding: '8px 16px',
-                                            backgroundColor: '#fff1f2',
-                                            color: '#e11d48',
-                                            border: '1px solid #fda4af',
-                                            borderRadius: '8px',
-                                            fontWeight: '600',
-                                            fontSize: '0.85rem',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            marginLeft: '12px',
-                                            transition: 'all 0.2s'
-                                        }}
-                                        onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#fee2e2'; }}
-                                        onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#fff1f2'; }}
-                                    >
-                                        <span>🗑️</span>
-                                        <span>민원 삭제</span>
-                                    </button>
-                                )}
-                            </div>
+                                        }
+                                    }}
+                                    style={{
+                                        width: '56px',
+                                        height: '56px',
+                                        borderRadius: '50%',
+                                        backgroundColor: '#fff1f2',
+                                        color: '#e11d48',
+                                        border: '1px solid #fda4af',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 0.2s',
+                                        fontSize: '1.2rem'
+                                    }}
+                                    title="삭제하기"
+                                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#fee2e2'; }}
+                                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#fff1f2'; }}
+                                >
+                                    🗑️
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -371,34 +372,61 @@ function Detail() {
                                     {steps.map((step, index) => {
                                         const isActive = index <= currentIndex;
                                         const isCurrent = index === currentIndex;
+                                        // 권한 체크: AGENCY 회원이고, 민원의 담당 기관 번호와 일치하는 경우에만 버튼 활성화
+                                        const canChangeStatus = user && user.role === 'AGENCY' && String(report.agencyNo) === String(user.agencyNo);
+
                                         return (
                                             <div
                                                 key={step.key}
-                                                style={{ textAlign: 'center', cursor: user && user.role === 'AGENCY' ? 'pointer' : 'default' }}
-                                                onClick={() => user && user.role === 'AGENCY' && handleStatusChange(step.key)}
+                                                style={{ textAlign: 'center' }}
                                             >
                                                 <div style={{
-                                                    width: '52px',
-                                                    height: '52px',
+                                                    width: '56px',
+                                                    height: '56px',
                                                     borderRadius: '50%',
-                                                    backgroundColor: isActive ? 'white' : '#f1f5f9',
-                                                    border: isActive ? '2px solid #6366f1' : '2px solid #e2e8f0',
+                                                    backgroundColor: isActive ? 'white' : '#f8fafc',
+                                                    border: isCurrent ? '3px solid #6366f1' : (isActive ? '2px solid #6366f1' : '2px solid #e2e8f0'),
                                                     color: isActive ? '#6366f1' : '#94a3b8',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
                                                     fontSize: '1.5rem',
                                                     margin: '0 auto 12px',
-                                                    boxShadow: isCurrent ? '0 0 0 4px rgba(99, 102, 241, 0.2)' : 'none',
+                                                    boxShadow: isCurrent ? '0 0 0 4px rgba(99, 102, 241, 0.2), 0 4px 6px rgba(0,0,0,0.1)' : 'none',
+                                                    transform: isCurrent ? 'scale(1.1)' : 'scale(1)',
+                                                    opacity: isActive ? 1 : 0.6,
                                                     transition: 'all 0.3s ease'
                                                 }}>
                                                     {step.icon}
                                                 </div>
-                                                <div style={{ fontSize: '0.9rem', fontWeight: isActive ? '700' : '500', color: isActive ? '#1e293b' : '#94a3b8' }}>
+                                                <div style={{
+                                                    fontSize: '0.9rem',
+                                                    fontWeight: isActive ? '700' : '500',
+                                                    color: isActive ? '#1e293b' : '#94a3b8',
+                                                    marginBottom: '8px'
+                                                }}>
                                                     {step.label}
                                                 </div>
-                                                {user && user.role === 'AGENCY' && !isCurrent && (
-                                                    <div style={{ fontSize: '0.75rem', color: '#6366f1', marginTop: '4px' }}>변경하기</div>
+                                                {canChangeStatus && !isCurrent && (
+                                                    <button
+                                                        onClick={() => handleStatusChange(step.key)}
+                                                        style={{
+                                                            padding: '6px 12px',
+                                                            borderRadius: '6px',
+                                                            backgroundColor: '#eef2ff',
+                                                            color: '#4f46e5',
+                                                            fontSize: '0.8rem',
+                                                            fontWeight: '600',
+                                                            cursor: 'pointer',
+                                                            border: 'none',
+                                                            transition: 'all 0.2s',
+                                                            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                                                        }}
+                                                        onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#e0e7ff'; }}
+                                                        onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#eef2ff'; }}
+                                                    >
+                                                        변경하기
+                                                    </button>
                                                 )}
                                             </div>
                                         );

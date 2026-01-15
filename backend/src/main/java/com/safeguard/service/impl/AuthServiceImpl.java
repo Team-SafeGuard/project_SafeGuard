@@ -110,7 +110,7 @@ public class AuthServiceImpl implements AuthService {
      * @param name      사용자 이름
      * @param phone     사용자 전화번호
      * @param birthDate 사용자 생년월일
-     * @return 찾은 사용자 ID 목록 (쉼표로 구분, 마스킹 처리됨)
+     * @return 찾은 사용자 ID 목록
      */
     @Override
     public String findId(String name, String phone, String birthDate) {
@@ -120,7 +120,7 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("사용자를 찾을 수 없습니다.");
         }
         return users.stream()
-                .map(user -> maskUserId(user.getUserId()))
+                .map(UserDTO::getUserId)
                 .collect(java.util.stream.Collectors.joining(", "));
     }
 
@@ -136,20 +136,6 @@ public class AuthServiceImpl implements AuthService {
         java.time.LocalDate parsedBirthDate = java.time.LocalDate.parse(birthDate);
         userMapper.selectUserByUserIdAndPhone(userId, phone, parsedBirthDate)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-    }
-
-    /**
-     * 아이디 마스킹 처리
-     * 앞 4자리만 보여주고 나머지는 *로 표시
-     *
-     * @param userId 원본 아이디
-     * @return 마스킹된 아이디
-     */
-    private String maskUserId(String userId) {
-        if (userId == null || userId.length() < 4) {
-            return userId; // 너무 짧으면 그대로 노출하거나 별도 처리
-        }
-        return userId.substring(0, 4) + "*".repeat(userId.length() - 4);
     }
 
     /**
