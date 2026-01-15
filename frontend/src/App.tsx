@@ -14,7 +14,6 @@ import MyPage from './pages/MyPage';
 import FindAccount from './pages/FindAccount';
 import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
-import { agenciesAPI } from './utils/api';
 import './index.css';
 
 function App() {

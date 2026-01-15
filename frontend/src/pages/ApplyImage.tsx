@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { complaintsAPI, getToken, agenciesAPI, analyzeImage } from '../utils/api';
+import { complaintsAPI, getToken, analyzeImage } from '../utils/api';
 
 function ApplyImage() {
     const navigate = useNavigate();
@@ -29,26 +29,9 @@ function ApplyImage() {
     const [previewUrl, setPreviewUrl] = useState(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [aiResult, setAiResult] = useState({ type: '-', agency: '-' });
-    const [agencies, setAgencies] = useState<any[]>([]);
-
     const [loading, setLoading] = useState(false);
 
-    // 기관 목록 불러오기
-    useEffect(() => {
-        const fetchAgencies = async () => {
-            try {
-                const response = await agenciesAPI.getList();
-                if (response && Array.isArray(response)) {
-                    setAgencies(response);
-                } else if (response && response.agencies) {
-                    setAgencies(response.agencies);
-                }
-            } catch (error) {
-                console.error("Failed to fetch agencies:", error);
-            }
-        };
-        fetchAgencies();
-    }, []);
+
     const [error, setError] = useState('');
     const [currentStep, setCurrentStep] = useState(1);
 
@@ -207,34 +190,28 @@ function ApplyImage() {
         setLoading(true);
         setError('');
         try {
-            // 업로드 로직 통합: 별도의 uploadImage 호출 없이
-            // FormData에 'file' 파라미터로 직접 첨부하여 보냅니다.
 
-            let agencyCode = null;
-            if (aiResult?.agency && agencies.length > 0) {
-                const found = agencies.find((a: any) => a.agencyName === aiResult.agency);
-                if (found) {
-                    agencyCode = found.agencyNo;
-                }
-            }
+            // 1. 이미지를 백엔드 영구 저장소에 업로드
+            console.log('[프론트엔드 로그] 서버에 이미지 업로드 시작...');
+            const uploadResult = await complaintsAPI.uploadImage(selectedImage);
+            const imagePath = uploadResult.imagePath; // 서버에서 반환한 경로
 
+            // 2. 업로드된 경로를 포함하여            // 기관 매핑 (백엔드에서 agencyName 기준으로 자동 처리됨)
             const complaintData = {
                 category: aiResult?.type || '이미지',
                 title: formData.title,
                 content: formData.content,
                 isPublic: formData.isPublic,
                 location: formData.location,
-                agencyCode: agencyCode,
+                imagePath: imagePath, // 저장된 경로 전달
                 agencyName: aiResult?.agency || null
             };
 
+            console.log('[프론트엔드 로그] 최종 제출 데이터 (이미지 기반):', complaintData);
+
             const submitData = new FormData();
             submitData.append('complaint', JSON.stringify(complaintData));
-
-            // 이미지 파일을 'file'이라는 이름으로 추가 (백엔드 RequestPart와 일치)
-            if (selectedImage) {
-                submitData.append('file', selectedImage);
-            }
+            // 이미지는 이미 업로드되었으므로 file 파트는 보내지 않음 (null 처리 or 생략)
 
             const result = await complaintsAPI.create(submitData);
             alert(`이미지 민원이 접수되었습니다. (접수번호: ${result.complaintNo})`);
@@ -687,10 +664,12 @@ function ApplyImage() {
                                 marginBottom: '16px'
                             }}>
                                 <div style={{ fontSize: '0.8rem', color: '#7c3aed', fontWeight: '600', marginBottom: '8px' }}>
-                                    📊 이미지 분석 결과
+                                    📊 민원 유형
                                 </div>
                                 <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#1e293b', textAlign: 'center' }}>
-                                    {aiResult.type}
+                                    {aiResult
+                                        ? (aiResult.type || '유형 분석 실패')
+                                        : (formData.content.length > 10 ? '분석 가능' : '분석 대기')}
                                 </div>
                             </div>
                             <div style={{
@@ -699,7 +678,7 @@ function ApplyImage() {
                                 borderRadius: '12px'
                             }}>
                                 <div style={{ fontSize: '0.8rem', color: '#a855f7', fontWeight: '600', marginBottom: '8px' }}>
-                                    🏛️ 처리 기관 분류
+                                    🏛️ 처리 기관
                                 </div>
                                 <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#1e293b', textAlign: 'center' }}>
                                     {aiResult.agency}
