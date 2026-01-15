@@ -14,6 +14,8 @@ import MyPage from './pages/MyPage';
 import FindAccount from './pages/FindAccount';
 import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import { agenciesAPI } from './utils/api';
 import './index.css';
 
 function App() {
@@ -116,12 +118,16 @@ function App() {
                 ) : (
                   <>
                     <li className="nav__item nav-dropdown">
-                      <span>민원접수 ▾</span>
-                      <div className="nav-dropdown-content">
-                        <Link to="/apply-text">텍스트 민원</Link>
-                        <Link to="/apply-voice">음성 민원</Link>
-                        <Link to="/apply-image">이미지 민원</Link>
-                      </div>
+                      <span onClick={() => { if (!token) { alert('로그인이 필요한 서비스입니다.'); window.location.href = '/login'; } }} style={{ cursor: 'pointer' }}>
+                        민원접수 ▾
+                      </span>
+                      {token && (
+                        <div className="nav-dropdown-content">
+                          <Link to="/apply-text">텍스트 민원</Link>
+                          <Link to="/apply-voice">음성 민원</Link>
+                          <Link to="/apply-image">이미지 민원</Link>
+                        </div>
+                      )}
                     </li>
                     <li className="nav__item"><Link to="/about">서비스 소개</Link></li>
                     <li className="nav__item"><Link to="/list">민원 목록</Link></li>
@@ -136,20 +142,26 @@ function App() {
         {/* Page Routes */}
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/apply-text" element={<ApplyText />} />
-          <Route path="/apply-voice" element={<ApplyVoice />} />
-          <Route path="/apply-image" element={<ApplyImage />} />
-          <Route path="/about" element={<About />} />
+          {/* Admin Routes (Protected) */}
+          <Route element={<ProtectedRoute allowedRoles={['AGENCY']} />}>
+            <Route path="/admin/list" element={<List />} />
+            <Route path="/admin/map" element={<MapView />} />
+            <Route path="/admin/dashboard" element={<Dashboard />} />
+          </Route>
 
-          {/* Admin Routes */}
+          {/* Application Routes (Login Required) */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/apply-text" element={<ApplyText />} />
+            <Route path="/apply-voice" element={<ApplyVoice />} />
+            <Route path="/apply-image" element={<ApplyImage />} />
+          </Route>
+
           <Route path="/list" element={<List />} />
-          <Route path="/admin/list" element={<List />} />
           <Route path="/reports/:id" element={<Detail />} />
           <Route path="/map" element={<MapView />} />
-          <Route path="/admin/map" element={<MapView />} />
-          <Route path="/admin/dashboard" element={<Dashboard />} />
 
           {/* User Account Routes */}
           <Route path="/mypage" element={<MyPage />} />

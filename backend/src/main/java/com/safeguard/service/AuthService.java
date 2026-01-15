@@ -10,11 +10,11 @@ public interface AuthService {
 
     Map<String, Object> login(LoginRequest request);
 
-    String findId(String name, String phone);
+    String findId(String name, String phone, String birthDate);
 
-    void verifyUserForReset(String userId, String phone);
+    void verifyUserForReset(String userId, String phone, String birthDate);
 
-    void updatePassword(String userId, String phone, String newPassword);
+    void updatePassword(String userId, String phone, String newPassword, String birthDate);
 
     boolean isIdDuplicate(String userId);
 

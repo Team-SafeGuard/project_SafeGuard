@@ -6,8 +6,8 @@ function ResetPassword() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Get userId and phone from location state (passed from FindAccount)
-    const { userId, phone } = location.state || {};
+    // Get userId and phone and birthDate from location state (passed from FindAccount)
+    const { userId, phone, birthDate } = location.state || {}; // birthDate 추가
 
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -15,7 +15,7 @@ function ResetPassword() {
     const [loading, setLoading] = useState(false);
 
     // Redirect if direct access without state
-    if (!userId || !phone) {
+    if (!userId || !phone || !birthDate) { // birthDate 체크 추가
         return (
             <div style={{ padding: '40px', textAlign: 'center' }}>
                 <p>잘못된 접근입니다.</p>
@@ -41,7 +41,7 @@ function ResetPassword() {
         setError('');
 
         try {
-            await authAPI.updatePassword({ userId, phone, newPassword });
+            await authAPI.updatePassword({ userId, phone, newPassword, birthDate });
             alert('비밀번호가 성공적으로 변경되었습니다. 다시 로그인해 주세요.');
             navigate('/login');
         } catch (err) {

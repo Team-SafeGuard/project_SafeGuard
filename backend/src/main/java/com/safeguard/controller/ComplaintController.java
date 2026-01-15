@@ -226,6 +226,34 @@ public class ComplaintController {
     }
 
     /**
+     * 민원 삭제 (Soft Delete)
+     * - 관리자(기관 담당자) 전용
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, String>> deleteComplaint(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Long userNo = userDetails.getUserNo();
+        UserDTO userDto = userMapper.findByUserId(userDetails.getUsername()).orElse(null);
+
+        if (userDto == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String role = (userDto.getRole() != null) ? userDto.getRole().name() : null;
+        Long agencyNo = userDto.getAgencyNo();
+
+        complaintService.deleteComplaint(id, userNo, role, agencyNo);
+
+        return ResponseEntity.ok(Map.of("message", "민원이 삭제되었습니다."));
+    }
+
+    /**
      * 신규 민원 등록 처리
      */
     @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })

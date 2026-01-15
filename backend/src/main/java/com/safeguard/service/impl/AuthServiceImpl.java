@@ -105,33 +105,51 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * 이름과 전화번호로 사용자 ID를 찾습니다.
+     * 이름과 전화번호, 생년월일로 사용자 ID를 찾습니다.
      *
-     * @param name  사용자 이름
-     * @param phone 사용자 전화번호
-     * @return 찾은 사용자 ID 목록 (쉼표로 구분)
+     * @param name      사용자 이름
+     * @param phone     사용자 전화번호
+     * @param birthDate 사용자 생년월일
+     * @return 찾은 사용자 ID 목록 (쉼표로 구분, 마스킹 처리됨)
      */
     @Override
-    public String findId(String name, String phone) {
-        List<UserDTO> users = userMapper.selectUserByNameAndPhone(name, phone);
+    public String findId(String name, String phone, String birthDate) {
+        java.time.LocalDate parsedBirthDate = java.time.LocalDate.parse(birthDate);
+        List<UserDTO> users = userMapper.selectUserByNameAndPhone(name, phone, parsedBirthDate);
         if (users.isEmpty()) {
             throw new RuntimeException("사용자를 찾을 수 없습니다.");
         }
         return users.stream()
-                .map(UserDTO::getUserId)
+                .map(user -> maskUserId(user.getUserId()))
                 .collect(java.util.stream.Collectors.joining(", "));
     }
 
     /**
      * 비밀번호 재설정을 위해 사용자가 존재하는지 확인합니다.
      *
-     * @param userId 사용자 ID
-     * @param phone  사용자 전화번호
+     * @param userId    사용자 ID
+     * @param phone     사용자 전화번호
+     * @param birthDate 사용자 생년월일
      */
     @Override
-    public void verifyUserForReset(String userId, String phone) {
-        userMapper.selectUserByUserIdAndPhone(userId, phone)
+    public void verifyUserForReset(String userId, String phone, String birthDate) {
+        java.time.LocalDate parsedBirthDate = java.time.LocalDate.parse(birthDate);
+        userMapper.selectUserByUserIdAndPhone(userId, phone, parsedBirthDate)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+    }
+
+    /**
+     * 아이디 마스킹 처리
+     * 앞 4자리만 보여주고 나머지는 *로 표시
+     *
+     * @param userId 원본 아이디
+     * @return 마스킹된 아이디
+     */
+    private String maskUserId(String userId) {
+        if (userId == null || userId.length() < 4) {
+            return userId; // 너무 짧으면 그대로 노출하거나 별도 처리
+        }
+        return userId.substring(0, 4) + "*".repeat(userId.length() - 4);
     }
 
     /**
@@ -144,9 +162,10 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     @Transactional
-    public void updatePassword(String userId, String phone, String newPassword) {
+    public void updatePassword(String userId, String phone, String newPassword, String birthDate) {
         // Double check for security
-        userMapper.selectUserByUserIdAndPhone(userId, phone)
+        java.time.LocalDate parsedBirthDate = java.time.LocalDate.parse(birthDate);
+        userMapper.selectUserByUserIdAndPhone(userId, phone, parsedBirthDate)
                 .orElseThrow(() -> new RuntimeException("사용자 검증에 실패했습니다."));
 
         // 비밀번호 유효성 검사
