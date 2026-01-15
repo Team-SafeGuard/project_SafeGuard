@@ -1,14 +1,32 @@
 /**
  * 연령별 민원접수 현황을 보여주는 바 차트 컴포넌트입니다.
  */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactApexChart from 'react-apexcharts';
 
 const AgeGroupChart: React.FC = () => {
-    const series = [{
+    const [series, setSeries] = useState([{
         name: '민원 접수 건수',
-        data: [120, 250, 480, 520, 310, 150]
-    }];
+        data: [] as number[]
+    }]);
+
+    useEffect(() => {
+        fetch('/api/complaints/stats/dashboard')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.ageGroupStats) {
+                    const stats = data.ageGroupStats;
+                    const categories = ['10대', '20대', '30대', '40대', '50대', '60대+'];
+                    const counts = categories.map(cat => {
+                        const found = stats.find((d: any) => d.agegroup === cat);
+                        return found ? parseInt(found.count) : 0;
+                    });
+                    setSeries([{ name: '민원 접수 건수', data: counts }]);
+                }
+            })
+            .catch(err => console.error("Failed to fetch age group stats:", err));
+    }, []);
+
 
     const options = {
         chart: {

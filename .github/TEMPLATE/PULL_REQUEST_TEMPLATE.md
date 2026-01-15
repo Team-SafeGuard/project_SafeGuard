@@ -6,7 +6,7 @@ PR 태그에 체크한 항목만 details 열고 나머지는 삭제
 
 # 📌 Pull Request
 
-> PR 제목 규칙  
+
 > **type(scope): summary**  
 > 예) `fix(stt): 무음 환경에서 환각 텍스트 생성 문제 해결 (제목 내용은 항상 한국어로 한다.)`
 

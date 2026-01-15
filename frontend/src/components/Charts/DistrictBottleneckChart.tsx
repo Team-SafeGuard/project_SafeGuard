@@ -1,7 +1,7 @@
 /**
  * 자치구별 미처리 또는 지연된 민원 건수 TOP 10을 보여주는 병목 분석 차트 컴포넌트입니다.
  */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactApexChart from 'react-apexcharts';
 
 interface DistrictBottleneckChartProps {
@@ -9,34 +9,33 @@ interface DistrictBottleneckChartProps {
 }
 
 const DistrictBottleneckChart: React.FC<DistrictBottleneckChartProps> = ({ type }) => {
-    // 임시 데이터 (실제 데이터 연동 필요)
-    const unprocessedData = [
-        { x: '강남구', y: 145 },
-        { x: '서초구', y: 122 },
-        { x: '송파구', y: 118 },
-        { x: '영등포구', y: 105 },
-        { x: '강서구', y: 98 },
-        { x: '마포구', y: 85 },
-        { x: '관악구', y: 76 },
-        { x: '노원구', y: 72 },
-        { x: '은평구', y: 68 },
-        { x: '용산구', y: 64 },
-    ];
+    const [data, setData] = useState<{ x: string, y: number }[]>([]);
 
-    const overdueData = [
-        { x: '강남구', y: 24 },
-        { x: '동작구', y: 18 },
-        { x: '강서구', y: 15 },
-        { x: '종로구', y: 14 },
-        { x: '마포구', y: 12 },
-        { x: '서초구', y: 10 },
-        { x: '구로구', y: 9 },
-        { x: '금천구', y: 8 },
-        { x: '성동구', y: 7 },
-        { x: '중구', y: 6 },
-    ];
+    useEffect(() => {
+        // Fetch Dashboard Stats including bottleneck data
+        fetch(`/api/complaints/stats/dashboard`)
+            .then(res => res.json())
+            .then(data => {
+                let sourceData = [];
+                if (type === 'unprocessed') {
+                    sourceData = data.bottleneck || [];
+                } else {
+                    sourceData = data.bottleneckOverdue || [];
+                }
 
-    const currentData = type === 'unprocessed' ? unprocessedData : overdueData;
+                // Formatting to match chart data structure {x, y}
+                const formatted = sourceData.map((d: any) => ({
+                    x: d.name,
+                    y: parseInt(d.count)
+                }));
+                setData(formatted);
+            })
+            .catch(err => console.error("Failed to fetch bottleneck stats:", err));
+    }, [type]);
+
+
+
+    const currentData = data;
     const mainColor = type === 'unprocessed' ? '#3B82F6' : '#EF4444';
     const bgColor = type === 'unprocessed' ? '#EFF6FF' : '#FEF2F2';
     const title = type === 'unprocessed' ? '구별 미처리 TOP 10' : '구별 지연(Overdue) TOP 10';

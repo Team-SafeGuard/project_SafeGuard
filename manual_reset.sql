@@ -47,7 +47,7 @@ CREATE TABLE complaint (
     longitude DOUBLE PRECISION,
     image_path VARCHAR(500),
     analysis_result JSONB,
-    status VARCHAR(20) NOT NULL DEFAULT 'RECEIVED',
+    status VARCHAR(20) NOT NULL DEFAULT 'UNPROCESSED',
     is_public BOOLEAN NOT NULL DEFAULT TRUE,
     created_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_date TIMESTAMPTZ,
@@ -57,12 +57,13 @@ CREATE TABLE complaint (
     answer TEXT
 );
 
--- Complaint Like (좋아요)
+-- Complaint Like (좋아요 / 싫어요)
 CREATE TABLE complaint_like (
     like_id BIGSERIAL PRIMARY KEY,
     complaint_no BIGINT NOT NULL REFERENCES complaint(complaint_no) ON DELETE CASCADE,
     user_no BIGINT NOT NULL REFERENCES app_user(user_no) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    type VARCHAR(10) NOT NULL DEFAULT 'LIKE',
     UNIQUE(complaint_no, user_no)
 );
 
@@ -99,7 +100,6 @@ CREATE TABLE error_logs (
     stack_trace TEXT,
     timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
-
 
 -- 3. 기초 데이터 삽입 (Agencies)
 INSERT INTO agency (agency_type, agency_name, region_code) VALUES
@@ -143,10 +143,5 @@ INSERT INTO agency (agency_type, agency_name, region_code) VALUES
   ('CENTRAL', '소방청', NULL),
   ('CENTRAL', '인사혁신처', NULL),
   ('CENTRAL', '기타', NULL);
-
--- 4. 기초 데이터 삽입 (Default User)
-INSERT INTO app_user (user_id, pw, name, role) VALUES
-('testuser', 'password', '테스트유저', 'USER');
-
 
 SELECT 'Reset Complete' as status;

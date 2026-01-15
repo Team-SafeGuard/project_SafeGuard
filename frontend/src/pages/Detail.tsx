@@ -10,13 +10,20 @@ function Detail() {
     const [isEditing, setIsEditing] = useState(false);
     const navigate = useNavigate();
 
+    const [loading, setLoading] = useState(true);
+    const [accessDenied, setAccessDenied] = useState(false); // New state for explicit private handling if needed
+
     const fetchDetail = async () => {
         try {
+            setLoading(true);
             const data = await complaintsAPI.getDetail(id);
             setReport(data);
             if (data.answer) setAnswerText(data.answer);
         } catch (err) {
             console.error('Failed to fetch report detail:', err);
+            // Optionally handle error state
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -60,7 +67,7 @@ function Detail() {
         }
     };
 
-    const handleLike = async () => {
+    const handleReaction = async (type) => {
         const token = localStorage.getItem('token');
         if (!token) {
             alert('로그인이 필요한 서비스입니다.');
@@ -69,16 +76,61 @@ function Detail() {
         }
 
         try {
-            await complaintsAPI.toggleLike(id);
-            const updated = await complaintsAPI.getDetail(id);
-            setReport(updated);
+            const result = await complaintsAPI.toggleReaction(id, type);
+            // 만약 API가 업데이트된 데이터를 반환하면 바로 적용
+            // 하지만 DTO 구조가 전체 상세와 다를 수 있으므로 fetchDetail 호출하거나 부분 업데이트
+            // Backend returns: { message, likeCount, dislikeCount, myReaction }
+
+            setReport(prev => ({
+                ...prev,
+                likeCount: result.likeCount,
+                dislikeCount: result.dislikeCount,
+                myReaction: result.myReaction
+            }));
         } catch (err) {
-            console.error('Failed to update like:', err);
-            alert('좋아요 처리 실패');
+            if (err.message && err.message.includes('본인 글')) {
+                alert('본인 글에는 반응할 수 없습니다.');
+            } else {
+                console.error('Failed to update reaction:', err);
+                alert('처리 실패');
+            }
         }
     };
 
-    if (!report) return <div className="container" style={{ padding: '100px', textAlign: 'center' }}>로딩중...</div>;
+    if (loading) {
+        return <div className="container" style={{ padding: '100px', textAlign: 'center' }}>로딩중...</div>;
+    }
+
+    if (!report) {
+        return <div className="container" style={{ padding: '100px', textAlign: 'center' }}>게시물을 찾을 수 없습니다.</div>;
+    }
+
+    // [Strict Access Control] 비공개 게시물 처리
+    if (report.message === "비공개된 게시물입니다") {
+        return (
+            <div className="container" style={{ padding: '100px', textAlign: 'center' }}>
+                <div style={{ fontSize: '64px', marginBottom: '20px' }}>🔒</div>
+                <h2>비공개된 게시물입니다</h2>
+                <p style={{ color: '#666', marginTop: '10px' }}>
+                    작성자와 담당 기관 관계자만 열람할 수 있습니다.
+                </p>
+                <button
+                    onClick={() => navigate('/list')}
+                    style={{
+                        marginTop: '30px',
+                        padding: '10px 20px',
+                        backgroundColor: '#2563eb',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: 'pointer'
+                    }}
+                >
+                    목록으로 돌아가기
+                </button>
+            </div>
+        );
+    }
 
     const statusMap = {
         'UNPROCESSED': '미처리',
@@ -175,37 +227,58 @@ function Detail() {
                                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                     <span>🏛️</span>
                                     <span style={{
-                                        padding: '2px 10px',
-                                        backgroundColor: report.agencyName ? '#e0f2fe' : '#f1f5f9',
-                                        borderRadius: '6px',
-                                        color: report.agencyName ? '#0369a1' : '#94a3b8',
-                                        fontWeight: '600'
+                                        fontWeight: '600',
+                                        color: '#334155'
                                     }}>
-                                        {report.agencyName || '미지정'}
+                                        {report.assignedAgencyText || '-'}
                                     </span>
                                 </div>
                             </div>
 
-                            <button
-                                onClick={handleLike}
-                                style={{
-                                    padding: '10px 20px',
-                                    backgroundColor: report.liked ? '#fff1f2' : '#f8fafc',
-                                    color: report.liked ? '#e11d48' : '#64748b',
-                                    border: report.liked ? '1px solid #fda4af' : '1px solid #e2e8f0',
-                                    borderRadius: '12px',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    transition: 'all 0.2s',
-                                    fontSize: '0.95rem'
-                                }}
-                            >
-                                <span style={{ fontSize: '1.1rem' }}>{report.liked ? '❤️' : '🤍'}</span>
-                                <span>공감 {report.likeCount || 0}</span>
-                            </button>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button
+                                    onClick={() => handleReaction('LIKE')}
+                                    disabled={report.isMyPost}
+                                    style={{
+                                        padding: '10px 20px',
+                                        backgroundColor: report.myReaction === 'LIKE' ? '#fff1f2' : (report.isMyPost ? '#f3f4f6' : '#f8fafc'),
+                                        color: report.myReaction === 'LIKE' ? '#e11d48' : (report.isMyPost ? '#9ca3af' : '#64748b'),
+                                        border: report.myReaction === 'LIKE' ? '1px solid #fda4af' : '1px solid #e2e8f0',
+                                        borderRadius: '12px',
+                                        fontWeight: '600',
+                                        cursor: report.isMyPost ? 'not-allowed' : 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        transition: 'all 0.2s',
+                                        fontSize: '0.95rem'
+                                    }}
+                                >
+                                    <span style={{ fontSize: '1.1rem' }}>{report.myReaction === 'LIKE' ? '❤️' : '🤍'}</span>
+                                    <span>공감 {report.likeCount || 0}</span>
+                                </button>
+                                <button
+                                    onClick={() => handleReaction('DISLIKE')}
+                                    disabled={report.isMyPost}
+                                    style={{
+                                        padding: '10px 20px',
+                                        backgroundColor: report.myReaction === 'DISLIKE' ? '#eff6ff' : (report.isMyPost ? '#f3f4f6' : '#f8fafc'),
+                                        color: report.myReaction === 'DISLIKE' ? '#2563eb' : (report.isMyPost ? '#9ca3af' : '#64748b'),
+                                        border: report.myReaction === 'DISLIKE' ? '1px solid #bfdbfe' : '1px solid #e2e8f0',
+                                        borderRadius: '12px',
+                                        fontWeight: '600',
+                                        cursor: report.isMyPost ? 'not-allowed' : 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        transition: 'all 0.2s',
+                                        fontSize: '0.95rem'
+                                    }}
+                                >
+                                    <span style={{ fontSize: '1.1rem' }}>{report.myReaction === 'DISLIKE' ? '👎' : '👎'}</span>
+                                    <span>비공감 {report.dislikeCount || 0}</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -414,8 +487,8 @@ function Detail() {
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
 

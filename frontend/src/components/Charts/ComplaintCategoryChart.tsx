@@ -1,32 +1,13 @@
 /**
  * 분류별 민원 통계 및 순위를 보여주는 도넛 차트 및 리스트 컴포넌트입니다.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactApexChart from 'react-apexcharts';
 
-// 민원 유형별 통계 데이터 (이미지 기반 10개 확장)
-const MOCK_TYPE_DATA = [
-    { name: '교통', value: 10108, change: -4.7, rank: 1 },
-    { name: '행정·안전', value: 1516, change: -10.0, rank: 2 },
-    { name: '도로', value: 1417, change: 16.4, rank: 3 },
-    { name: '주택·건축', value: 858, change: -17.9, rank: 4 },
-    { name: '산업·통상', value: 707, change: 7.0, rank: 5 },
-    { name: '환경', value: 494, change: -27.0, rank: 6 },
-    { name: '경찰·검찰·법원', value: 406, change: 0.5, rank: 7 },
-    { name: '교육', value: 381, change: 2.7, rank: 8 },
-    { name: '관광', value: 290, change: 14.6, rank: 9 },
-    { name: '보건', value: 286, change: -32.4, rank: 10 },
-    { name: '정보통신', value: 265, change: 4.2, rank: 11 },
-    { name: '산림·농업', value: 240, change: -1.5, rank: 12 },
-    { name: '상하수도', value: 215, change: 0.8, rank: 13 },
-    { name: '재난·안전', value: 198, change: -2.4, rank: 14 },
-    { name: '공원·녹지', value: 175, change: 5.5, rank: 15 },
-    { name: '도시계획', value: 152, change: -0.9, rank: 16 },
-    { name: '수산·해양', value: 135, change: 1.2, rank: 17 },
-    { name: '과학기술', value: 118, change: -3.1, rank: 18 },
-    { name: '외교·안보', value: 102, change: 0.4, rank: 19 },
-    { name: '기획·예산', value: 85, change: -1.8, rank: 20 },
-];
+
+
+// 민원 유형별 통계 데이터 (이미지 기반 10개 확장) - State로 대체됨
+// const MOCK_TYPE_DATA = [ ... ];
 
 interface ChartTwoProps {
     selectedCategory: string;
@@ -34,8 +15,41 @@ interface ChartTwoProps {
 }
 
 const ComplaintCategoryChart: React.FC<ChartTwoProps> = ({ selectedCategory, onSelect }) => {
-    const [state] = useState({
-        series: [10108, 1516, 1417, 858, 707], // TOP 5 시각화용
+    const [categoryData, setCategoryData] = useState<any[]>([]);
+
+    useEffect(() => {
+        const url = `/api/complaints/stats/dashboard?category=${encodeURIComponent(selectedCategory)}`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.categoryStats) {
+                    // Backend returns { categoryStats: [{ name: '불법주정차', value: 10 }, ...], ... }
+                    const transformed = data.categoryStats.map((d: any, i: number) => ({
+                        name: d.name,
+                        value: d.value,
+                        change: Number((Math.random() * 20 - 10).toFixed(1)), // Mock change preserved
+                        rank: i + 1
+                    }));
+
+                    // Sort by value desc if not already
+                    transformed.sort((a: any, b: any) => b.value - a.value);
+                    // Re-assign rank after sort
+                    transformed.forEach((d: any, i: number) => d.rank = i + 1);
+
+                    setCategoryData(transformed);
+                }
+            })
+            .catch(err => console.error("Failed to fetch category stats:", err));
+    }, [selectedCategory]);
+
+    // Derived state for chart
+    const top5 = categoryData.slice(0, 5);
+    const chartSeries = top5.map(d => d.value);
+    const chartLabels = top5.map(d => d.name);
+
+    const [state, setState] = useState({
+        series: [], // initialized in useEffect or derived
         options: {
             chart: {
                 type: 'donut' as const,
@@ -47,7 +61,7 @@ const ComplaintCategoryChart: React.FC<ChartTwoProps> = ({ selectedCategory, onS
                 }
             },
             colors: ['#A0C4FF', '#B2F2BB', '#FFEC99', '#FFD8A8', '#FFB1B1'],
-            labels: ['교통', '행정·안전', '도로', '주택·건축', '산업·통상'],
+            labels: [],
             legend: { show: false },
             plotOptions: {
                 pie: {
@@ -69,6 +83,8 @@ const ComplaintCategoryChart: React.FC<ChartTwoProps> = ({ selectedCategory, onS
                     }
                 },
             },
+            // ... remaining options
+
             dataLabels: {
                 enabled: true,
                 formatter: function (val: any, opts: any) {
@@ -120,8 +136,8 @@ const ComplaintCategoryChart: React.FC<ChartTwoProps> = ({ selectedCategory, onS
                     }}
                 >
                     <ReactApexChart
-                        options={state.options}
-                        series={state.series}
+                        options={{ ...state.options, labels: chartLabels }}
+                        series={chartSeries}
                         type="donut"
                         width={440}
                         height={440}
@@ -136,7 +152,7 @@ const ComplaintCategoryChart: React.FC<ChartTwoProps> = ({ selectedCategory, onS
 
                 <div className="custom-scrollbar" style={{ height: '520px', overflowY: 'auto', paddingRight: '12px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {MOCK_TYPE_DATA.map((item, i) => (
+                        {categoryData.map((item, i) => (
                             <div
                                 key={i}
                                 onClick={() => onSelect(item.name)}

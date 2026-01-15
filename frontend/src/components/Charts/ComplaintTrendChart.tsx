@@ -1,7 +1,7 @@
 /**
  * 선택된 카테고리의 민원 접수, 완료 건수 및 증감률, 백로그 트렌드를 보여주는 복합 차트 컴포넌트입니다.
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import ReactApexChart from 'react-apexcharts';
 
 interface ChartOneProps {
@@ -17,38 +17,93 @@ const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory }) => {
         backlog: true
     });
 
-    // 데이터 생성 로직
-    const getCategoryData = (name: string) => {
-        const seed = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        return Array.from({ length: 10 }, (_, i) => Math.floor(Math.abs(Math.sin(seed + i)) * 100));
-    };
+    const [trendData, setTrendData] = useState<{ date: string, received: number, completed: number, backlog: number }[]>([]);
+    const [backlogStats, setBacklogStats] = useState({ current: 0, changePercent: 0, changeType: 'increase' });
 
-    const receivedData = useMemo(() => getCategoryData(selectedCategory), [selectedCategory]);
-    // 데이터 생성 로직 (임시 데이터로 대체)
-    // const getCategoryData = (name: string) => {
-    //     const seed = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    //     return Array.from({ length: 10 }, (_, i) => Math.floor(Math.abs(Math.sin(seed + i)) * 100));
-    // };
+    useEffect(() => {
+        // 백엔드 API 호출: /api/complaints/stats/dashboard
+        const url = `/api/complaints/stats/dashboard?category=${encodeURIComponent(selectedCategory)}`;
 
-    // const receivedData = useMemo(() => getCategoryData(selectedCategory), [selectedCategory]);
-    // const completedData = useMemo(() => getCategoryData(selectedCategory + 'done').map(v => Math.floor(v * 0.7)), [selectedCategory]);
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                // Backend returns { monthlyTrend: [{ month: '2024-01', received: 10, completed: 5 }, ...], ... }
+                // We need { date: string, count: number } for the chart
+                if (data && data.monthlyTrend && data.summary) {
+                    const trends = data.monthlyTrend; // sorted by date asc
+                    const currentProcessing = data.summary.received + data.summary.processing; // Anchor point (Total Pending)
 
-    // 증감률 계산 (전일 대비 % - 시연용으로 변동성 있게 계산)
-    // const growthData = useMemo(() => {
-    //     return receivedData.map((val, i) => {
-    //         if (i === 0) return 0;
-    //         const prev = receivedData[i - 1];
-    //         if (prev === 0) return 0;
-    //         return parseFloat(((val - prev) / prev * 100).toFixed(1));
-    //     });
-    // }, [receivedData]);
+                    // Calculate Backlog backwards
+                    // Backlog[i] = Backlog[i-1] + Received[i] - Completed[i]
+                    // => Backlog[i-1] = Backlog[i] - Received[i] + Completed[i]
+
+                    const processedTrends = [];
+                    let tempBacklog = currentProcessing;
+
+                    // Process from last to first
+                    for (let i = trends.length - 1; i >= 0; i--) {
+                        const item = trends[i];
+                        processedTrends.unshift({
+                            date: item.month,
+                            received: item.received,
+                            completed: item.completed,
+                            backlog: tempBacklog
+                        });
+
+                        // Prepare backlog for previous month
+                        tempBacklog = tempBacklog - item.received + item.completed;
+                        if (tempBacklog < 0) tempBacklog = 0; // Safety clamp
+                    }
+
+                    setTrendData(processedTrends);
+
+                    // Calculate Backlog Change (Last vs Prev)
+                    if (processedTrends.length >= 2) {
+                        const last = processedTrends[processedTrends.length - 1].backlog;
+                        const prev = processedTrends[processedTrends.length - 2].backlog;
+                        const change = last - prev;
+                        const percent = prev === 0 ? 0 : ((change / prev) * 100);
+                        setBacklogStats({
+                            current: last,
+                            changePercent: Math.abs(parseFloat(percent.toFixed(1))),
+                            changeType: change >= 0 ? 'increase' : 'decrease'
+                        });
+                    } else if (processedTrends.length === 1) {
+                        setBacklogStats({
+                            current: processedTrends[0].backlog,
+                            changePercent: 0,
+                            changeType: 'increase'
+                        });
+                    }
+                }
+            })
+            .catch(err => console.error("Failed to fetch dashboard trends:", err));
+    }, [selectedCategory]);
+
+    const receivedData = trendData.map(d => d.received);
+    const completedData = trendData.map(d => d.completed);
+    const backlogData = trendData.map(d => d.backlog);
+    const dates = trendData.map(d => d.date);
+
+    // 1) 증감률 클램프 설정 (가상효과 극대화)
+    const GROWTH_CLAMP = 50; // -50% ~ +50% 범위로 제한
+
+    const growthData = receivedData.map((val, i) => {
+        if (i === 0) return 0;
+        const prev = receivedData[i - 1];
+        if (!prev || prev === 0) return 0;
+        const rawGrowth = parseFloat(((val - prev) / prev * 100).toFixed(1));
+        // 클램프 적용
+        return Math.max(-GROWTH_CLAMP, Math.min(GROWTH_CLAMP, rawGrowth));
+    });
+
 
     // 임시 데이터 (백로그 지표 추가)
     const series = [
-        ...(visibility.received ? [{ name: '접수 건수', type: 'area', data: [31, 40, 28, 51, 42, 109, 100, 85, 92, 95] }] : []),
-        ...(visibility.completed ? [{ name: '완료 건수', type: 'area', data: [11, 32, 45, 32, 34, 52, 41, 65, 87, 82] }] : []),
-        ...(visibility.growth ? [{ name: '증감률 (%)', type: 'line', data: [0, 29, -15, 82, -18, 160, -8, -15, 8, 3] }] : []),
-        ...(visibility.backlog ? [{ name: '미처리 잔량 (Backlog)', type: 'line', data: [120, 128, 111, 130, 138, 195, 254, 274, 279, 292] }] : []),
+        ...(visibility.received ? [{ name: '접수 건수', type: 'area', data: receivedData }] : []),
+        ...(visibility.completed ? [{ name: '완료 건수', type: 'line', data: completedData }] : []),
+        ...(visibility.growth ? [{ name: '증감률 (%)', type: 'column', data: growthData }] : []), // column으로 변경
+        ...(visibility.backlog ? [{ name: '미처리 잔량 (Backlog)', type: 'line', data: backlogData }] : []),
     ];
 
     // 선택된 지표에 따라 색상과 스타일 동적 생성
@@ -59,37 +114,31 @@ const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory }) => {
         ...(visibility.backlog ? ['#F59E0B'] : []), // 백로그: 주황색
     ];
 
-    const activeStrokeWidths = [
-        ...(visibility.received ? [3] : []),
-        ...(visibility.completed ? [3] : []),
-        ...(visibility.growth ? [3] : []),
-        ...(visibility.backlog ? [4] : []), // 백로그 선 강조
-    ];
-
-    const activeDashArrays = [
-        ...(visibility.received ? [0] : []),
-        ...(visibility.completed ? [0] : []),
-        ...(visibility.growth ? [0] : []),
-        ...(visibility.backlog ? [4] : []), // 백로그는 점선으로 구분
-    ];
-
-    const activeOpacitiesFrom = [
-        ...(visibility.received ? [0.45] : []),
-        ...(visibility.completed ? [0.45] : []),
-        ...(visibility.growth ? [1.0] : []),
-        ...(visibility.backlog ? [1.0] : []),
-    ];
-
-    const activeOpacitiesTo = [
-        ...(visibility.received ? [0.1] : []),
-        ...(visibility.completed ? [0.1] : []),
-        ...(visibility.growth ? [1.0] : []),
-        ...(visibility.backlog ? [1.0] : []),
+    const activeMarkersSize = [
+        ...(visibility.received ? [5] : []),
+        ...(visibility.completed ? [5] : []),
+        ...(visibility.growth ? [0] : []), // Column은 마커 제외
+        ...(visibility.backlog ? [6] : []),
     ];
 
     const options = {
         legend: { show: false },
         colors: activeColors,
+        annotations: {
+            yaxis: visibility.growth ? [{
+                y: 0,
+                yAxisIndex: 1, // 증감률 축에 고정
+                borderColor: '#FF3B30',
+                strokeDashArray: 4,
+                width: '100%',
+                label: {
+                    text: '0%',
+                    position: 'right',
+                    offsetX: -10,
+                    style: { color: '#fff', background: '#FF3B30', fontWeight: 700 }
+                }
+            }] : []
+        },
         chart: {
             fontFamily: 'Pretendard, sans-serif',
             height: 350,
@@ -106,9 +155,19 @@ const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory }) => {
             toolbar: { show: false },
         },
         stroke: {
-            width: activeStrokeWidths,
+            width: [
+                ...(visibility.received ? [3] : []),
+                ...(visibility.completed ? [3] : []),
+                ...(visibility.growth ? [0] : []), // Column stroke width는 0으로
+                ...(visibility.backlog ? [4] : []),
+            ],
             curve: 'smooth' as const,
-            dashArray: activeDashArrays
+            dashArray: [
+                ...(visibility.received ? [0] : []),
+                ...(visibility.completed ? [0] : []),
+                ...(visibility.growth ? [0] : []),
+                ...(visibility.backlog ? [4] : []),
+            ]
         },
         fill: {
             type: 'gradient',
@@ -117,8 +176,18 @@ const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory }) => {
                 type: 'vertical',
                 shadeIntensity: 0.5,
                 inverseColors: false,
-                opacityFrom: activeOpacitiesFrom, // 동적 불투명도 적용
-                opacityTo: activeOpacitiesTo,
+                opacityFrom: [
+                    ...(visibility.received ? [0.45] : []),
+                    ...(visibility.completed ? [0.45] : []),
+                    ...(visibility.growth ? [0.85] : []),
+                    ...(visibility.backlog ? [1.0] : []),
+                ],
+                opacityTo: [
+                    ...(visibility.received ? [0.1] : []),
+                    ...(visibility.completed ? [0.1] : []),
+                    ...(visibility.growth ? [0.85] : []),
+                    ...(visibility.backlog ? [1.0] : []),
+                ],
                 stops: [0, 100]
             }
         },
@@ -130,7 +199,7 @@ const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory }) => {
         },
         dataLabels: { enabled: false },
         markers: {
-            size: 5,
+            size: activeMarkersSize,
             colors: '#fff',
             strokeColors: activeColors,
             strokeWidth: 3,
@@ -138,22 +207,28 @@ const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory }) => {
         },
         xaxis: {
             type: 'category' as const,
-            categories: ['12/25', '12/26', '12/27', '12/28', '12/29', '12/30', '12/31', '01/01', '01/02', '01/03'],
+            categories: dates,
             axisBorder: { show: false },
             axisTicks: { show: false },
             labels: { style: { colors: '#64748B', fontWeight: 700 } }
         },
         yaxis: [
             {
+                seriesName: ['접수 건수', '완료 건수', '미처리 잔량 (Backlog)'],
                 show: visibility.received || visibility.completed || visibility.backlog,
                 title: { text: '건수', style: { color: '#64748B', fontWeight: 800 } },
-                labels: { style: { colors: '#64748B', fontWeight: 700 } }
+                labels: { style: { colors: '#64748B', fontWeight: 700 } },
+                min: 0,
             },
             {
+                seriesName: '증감률 (%)',
                 opposite: true,
                 show: visibility.growth,
                 title: { text: '증감률 (%)', style: { color: '#FF3B30', fontWeight: 800 } },
-                labels: { style: { colors: '#FF3B30', fontWeight: 700 } }
+                labels: { style: { colors: '#FF3B30', fontWeight: 700 } },
+                min: -GROWTH_CLAMP,
+                max: GROWTH_CLAMP,
+                tickAmount: 5,
             }
         ],
         tooltip: {
@@ -188,10 +263,10 @@ const ComplaintTrendChart: React.FC<ChartOneProps> = ({ selectedCategory }) => {
                 <div style={{ textAlign: 'right', backgroundColor: '#FFF7ED', padding: '12px 20px', borderRadius: '12px', border: '1px solid #FFEDD5' }}>
                     <div style={{ fontSize: '13px', fontWeight: '800', color: '#9A3412', marginBottom: '4px' }}>현재 미처리 잔량 (Backlog)</div>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                        <span style={{ fontSize: '24px', fontWeight: '950', color: '#EA580C' }}>292</span>
-                        <span style={{ fontSize: '14px', fontWeight: '900', color: '#C2410C' }}>
-                            <span style={{ marginRight: '4px' }}>▲</span>
-                            14.2% <span style={{ fontSize: '12px', color: '#9A3412', fontWeight: '700' }}>(전주 대비)</span>
+                        <span style={{ fontSize: '24px', fontWeight: '950', color: '#EA580C' }}>{backlogStats.current}</span>
+                        <span style={{ fontSize: '14px', fontWeight: '900', color: backlogStats.changeType === 'increase' ? '#C2410C' : '#16A34A' }}>
+                            <span style={{ marginRight: '4px' }}>{backlogStats.changeType === 'increase' ? '▲' : '▼'}</span>
+                            {backlogStats.changePercent}% <span style={{ fontSize: '12px', color: '#9A3412', fontWeight: '700' }}>(전월 대비)</span>
                         </span>
                     </div>
                 </div>

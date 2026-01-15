@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Download
 } from 'lucide-react';
@@ -12,38 +13,66 @@ import DistrictBottleneckChart from '../components/Charts/DistrictBottleneckChar
 
 
 // --- 임시 데이터 (Mock) ---
-const MOCK_OVERDUE_DATA = [
-    { id: 1, category: '건축/건설', title: '담장 붕괴 위험 긴급 신고', district: '강남구', overdueTime: '48시간 지연', agency: '건설본부' },
-    { id: 2, category: '교통', title: '신호등 오작동 제보', district: '서초구', overdueTime: '24시간 지연', agency: '교통운영과' },
-    { id: 3, category: '환경', title: '청계천 인근 악취 민원', district: '종로구', overdueTime: '12시간 지연', agency: '기후환경본부' },
-    { id: 4, category: '도로', title: '포트홀 파손 수리 요청', district: '마포구', overdueTime: '8시간 지연', agency: '도로관리과' },
-    { id: 5, category: '안전', title: '옹벽 균열 발생 신고', district: '동작구', overdueTime: '36시간 지연', agency: '안전총괄실' },
-];
+// MOCK_OVERDUE_DATA removed
+
 
 
 const Dashboard = () => {
-    const [stats, setStats] = useState({ total: 90, processing: 30, completed: 20 });
+    const [stats, setStats] = useState({
+        total: 0,
+        received: 0,
+        processing: 0,
+        completed: 0,
+        sla_compliance: 0,
+        overdue: 0
+    });
+    const navigate = useNavigate();
+    const [overdueList, setOverdueList] = useState<any[]>([]);
 
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchDashboardData = async () => {
             try {
-                const data = await complaintsAPI.getStats();
-                if (data && data.total) setStats(data);
+                const res = await fetch('/api/complaints/stats/dashboard');
+                const data = await res.json();
+
+                if (data) {
+                    if (data.summary) {
+                        setStats(data.summary);
+                    }
+                    if (data.overdueList) {
+                        setOverdueList(data.overdueList);
+                    }
+                }
             } catch (error) {
-                console.error('Failed to fetch stats, using fallback:', error);
+                console.error('Failed to fetch dashboard stats:', error);
             }
         };
-        fetchStats();
+        fetchDashboardData();
     }, []);
 
     const [selectedCategory, setSelectedCategory] = useState('도로');
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 5;
     const overdueListRef = useRef<HTMLDivElement>(null);
+
+    const totalPages = Math.ceil(overdueList.length / ITEMS_PER_PAGE);
+    const currentOverdueList = overdueList.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
+    const handlePageChange = (newPage: number) => {
+        if (newPage >= 1 && newPage <= totalPages) {
+            setCurrentPage(newPage);
+        }
+    };
 
     const handleOverdueClick = () => {
         overdueListRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const received = stats.total - (stats.processing + stats.completed);
+    // const received = stats.total - (stats.processing + stats.completed);
+
 
     return (
         <div className="dash-page">
@@ -118,11 +147,11 @@ const Dashboard = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '16px' }}>
                         {[
                             { label: '전 체', count: stats.total, color: '#F1F5F9', textColor: '#334155' },
-                            { label: '접 수', count: received, color: '#EFF6FF', textColor: '#2563EB' },
+                            { label: '접 수', count: stats.received, color: '#EFF6FF', textColor: '#2563EB' },
                             { label: '처리중', count: stats.processing, color: '#FEF2F2', textColor: '#EF4444' },
                             { label: '처리완료', count: stats.completed, color: '#F0FDF4', textColor: '#16A34A' },
-                            { label: 'SLA 준수율', count: '94.2%', color: '#EEF2FF', textColor: '#4F46E5' },
-                            { label: '지연 민원', count: 12, color: '#FFF1F2', textColor: '#E11D48', isUrgent: true }
+                            { label: 'SLA 준수율', count: `${stats.sla_compliance}%`, color: '#EEF2FF', textColor: '#4F46E5' },
+                            { label: '지연 민원', count: overdueList.length, color: '#FFF1F2', textColor: '#E11D48', isUrgent: true }
                         ].map((stat, idx) => (
                             <div
                                 key={idx}
@@ -179,9 +208,9 @@ const Dashboard = () => {
                         <div style={{ backgroundColor: '#FFF1F2', padding: '24px 32px', borderBottom: '1px solid #FECDD3', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <h3 className="font-bold flex items-center gap-3">
                                 <span style={{ fontSize: '22px', fontWeight: '950', color: '#9F1239' }}>지연 민원 상세 관리 (SLA Overdue)</span>
-                                <span style={{ backgroundColor: '#E11D48', color: 'white', padding: '2px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '900' }}>12 Active</span>
+                                <span style={{ backgroundColor: '#E11D48', color: 'white', padding: '2px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: '900' }}>{stats.overdue} 개 민원</span>
                             </h3>
-                            <button style={{ backgroundColor: 'white', color: '#E11D48', border: '1px solid #FECDD3', padding: '8px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '800', cursor: 'pointer' }}>전체 보기</button>
+
                         </div>
                         <div style={{ padding: '0 32px 32px 32px' }}>
                             <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 12px' }}>
@@ -196,26 +225,70 @@ const Dashboard = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {MOCK_OVERDUE_DATA.map((item) => (
+                                    {currentOverdueList.map((item) => (
                                         <tr key={item.id} style={{ backgroundColor: '#fff5f5', borderRadius: '12px', transition: 'transform 0.2s' }}>
                                             <td style={{ padding: '20px 16px', borderTopLeftRadius: '12px', borderBottomLeftRadius: '12px', fontWeight: '900', color: '#BE123C' }}>{item.category}</td>
                                             <td style={{ padding: '20px 16px', fontWeight: '700', color: '#1E293B' }}>{item.title}</td>
                                             <td style={{ padding: '20px 16px', color: '#64748B', fontWeight: '800' }}>{item.district}</td>
                                             <td style={{ padding: '20px 16px', color: '#1E293B', fontWeight: '800' }}>{item.agency}</td>
                                             <td style={{ padding: '20px 16px' }}>
-                                                <span style={{ color: '#E11D48', fontWeight: '950', backgroundColor: '#FFE4E6', padding: '4px 10px', borderRadius: '6px' }}>{item.overdueTime}</span>
+                                                <span style={{ color: '#E11D48', fontWeight: '950', backgroundColor: '#FFE4E6', padding: '4px 10px', borderRadius: '6px' }}>{item.overduetime}</span>
                                             </td>
                                             <td style={{ padding: '20px 16px', borderTopRightRadius: '12px', borderBottomRightRadius: '12px', textAlign: 'center' }}>
-                                                <button style={{ backgroundColor: '#E11D48', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: '900', cursor: 'pointer' }}>즉시 점검</button>
+                                                <button
+                                                    onClick={() => navigate('/reports/' + item.id)}
+                                                    style={{ backgroundColor: '#E11D48', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: '900', cursor: 'pointer' }}
+                                                >
+                                                    즉시 점검
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
+
+                            {/* Pagination Controls */}
+                            {totalPages > 1 && (
+                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '20px' }}>
+                                    <button
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                        style={{
+                                            padding: '8px 16px',
+                                            borderRadius: '8px',
+                                            border: '1px solid #FECDD3',
+                                            backgroundColor: currentPage === 1 ? '#FFF5F5' : 'white',
+                                            color: currentPage === 1 ? '#FDA4AF' : '#E11D48',
+                                            cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                                            fontWeight: '700'
+                                        }}
+                                    >
+                                        이전
+                                    </button>
+                                    <span style={{ fontSize: '14px', fontWeight: '700', color: '#9F1239' }}>
+                                        {currentPage} / {totalPages}
+                                    </span>
+                                    <button
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                        style={{
+                                            padding: '8px 16px',
+                                            borderRadius: '8px',
+                                            border: '1px solid #FECDD3',
+                                            backgroundColor: currentPage === totalPages ? '#FFF5F5' : 'white',
+                                            color: currentPage === totalPages ? '#FDA4AF' : '#E11D48',
+                                            cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                                            fontWeight: '700'
+                                        }}
+                                    >
+                                        다음
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </section>
-            </div>
+            </div >
         </div >
     );
 };
