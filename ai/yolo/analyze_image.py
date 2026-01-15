@@ -35,12 +35,21 @@ def analyze_image(image_path):
         verbose=False
     )
     
-    # 기관 매핑 정보
+    # 모델 라벨 -> 사용자 선호 유형 매핑
+    LABEL_TO_TYPE = {
+        '보행방해물': '도로',
+        '현수막': '행정안전',
+        '불법주정차': '교통',
+        '공사현장': '주택건축',
+        '쓰레기': '환경'
+    }
+
+    # 사용자 선호 유형 -> 기관 매핑
     AGENCY_MAP = {
         '도로': '국토교통부',
-        '행정·안전': '행정안전부',
+        '행정안전': '행정안전부',
         '교통': '경찰청',
-        '주택·건축': '행정안전부',
+        '주택건축': '행정안전부',
         '환경': '기후에너지환경부'
     }
     
@@ -53,12 +62,14 @@ def analyze_image(image_path):
         best_box = boxes[best_idx]
 
         class_id = int(best_box.cls[0])
-        class_name = model.names[class_id]
+        model_label = model.names[class_id] # 모델의 원본 라벨 (예: '보행방해물')
         confidence = float(best_box.conf[0])
 
+        # 선호하는 유형으로 변환
+        class_name = LABEL_TO_TYPE.get(model_label, model_label)
         agency = AGENCY_MAP.get(class_name, '지자체 민원실')
 
-        log_korean(f"분석 완료: {class_name} 탐지 (신뢰도: {confidence*100:.1f}%)")
+        log_korean(f"탐지된 라벨: {model_label} -> 변환된 유형: {class_name} (신뢰도: {confidence*100:.1f}%)")
         log_korean(f"추천 처리 기관: {agency}")
 
         return {

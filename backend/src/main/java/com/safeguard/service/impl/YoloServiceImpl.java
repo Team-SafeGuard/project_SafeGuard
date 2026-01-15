@@ -32,25 +32,32 @@ public class YoloServiceImpl implements YoloService {
     private static final Map<String, String> AGENCY_MAP = new HashMap<>();
 
     static {
-        // 사용자 고정 매핑 정보 (0~4 순서)
-        TYPE_MAP.put("0", "보행 방해물");
-        TYPE_MAP.put("1", "불법 현수막");
-        TYPE_MAP.put("2", "불법 주정차");
-        TYPE_MAP.put("3", "공사 현장");
-        TYPE_MAP.put("4", "쓰레기 무단 투기");
+        // 사용자 선호 유형 매핑 (0~4 순서)
+        TYPE_MAP.put("0", "도로");
+        TYPE_MAP.put("1", "행정·안전");
+        TYPE_MAP.put("2", "교통");
+        TYPE_MAP.put("3", "주택·건축");
+        TYPE_MAP.put("4", "환경");
+
+        // 모델 라벨 대응
+        TYPE_MAP.put("보행방해물", "도로");
+        TYPE_MAP.put("현수막", "행정·안전");
+        TYPE_MAP.put("불법주정차", "교통");
+        TYPE_MAP.put("공사현장", "주택·건축");
+        TYPE_MAP.put("쓰레기", "환경");
 
         // 영문 라벨 대응 (추가 안전망)
-        TYPE_MAP.put("pothole", "보행 방해물(도로파손)");
-        TYPE_MAP.put("banner", "불법 현수막");
-        TYPE_MAP.put("parking", "불법 주정차");
-        TYPE_MAP.put("construction", "공사 현장");
-        TYPE_MAP.put("trash", "쓰레기 무단 투기");
+        TYPE_MAP.put("pothole", "도로");
+        TYPE_MAP.put("banner", "행정·안전");
+        TYPE_MAP.put("parking", "교통");
+        TYPE_MAP.put("construction", "주택·건축");
+        TYPE_MAP.put("trash", "환경");
         
-        // 기관 매핑
+        // 기관 매핑 (선호 유형 -> 중앙 부처)
         AGENCY_MAP.put("도로", "국토교통부");
-        AGENCY_MAP.put("행정·안전", "행정안전부");
+        AGENCY_MAP.put("행정안전", "행정안전부");
         AGENCY_MAP.put("교통", "경찰청");
-        AGENCY_MAP.put("주택·건축", "행정안전부");
+        AGENCY_MAP.put("주택건축", "행정안전부");
         AGENCY_MAP.put("환경", "기후에너지환경부");
     }
 
