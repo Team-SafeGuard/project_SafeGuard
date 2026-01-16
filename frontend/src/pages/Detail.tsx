@@ -180,6 +180,26 @@ function Detail() {
         });
     };
 
+    const formatDateTime = (dateString: string) => {
+        if (!dateString) return '-';
+        const d = new Date(dateString);
+
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+
+        const hours24 = d.getHours();
+        const isPM = hours24 >= 12;
+        const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
+
+        const minutes = d.getMinutes();
+        const seconds = d.getSeconds();
+
+        const ampm = isPM ? '오후' : '오전';
+
+        return `${yyyy}. ${mm}. ${dd} ${ampm} ${hours12}시 ${minutes}분 ${seconds}초`;
+    };
+
     const steps = [
         { key: 'UNPROCESSED', label: '미처리', icon: '📥' },
         { key: 'IN_PROGRESS', label: '처리중', icon: '🛠️' },
@@ -207,7 +227,7 @@ function Detail() {
     console.log('user.agencyNo:', user?.agencyNo);
     console.log('localStorage.agencyNo:', localStorage.getItem('agencyNo'));
     console.log('report:', report);
-    console.log('report.agencyNo:', report?.agencyNo);
+    console.log('report.agencyNo:', report?.agency);
     console.log('report.assignedAgencyNo:', report?.assignedAgencyNo); // 필드 확인 필요
     console.log('report.assignedAgencyText:', report?.assignedAgencyText);
 
@@ -554,7 +574,7 @@ function Detail() {
                                             {report.answer}
                                         </div>
                                         <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px dashed #bbf7d0', fontSize: '0.9rem', color: '#64748b' }}>
-                                            담당자: {user?.name || '관리자'} | 처리일시: {formatDate(new Date().toISOString())} {/* 실제로는 답변 시간을 DB에 저장해야 함 */}
+                                            담당자: {report.agencyName || '관리자'} | 처리일시: {formatDateTime(report.updatedDate || report.completedDate || report.createdDate)}
                                         </div>
                                     </div>
                                 )

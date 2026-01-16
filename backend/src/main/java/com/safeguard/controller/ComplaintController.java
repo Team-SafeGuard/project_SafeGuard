@@ -3,7 +3,6 @@ package com.safeguard.controller;
 import com.safeguard.dto.ComplaintDTO;
 import com.safeguard.dto.ComplaintStatsDTO;
 import com.safeguard.dto.UserDTO;
-import com.safeguard.enums.ComplaintStatus;
 import com.safeguard.enums.UserRole;
 import com.safeguard.mapper.ComplaintMapper;
 import com.safeguard.mapper.UserMapper;
@@ -211,32 +210,16 @@ public class ComplaintController {
         UserDTO user = userMapper.findByUserId(userDetails.getUsername())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-        ComplaintDTO complaint = complaintMapper.findByComplaintNo(id, user.getUserNo(), null)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Complaint not found"));
-
-        // 🔍 [Debug] 백엔드 권한 디버깅 (Java Logic)
-        java.util.List<Long> assignedAgencyNos = complaint.getAssignedAgencyNos();
-        log.error("=== BACKEND PERMISSION DEBUG ===");
-        log.error("loginUserId: {}", user.getUserId());
-        log.error("loginUserRole: {}", user.getRole());
-        log.error("loginUserAgencyNo: {}", user.getAgencyNo());
-        log.error("complaintId: {}", id);
-        log.error("complaint.assignedAgencyNos: {}", assignedAgencyNos);
-
-        // 🎯 판별 기준: 민원 배정 기관 목록에 내 기관 번호가 포함되어 있는지 확인
-        boolean isAssignedAgencyAdmin = (user.getRole() == UserRole.AGENCY)
-                && (user.getAgencyNo() != null)
-                && (assignedAgencyNos.contains(user.getAgencyNo()));
-
-        if (!isAssignedAgencyAdmin) {
-            log.error(">>> ACCESS DENIED: (MyAgency={} vs AssignedList={})", user.getAgencyNo(), assignedAgencyNos);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "담당 민원이 아닙니다."));
-        }
-
         try {
-            ComplaintStatus status = ComplaintStatus.valueOf(body.get("status"));
-            complaintMapper.updateStatus(id, status.name());
+            complaintService.updateComplaintStatus(id, user.getUserNo(),
+                    (user.getRole() != null) ? user.getRole().name() : null,
+                    user.getAgencyNo(),
+                    body.get("status"));
             return ResponseEntity.ok(Map.of("message", "Status updated"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid status"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "Update failed: " + e.getMessage()));
         }
@@ -259,32 +242,14 @@ public class ComplaintController {
         UserDTO user = userMapper.findByUserId(userDetails.getUsername())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-        ComplaintDTO complaint = complaintMapper.findByComplaintNo(id, user.getUserNo(), null)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Complaint not found"));
-
-        // 🔍 [Debug] 백엔드 권한 디버깅 (Java Logic)
-        java.util.List<Long> assignedAgencyNos = complaint.getAssignedAgencyNos();
-        log.error("=== BACKEND PERMISSION DEBUG ===");
-        log.error("loginUserId: {}", user.getUserId());
-        log.error("loginUserRole: {}", user.getRole());
-        log.error("loginUserAgencyNo: {}", user.getAgencyNo());
-        log.error("complaintId: {}", id);
-        log.error("complaint.assignedAgencyNos: {}", assignedAgencyNos);
-
-        // 🎯 판별 기준: 민원 배정 기관 목록에 내 기관 번호가 포함되어 있는지 확인
-        boolean isAssignedAgencyAdmin = (user.getRole() == UserRole.AGENCY)
-                && (user.getAgencyNo() != null)
-                && (assignedAgencyNos.contains(user.getAgencyNo()));
-
-        if (!isAssignedAgencyAdmin) {
-
-            log.error(">>> ACCESS DENIED: (MyAgency={} vs AssignedList={})", user.getAgencyNo(), assignedAgencyNos);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "담당 민원이 아닙니다."));
-        }
-
         try {
-            complaintMapper.updateAnswer(id, body.get("answer"));
+            complaintService.updateComplaintAnswer(id, user.getUserNo(),
+                    (user.getRole() != null) ? user.getRole().name() : null,
+                    user.getAgencyNo(),
+                    body.get("answer"));
             return ResponseEntity.ok(Map.of("message", "Answer updated"));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "Update failed: " + e.getMessage()));
         }

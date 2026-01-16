@@ -75,6 +75,8 @@
             c.category,
             c.status,
             c.created_date AS createdDate,
+            c.updated_date AS updatedDate,
+            c.completed_date AS completedDate,
             c.address,
             c.latitude,
             c.longitude,
@@ -269,13 +271,15 @@
 
     <update id="updateStatus">
         UPDATE complaint
-        SET status = #{status}
+        SET status = #{status},
+            updated_date = CURRENT_TIMESTAMP
         WHERE complaint_no = #{complaintNo}
     </update>
 
     <update id="updateAnswer">
         UPDATE complaint
-        SET answer = #{answer}
+        SET answer = #{answer},
+            updated_date = CURRENT_TIMESTAMP
         WHERE complaint_no = #{complaintNo}
     </update>
 
