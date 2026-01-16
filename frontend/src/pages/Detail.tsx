@@ -201,7 +201,9 @@ function Detail() {
         return name[0] + '*' + name[name.length - 1];
     };
 
-    const isMyComplaint = user && report && user.role === 'AGENCY' && String(report.agencyNo) === String(user.agencyNo);
+    const myAgencyNo = user?.agencyNo || localStorage.getItem('agencyNo');
+    const myRole = user?.role || localStorage.getItem('role');
+    const isMyComplaint = myRole === 'AGENCY' && report && String(report.agencyNo) === String(myAgencyNo);
 
     return (
         <div className="detail-page" style={{ padding: '40px 0', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
@@ -563,9 +565,19 @@ function Detail() {
                                         </>
                                     ) : (
                                         <div style={{ color: '#94a3b8' }}>
-                                            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⏳</div>
-                                            <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>아직 답변이 등록되지 않았습니다.</p>
-                                            <p style={{ fontSize: '0.9rem' }}>담당자가 내용을 확인 후 빠른 시일 내에 답변해 드리겠습니다.</p>
+                                            {localStorage.getItem('role') === 'AGENCY' && !isMyComplaint ? (
+                                                <>
+                                                    <div style={{ fontSize: '3rem', marginBottom: '16px', opacity: 0.5 }}>🚫</div>
+                                                    <p style={{ fontSize: '1.1rem', fontWeight: '500', color: '#64748b' }}>담당 기관만 답변을 등록할 수 있습니다.</p>
+                                                    <p style={{ fontSize: '0.9rem', marginTop: '4px' }}>이 민원은 귀 기관의 담당 민원이 아닙니다.</p>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⏳</div>
+                                                    <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>아직 답변이 등록되지 않았습니다.</p>
+                                                    <p style={{ fontSize: '0.9rem' }}>담당자가 내용을 확인 후 빠른 시일 내에 답변해 드리겠습니다.</p>
+                                                </>
+                                            )}
                                         </div>
                                     )}
                                 </div>
