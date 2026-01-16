@@ -25,4 +25,5 @@ public class MapSearchRequest {
 
     private Integer limit;
     private Long agencyNo;
+    private Boolean showCompleted; // [추가] 완료 민원 포함 여부
 }

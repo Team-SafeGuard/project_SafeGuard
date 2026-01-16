@@ -24,6 +24,7 @@ function MapView() {
   // [속성 추가] 뷰 모드 및 데이터
   const [viewMode, setViewMode] = useState('marker'); // 'marker' | 'hotspot'
   const [districtCounts, setDistrictCounts] = useState([]);
+  const [globalDistrictStats, setGlobalDistrictStats] = useState([]); // [추가] 색상 기준을 위한 전국 통계
   const polygonsRef = useRef([]);
   const geojsonCacheRef = useRef(null); // GeoJSON 캐시
   const renderSeqRef = useRef(0);      // 렌더링 시퀀스 ID (레이스 컨디션 방지)
@@ -93,8 +94,8 @@ function MapView() {
       neLat: ne.getLat(),
       neLng: ne.getLng(),
       zoom: map.getLevel(),
-      // [추가] 내 담당민원만 보기 활성화 시 agencyNo 전달
       agencyNo: (isAdmin && myAssignedOnly) ? userAgencyNo : null,
+      showCompleted: showCompleted, // [추가] 완료 민원 표시 여부 전달
     };
   };
 
@@ -111,63 +112,63 @@ function MapView() {
     polygonsRef.current = [];
   };
 
-  // ====== 데이터 로드 (bounds 기반) ======
+  // [수정] 통합 데이터 로드 함수 (기존 fetchLocations 명칭 유지하여 호환성 확보)
   const fetchLocations = async () => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !mapReady) return;
 
     const mySeq = ++fetchSeqRef.current;
     setLoading(true);
 
     try {
       const params = buildMapParams(map);
+      console.log("[MapView] Fetching data", { params, viewMode });
 
-      // 항상 민원 목록을 위해 데이터를 가져옴 (사이드바 리스트 동기화)
+      // 1. 공통: 민원 목록(마커용) 가져오기
       const markerData = await complaintsAPI.getMapItems(params);
       if (mySeq !== fetchSeqRef.current) return;
 
-      // [수정] 프론트엔드 레벨에서도 중복 제거 (민원 번호 기준)
       const uniqueMarkers = Array.isArray(markerData)
         ? markerData.filter((v, i, a) => a.findIndex(t => t.complaintNo === v.complaintNo) === i)
         : [];
 
-      setLocations(uniqueMarkers);
-
-      // 핫스팟 모드일 경우 시군구 통계 데이터를 가져옴
+      // 2. 핫스팟 모드일 경우 전국 통계 가져오기
+      let globalStats = [];
       if (viewMode === 'hotspot') {
-        const distData = await complaintsAPI.getDistrictCounts(params);
-        if (mySeq !== fetchSeqRef.current) return;
-        setDistrictCounts(Array.isArray(distData) ? distData : []);
+        const globalParams = {
+          agencyNo: (isAdmin && myAssignedOnly) ? userAgencyNo : null,
+          status: sidebarStatus === '전체' ? null : (sidebarStatus === '미처리' ? 'UNPROCESSED' : sidebarStatus === '처리중' ? 'IN_PROGRESS' : 'COMPLETED'),
+          category: sidebarCategory === '전체' ? null : sidebarCategory,
+          showCompleted: showCompleted
+        };
+        console.log("[MapView] Fetching global stats", globalParams);
+        globalStats = await complaintsAPI.getDistrictCounts(globalParams);
       }
 
-      // 선택된 민원이 화면에서 사라졌으면 선택 해제 (마커 모드일 때만 적용하기엔 모호하므로 일단 유지)
+      if (mySeq !== fetchSeqRef.current) return;
+
+      setLocations(uniqueMarkers);
+      setGlobalDistrictStats(Array.isArray(globalStats) ? globalStats : []);
+
     } catch (err) {
       console.error('데이터 로드 실패:', err);
     } finally {
-      // 최신 요청만 로딩 해제
       if (mySeq === fetchSeqRef.current) setLoading(false);
     }
   };
 
-  // Ref 업데이트
+  // Ref 업데이트 (idle 리스너가 항상 최신 함수를 참조하게 함)
   useEffect(() => {
     fetchLocationsRef.current = fetchLocations;
   }, [fetchLocations]);
 
-  // [추가] 뷰 모드 또는 필터가 바뀌면 즉시 데이터를 다시 불러옴
+  // [수정] 필터 및 뷰 모드 변경 시 통합 데이터 갱신 (mapReady 시점에 최초 실행 포함)
   useEffect(() => {
     if (mapReady) {
       fetchLocations();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewMode, myAssignedOnly]);
-  // showCompleted는 fetchLocations 결과에는 영향을 주지 않고 render 시점에 처리하므로 제외 가능 (단, 사이드바 일관성을 위해 fetch 재호출 하도록 함)
-
-  useEffect(() => {
-    if (mapReady) {
-      fetchLocations();
-    }
-  }, [showCompleted]);
+  }, [viewMode, myAssignedOnly, sidebarCategory, sidebarStatus, showCompleted, mapReady]);
 
   // [추가] 필터링된 민원 목록 계산 (메모이제이션)
   const filteredLocations = useMemo(() => {
@@ -375,38 +376,40 @@ function MapView() {
 
     if (!geojson || !geojson.features) return;
 
+    // [수정] 전국 통계(globalDistrictStats)를 기반으로 데이터 맵 생성
     const countMap = new Map();
-    const allCounts = [];
-    districtCounts.forEach(d => {
+    globalDistrictStats.forEach(d => {
       const name = d.name ? d.name.trim() : '';
-      const cnt = Number(d.count);
-      if (name) {
-        countMap.set(name, cnt);
-        if (cnt > 0) allCounts.push(cnt);
-      }
+      countMap.set(name, Number(d.count));
     });
 
-    // 상대적 비율 계산을 위해 오름차순 정렬
-    allCounts.sort((a, b) => a - b);
-    const totalCount = allCounts.length;
+    const globalCounts = globalDistrictStats.map(d => Number(d.count)).filter(c => c > 0).sort((a, b) => a - b);
+    const globalTotal = globalCounts.length;
+
+    console.log("[renderHotspotDistricts] Stats:", {
+      globalTotal,
+      showCompleted,
+      globalMax: globalTotal > 0 ? globalCounts[globalTotal - 1] : 0,
+      countMapSize: countMap.size,
+      globalDistrictStats: globalDistrictStats.slice(0, 5) // 샘플 데이터 로그
+    });
+
+    // 색상 스케일 (고정된 전국 기준으로 계산)
+    const getColor = (val) => {
+      if (!val || val === 0) return 'rgba(148, 163, 184, 0.1)';
+
+      // 전국 통계에서 해당 값의 상대적 위치(백분위)를 찾음
+      const rankIndex = globalCounts.findIndex(c => c >= val);
+      const r = globalTotal > 0 ? (rankIndex + 1) / globalTotal : 0;
+
+      if (r > 0.8) return 'rgba(239, 68, 68, 0.55)';
+      if (r > 0.6) return 'rgba(249, 115, 22, 0.45)';
+      if (r > 0.4) return 'rgba(250, 204, 21, 0.4)';
+      if (r > 0.2) return 'rgba(132, 204, 22, 0.35)';
+      return 'rgba(34, 197, 94, 0.3)';
+    };
 
     const polygons = [];
-
-    // 색상 스케일 (사용자 요청: 초록 -> 노랑 -> 주황 -> 빨강, 상대적 백분위 기반)
-    const getColor = (val) => {
-      if (!val || val === 0) return 'rgba(148, 163, 184, 0.1)'; // 매우 연한 Slate 회색
-
-      // 해당 값이 전체 데이터에서 몇 번째 위치인지 찾음 (상대적 순위)
-      const rankIndex = allCounts.findIndex(c => c >= val);
-      const r = totalCount > 0 ? (rankIndex + 1) / totalCount : 0;
-
-      // 분위수(Quantile)에 따른 색상 할당 (투명도 0.3 ~ 0.55 유지)
-      if (r > 0.8) return 'rgba(239, 68, 68, 0.55)';  // 상위 20% (빨강)
-      if (r > 0.6) return 'rgba(249, 115, 22, 0.45)';  // 상위 20~40% (주황)
-      if (r > 0.4) return 'rgba(250, 204, 21, 0.4)';   // 상위 40~60% (노랑)
-      if (r > 0.2) return 'rgba(132, 204, 22, 0.35)';  // 상위 60~80% (연초록)
-      return 'rgba(34, 197, 94, 0.3)';                // 하위 20% (초록)
-    };
 
     geojson.features.forEach((feature) => {
       const props = feature.properties;
@@ -484,7 +487,7 @@ function MapView() {
       renderHotspotDistricts();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mapReady, locations, districtCounts, viewMode]);
+  }, [mapReady, locations, globalDistrictStats, viewMode]); // districtCounts 의존성 제거
 
   // ====== Kakao SDK 로드 & 지도 생성 ======
   useEffect(() => {
@@ -535,8 +538,9 @@ function MapView() {
           }
         });
 
-        // 최초 1회 로드
-        fetchLocations();
+        // mapReady가 true가 되면 useEffect에서 자동으로 최초 fetchLocations를 수행하므로
+        // 여기서 명시적으로 호출할 필요 없음 (중복 호출 방지)
+        // fetchLocations();
 
         // [추가] 지도 클릭 시 오버레이 닫기
         window.kakao.maps.event.addListener(map, 'click', () => {

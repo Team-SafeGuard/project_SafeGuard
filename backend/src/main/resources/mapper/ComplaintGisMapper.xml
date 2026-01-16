@@ -24,6 +24,9 @@
         <if test="req.status != null and req.status != ''">
             AND c.status = #{req.status}
         </if>
+        <if test="req.showCompleted != null and req.showCompleted == false">
+            AND c.status != 'COMPLETED'
+        </if>
 
         <!-- date range: OffsetDateTime from/to -->
         <if test="req.from != null">
