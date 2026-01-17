@@ -357,6 +357,51 @@ docker-compose up -d --build
 - **서비스 다운 시**: Docker Compose Healthcheck를 통해 자동 재시작.
 - **지속적 오분류 발견 시**: `KEYWORD_TO_AGENCY` 매핑 테이블 업데이트 또는 `BROAD_LAWS` 리스트 튜닝 후 재배포.
 
+### 11.3 로그 분석 및 점수 체계 (Log Analysis & Scoring)
+실제 운영 시 발생하는 로그의 예시와, 각 점수가 어떻게 산출되는지 상세히 설명합니다.
+
+#### A. 실제 로그 예시 (Log Example)
+사용자가 **"식당 밥에서 벌레가 나왔어요"** 라고 신고했을 때의 실제 컨테이너 로그입니다.
+
+```text
+INFO:ai.rag.classification_service:============================================================
+INFO:ai.rag.classification_service:[RAG] Query received: 식당 밥에서 벌레가 나왔어요
+INFO:ai.rag.query:Hybrid Search: Vector(6) + BM25(6)
+INFO:ai.rag.classification_service:----------------------------------------
+INFO:ai.rag.classification_service:[ANALYSIS REPORT]
+INFO:ai.rag.classification_service:1. 입력 텍스트: 식당 밥에서 벌레가 나왔어요
+INFO:ai.rag.classification_service:2. 질의 힌트: 식품의약품안전처
+INFO:ai.rag.classification_service:3. 점수 상위: [('식품의약품안전처', 6.84), ('기타', 0.52)]
+INFO:ai.rag.classification_service:4. 최종 결과: 식품의약품안전처
+INFO:ai.rag.classification_service:5. 신뢰도: 0.93
+INFO:ai.rag.classification_service:----------------------------------------
+```
+
+#### B. 점수 산정 상세 로직 (Scoring Math)
+위 로그에서 **6.84점**이 어떻게 계산되었는지 수식으로 분석합니다.
+
+1.  **질의 힌트 점수 (Base Score)**
+    *   입력 텍스트에 "식당", "벌레" 키워드가 있어 식약처로 1차 추론됨.
+    *   **+3.0점** 부여 (코드: `agency_scores[query_hint_agency] += 3.0`)
+
+2.  **검색 결과 가중치 (Retrieval Score)**
+    *   `식품위생법.pdf`가 검색됨 (관련 법령).
+    *   Vector 유사도 점수: **0.84** (예시)
+    *   파일명 매칭 보너스: **+1.0** (힌트 기관과 일치 시 `weight += 1.0` 보너스)
+    *   파일명 키워드 매칭: **+0.5** (`KEYWORD_TO_AGENCY`에 '식품' 포함)
+    *   기타 가중치: **1.0** (기본 가중치)
+    *   **계산**: $1.0(\text{기본}) + 0.84(\text{유사도}) + 1.0(\text{힌트일치}) + 0.5(\text{키워드}) + 0.5(\text{파일명}) \approx 3.84$
+    *   *(실제 점수는 검색 품질에 따라 유동적이나, 힌트와 법령이 모두 일치하면 3~4점이 추가됨)*
+
+3.  **최종 합산**
+    *   초기 힌트(3.0) + 검색 가중치(3.84) = **6.84점**
+
+#### C. 페널티 로직 (Broad Law Penalty)
+만약 **"민원 처리에 관한 법률"** 같은 범용 법령이 검색되면 어떻게 될까요?
+*   **감점 계수**: `0.35` (코드: `BROAD_LAW_PENALTY`)
+*   **계산**: 원래 점수가 2.0점이라도, $2.0 \times 0.35 = \mathbf{0.7점}$ 으로 대폭 삭감됩니다.
+*   **효과**: 특정 부서로 쏠리는 현상을 강력하게 억제합니다.
+
 ---
 
 ## 12. 테스트 전략 (Test Strategy)
