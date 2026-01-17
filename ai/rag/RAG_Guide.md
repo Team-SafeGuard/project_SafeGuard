@@ -40,6 +40,35 @@ graph LR
     Rules -->|Result JSON| API
 ```
 
+### 1.4 프론트엔드 연동 구조 (Frontend Integration)
+사용자가 텍스트 민원을 작성할 때, 프론트엔드(React)에서 백엔드를 거쳐 RAG 서비스로 이어지는 호출 흐름입니다.
+
+```mermaid
+sequenceDiagram
+    participant User as 👤 사용자
+    participant React as ⚛️ ApplyText.tsx (Frontend)
+    participant Spring as 🛡️ RagController (Backend)
+    participant RAG as 🤖 RAG Service (FastAPI)
+
+    User->>React: 민원 내용 입력 ("식당 밥에 벌레...")
+    React->>React: 8자 이상 입력 확인
+    
+    React->>Spring: POST /api/rag/analyze
+    Note right of React: { text: "..." }
+    
+    Spring->>Spring: 요청 검증 (Auth)
+    Spring->>RAG: POST http://ai-rag:8001/classify
+    
+    activate RAG
+    RAG->>RAG: 1. Hard Rule 체크
+    RAG->>RAG: 2. Hybrid Search & Scoring
+    RAG-->>Spring: JSON Result (Agency, Score)
+    deactivate RAG
+    
+    Spring-->>React: 200 OK (AI 분석 결과)
+    React->>User: "식품의약품안전처" 추천 표시
+```
+
 ---
 
 ---
