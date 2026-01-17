@@ -11,7 +11,7 @@ FastAPI로 구현되어 있으며, Docker 컨테이너 환경(`safeguard-ai-stt`
 - **사용자 가치**: 현장에서 사진 촬영과 동시에 음성으로 상황을 설명하면 자동으로 텍스트화되어 접수 시간이 80% 이상 단축됩니다.
 
 ### 1.2 문제 정의 (Problem Statement)
-- **배경**: 야외 소음, 바람 소리 등으로인해 기존 일반 STT의 인식률이 현저히 낮았습니다.
+- **배경**: 야외 소음, 바람 소리 등으로 인해 기존 일반 STT의 인식률이 현저히 낮았습니다.
 - **상세**: 특히 "아무 말도 안 했는데" 텍스트가 생성되는 Whisper 모델 고유의 **환각(Hallucination)** 현상이 데이터 품질을 심각하게 저하시켰습니다.
 
 ---
@@ -39,7 +39,7 @@ FastAPI로 구현되어 있으며, Docker 컨테이너 환경(`safeguard-ai-stt`
   - **STT 변환**: Whisper 모델을 사용해 음성을 텍스트로 변환합니다.
   - **환각(Hallucination) 필터링**: 무의미한 반복이나 오인식을 제거합니다.
   - **민원 자동 분류**: 변환된 텍스트를 분석하여 담당 부서를 결정합니다. (RAG 서버와 연동)
-  - **제목 자동 생성**: "사릉역 앞 쓰레기"와 같이 보기 편한 제목을 달아줍니다.
+
 
 ### 2.2. `Dockerfile` & `requirements.txt`
 **역할**: 서버 실행 환경을 정의합니다.
@@ -103,7 +103,7 @@ FastAPI로 구현되어 있으며, Docker 컨테이너 환경(`safeguard-ai-stt`
 
 ```mermaid
 flowchart TD
-    Start([1. 요청 수신]) --> CheckInput{입력 타입 확인}
+    start_node([1. 요청 수신]) --> CheckInput{입력 타입 확인}
     
     CheckInput -- "Audio File" --> Preproc[2. Audio 전처리<br/>(FFmpeg Noise Reduction)]
     Preproc --> Whisper[3. Whisper STT 변환]
@@ -114,17 +114,15 @@ flowchart TD
     
     CheckInput -- "Text" --> TextNorm
     
-    TextNorm --> HardRule{6. Hard Rule<br/>(키워드 규칙)}
+    TextNorm --> RAG[6. RAG 검색 서버 호출<br/>(분류 요청)]
     
-    HardRule -- "주정차/신고 발견" --> Police[경찰청 즉시 분류]
-    HardRule -- "매칭 없음" --> RAG[7. RAG 검색 서버 호출<br/>(법령 기반 분류)]
+    RAG -- "분류 실패 (Timeout/Error)" --> Fallback[7. 키워드 기반 단순 분류]
+    RAG -- "분류 성공" --> Formatting[8. 결과 포맷팅]
     
-    Police --> TitleGen[8. 민원 제목 자동 생성]
-    RAG --> TitleGen
+    Fallback --> Formatting
+    Formatting --> Response([9. 최종 JSON 응답])
     
-    TitleGen --> Response([9. 최종 JSON 응답])
-    
-    style Start fill:#f9f,stroke:#333
+    style start_node fill:#f9f,stroke:#333
     style Whisper fill:#bbf,stroke:#333
     style RAG fill:#bfb,stroke:#333
     style Response fill:#f9f,stroke:#333
@@ -135,9 +133,9 @@ flowchart TD
 2.  **STT**: 음성이면 텍스트로 변환 (Whisper)
 3.  **전처리**: 공백 제거 및 정규화
 4.  **분류**:
-    - **1차 (Hard Rule)**: "주정차", "신고" 키워드 → 즉시 경찰청 분류
-    - **2차 (RAG)**: RAG 서버(`ai-rag`)에 텍스트를 보내 법령 기반 정밀 분류 수행
-5.  **후처리**: 민원 제목 생성 및 결과 포맷팅
+    - **RAG 연동**: 정규화된 텍스트를 RAG 서버(`ai-rag`)로 전송.
+    - **Fallback**: RAG 서버 장애 시 내장된 키워드 매칭 로직(`_classify_agency_keyword`) 수행.
+5.  **후처리**: 최종 JSON 응답 생성.
 
 ---
 
@@ -189,10 +187,9 @@ sequenceDiagram
     Backend->>RAG: 6. 민원 내용 분류 요청 (Text)
     RAG-->>Backend: 7. 분류 결과 반환 (기관, 근거, 신뢰도)
     
-    Backend->>Backend: 8. 민원 제목 자동 생성
     Backend-->>Browser: 9. 최종 결과 응답 (JSON)
     
-    Browser->>User: 10. 제목, 내용, 담당기관 자동 채움 완료
+    Browser->>User: 10. 내용, 담당기관 자동 채움 완료
 ```
 
 ---
@@ -207,11 +204,10 @@ sequenceDiagram
 - **Response**:
   ```json
   {
-    "text": "사릉역 앞에 쓰레기가 너무 많아요",
+    "original_text": "사릉역 앞에 쓰레기가 너무 많아요",
+    "agency_id": 30,
     "agency": "기후에너지환경부",
-    "category": "환경",
-    "title": "[음성민원] 사릉역 앞 / 쓰레기",
-    "reasoning": "폐기물 관리법 및 환경 오염 관련..."
+    "category": "환경/기상"
   }
   ```
 

@@ -24,7 +24,7 @@
 ### 1.2 솔루션 (Solution)
 - **음성/사진 기반 간편 접수**: STT와 객체 탐지 기술로 입력 장벽 제거.
 - **AI 자동 분류 (Hybrid RAG)**: 법령 데이터 기반의 자동 부서 매칭 및 근거 제시.
-- **개인정보 자동 마스킹**: 이미지 업로드 즉시 민감 정보(번호판, 얼굴) 비식별화.
+- **이미지 자동 분석**: 업로드된 이미지에서 민원 요소(불법주정차 등)를 즉시 탐지하여 분류.
 - **실시간 관제 대시보드**: 30초 단위 자동 갱신되는 관리자 현황판 제공.
 
 ### 1.3 프로젝트 배경 (Background)
@@ -120,7 +120,7 @@ graph TD
 | **Database** | `safeguard-db` | **5433**:5432 | PostgreSQL 16 + PostGIS. 민원 및 위치 데이터 저장. |
 | **AI-STT** | `safeguard-ai-stt` | **8000**:8000 | 음성 -> 텍스트 변환 및 전처리 엔진. |
 | **AI-RAG** | `safeguard-ai-rag` | **8001**:8001 | 민원 분류 및 법령 하이브리드 검색 엔진. |
-| **AI-YOLO** | `safeguard-ai-yolo` | **5001**:5000 | 이미지 개인정보(번호판, 얼굴) 마스킹 처리. |
+| **AI-YOLO** | `safeguard-ai-yolo` | **5001**:5000 | 이미지 객체 탐지 및 민원 유형 분류 엔진. |
 | **Milvus** | `milvus-standalone` | **19530**:19530 | 벡터 데이터베이스 (Standalone Mode). |
 | **MinIO** | `milvus-minio` | **9001**:9001 | 객체 스토리지 (S3 호환). 이미지/오디오/벡터파일 저장. |
 
@@ -199,11 +199,11 @@ graph TD
 3.  **백엔드 수신 및 오케스트레이션**:
     - `Multipart/form-data`로 오디오/이미지 수신.
 4.  **병렬 AI 처리**:
-    - **(Async) 이미지 처리**: `AI-YOLO` 서버로 전송 → 마스킹된 이미지 S3(MinIO) 저장.
+    - **(Async) 이미지 처리**: `AI-YOLO` 서버로 전송 → 객체 탐지 및 기관 매핑 수행.
     - **(Sync) 음성 분석**: `AI-STT` 서버로 전송 → 텍스트 변환 결과 수신.
     - **(Sync) 분류/추천**: 변환된 텍스트를 `AI-RAG` 서버로 전송 → 담당 기관(Agency) 및 법령 근거 수신.
 5.  **저장 및 응답**:
-    - 변환된 텍스트, 마스킹된 이미지 경로, 추천된 기관 정보를 DB에 저장(`Insert`).
+    - 변환된 텍스트, 이미지 경로, 추천된 기관 정보를 DB에 저장(`Insert`).
     - 사용자에게 접수 완료 메시지 및 예상 민원 분류 결과 즉시 반환.
 
 ### 4.2 시스템 데이터 흐름도 (Data Processing Sequence)
@@ -226,8 +226,8 @@ sequenceDiagram
         STT-->>BE: 4a. 텍스트 반환 ("불법주차...")
         
         FE->>BE: 2b. 이미지 전송 (Multipart)
-        BE->>YOLO: 3b. 객체 마스킹 요청
-        YOLO-->>BE: 4b. 마스킹 이미지 & 객체 유형 반환
+        BE->>YOLO: 3b. 객체 탐지 요청
+        YOLO-->>BE: 4b. 객체 유형 및 신뢰도 반환 (JSON)
     end
 
     BE->>RAG: 5. 민원 분류 요청 (텍스트)
@@ -281,10 +281,10 @@ sequenceDiagram
 
 ### 6.2 AI-RAG (`:8001`)
 - `POST /classify`: 텍스트 → 기관(Agency), 카테고리, 법령 근거 반환.
-- `POST /generate-title`: 텍스트 + 주소 → **NLP 키워드 추출(Kiwi)** 기반의 제목 자동 생성.
+
 
 ### 6.3 AI-YOLO (`:5000`)
-- `POST /api/analyze-image`: 이미지 업로드 → 마스킹된 이미지 반환.
+- `POST /api/analyze-image`: 이미지 업로드 → 민원 유형 및 기관 추천 (JSON).
 
 ### 6.4 Backend Main (`:8080`)
 - `GET /api/complaints/stats/dashboard`: 대시보드용 KPI 및 통계 데이터 집계 (MyBatis).

@@ -117,6 +117,14 @@ PR 태그에 체크한 항목만 details 열고 나머지는 삭제
 - 데이터 이동 경로
 - 데이터 소유권
 
+### 5.4 기술 스택 (Technology Stack)
+- UI 프레임워크 / 라이브러리 버전
+- 사용 이유 (Rationale)
+
+### 5.5 디자인 시스템 (Design System)
+- 컬러 팔레트 / 폰트 / 아이콘
+- 컴포넌트 구조 및 스타일링 전략
+
 ---
 
 ## 6️⃣ End-to-End 처리 흐름 (E2E Flow)
@@ -152,14 +160,20 @@ PR 태그에 체크한 항목만 details 열고 나머지는 삭제
 - Success
 - Failed
 
-### 7.2 핵심 알고리즘
-- 알고리즘 개요
-- 의사결정 로직
+### 7.2 핵심 비즈니스 로직 및 산출 공식 (Core Business Logic & Formulas)
+- 핵심 산출 공식 (SQL Level Formula)
+- 비즈니스 로직 및 역산 알고리즘 (Code Level Logic)
+- 의사결정 트리 (Decision Tree)
 
 ### 7.3 파라미터 상세
 
 | 파라미터 | 설명 | 기본값 | 변경 영향 |
 |--------|------|------|---------|
+
+### 7.4 인터페이스 및 API 설계 (Interface & API Design)
+- API 엔드포인트 및 메서드
+- Request / Response 스키마
+- 연동 규격
 
 ---
 

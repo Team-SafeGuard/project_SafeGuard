@@ -3,23 +3,22 @@ rag/app.py
 : RAG 서비스 API 서버
 
 [역할]
-- 외부 서비스(STT, Frontend)에서 HTTP 요청을 받아 민원 분류 및 제목 생성 기능을 제공
+- 외부 서비스(STT, Frontend)에서 HTTP 요청을 받아 민원 분류 기능을 제공
 - RAG 로직(classification_service.py) 및 유틸리티를 래핑하여 FastAPI로 서빙
 - Docker 환경에서 'ai-rag' 컨테이너로 실행됨
 
 [주요 기능]
 - POST /classify: 텍스트를 입력받아 담당 기관 분류 결과 반환
-- POST /generate-title: 민원 내용과 주소를 기반으로 요약 제목 자동 생성
 - GET /health: 서버 상태 확인
 
 [시스템 흐름]
 1. 클라이언트(프론트엔드/STT)가 요청 전송
 2. FastAPI가 요청 수신 및 라우팅
-3. 서비스 로직(분류/제목생성) 호출
+3. 서비스 로직(분류) 호출
 4. 결과 반환 (JSON)
 
 [파일의 핵심목적]
-- AI 분류 및 제목 생성 기능의 엔트리 포인트(Entry Point) 역할 수행
+- AI 분류 기능의 엔트리 포인트(Entry Point) 역할 수행
 """
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -143,28 +142,7 @@ async def classify_text(input_data: ComplaintInput):
         print(f"Classification Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# ======================================================
-# 민원 제목 생성 API
-# ======================================================
-from complainttitle import generate_complaint_title
 
-class TitleGenInput(BaseModel):
-    text: str
-    address: str
-    type: str # '텍스트민원' or '음성민원'
-
-@app.post("/generate-title")
-async def generate_title_endpoint(input_data: TitleGenInput):
-    """
-    민원 내용과 주소를 받아 자동으로 제목을 생성합니다.
-    """
-    try:
-        # 제목 생성 로직 실행
-        title = generate_complaint_title(input_data.text, input_data.address, input_data.type)
-        return {"title": title}
-    except Exception as e:
-        print(f"Title Generation Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8001)
