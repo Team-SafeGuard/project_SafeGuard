@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { complaintsAPI, sttAPI, getToken, analyzeText, generateTitle } from '../utils/api';
+import { complaintsAPI, sttAPI, getToken, analyzeText } from '../utils/api';
 import Modal from '../components/common/Modal';
 
 function ApplyVoice() {
@@ -186,23 +186,7 @@ function ApplyVoice() {
                         content: finalContent
                     }));
 
-                    // 제목 자동 생성 호출 (음성민원)
-                    try {
-                        const titleRes = await generateTitle(
-                            finalContent,
-                            formData.location?.address || '',
-                            '음성민원' // 타입 지정
-                        );
 
-                        if (titleRes.title) {
-                            setFormData(prev => ({
-                                ...prev,
-                                title: titleRes.title
-                            }));
-                        }
-                    } catch (titleErr) {
-                        console.error("Voice title generation failed", titleErr);
-                    }
 
                 } catch (err) {
                     showAlert('오류', '음성 인식에 실패했습니다: ' + err.message);

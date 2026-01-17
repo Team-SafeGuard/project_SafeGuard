@@ -74,7 +74,6 @@ class UnifiedComplaintManager:
     민원 텍스트 분석 및 분류 엔진 (Core Logic)
     - STT로 변환된 텍스트를 분석하여 21개 주요 행정 기관으로 자동 분류 (ID 18-38)
     - RAG(Retrieval-Augmented Generation) 서비스와 연동하여 분류 정확도 확보
-    - 민원 제목 자동 생성 (generate-title) 기능 포함
     """
 
     def __init__(self):
@@ -190,11 +189,7 @@ class UnifiedComplaintManager:
             
         return text
 
-    def _generate_title(self, text: str, agency_id: int) -> str:
-        """민원 내용 요약 (제목 생성) - 간단히 앞부분 20자 + 기관명"""
-        agency_name = self.AGENCIES.get(agency_id, "기타")
-        summary = text[:20] + "..." if len(text) > 20 else text
-        return f"[{agency_name}] {summary}"
+
 
     def process_complaint(self, file_path: str = None, provided_text: str = None) -> dict:
         """
@@ -261,13 +256,12 @@ class UnifiedComplaintManager:
                 agency_id = aid
                 break
 
-        title = self._generate_title(cleaned_text, agency_id)
+
 
         return {
             "agency_id": agency_id,
             "agency": agency_name,
             "category": self.AGENCY_CATEGORIES.get(agency_id, "기타"),
-            "title": title,
             "original_text": text
         }
 
