@@ -13,16 +13,20 @@
 graph TD
     User((사용자))
     
-    subgraph "AWS Cloud (Fargate)"
-        ALB[로드 밸런서 / 공인 IP]
+    subgraph "AWS Cloud"
+        ALB[로드 밸런서]
         
-        subgraph "ECS Task (하나의 묶음)"
-            Frontend[🖥️ Frontend\n(React + Nginx)]
-            Backend[⚙️ Backend\n(Spring Boot)]
-            AI[🤖 AI Service\n(FastAPI + YOLO)]
+        subgraph "ECS Fargate (Serverless)"
+            Frontend[🖥️ Frontend]
+            Backend[⚙️ Backend]
+            AI[🤖 AI Services]
         end
         
-        RDS[(🛢️ DB\nPostgreSQL)]
+        subgraph "EC2 (Stateful)"
+            Milvus[📚 Milvus Vector DB]
+        end
+
+        RDS[(🛢️ AWS RDS)]
     end
 
     User -->|접속| ALB
@@ -33,8 +37,9 @@ graph TD
 ```
 
 ### 핵심 포인트
-1.  **ECS Fargate**: 우리 서버는 "가상 컴퓨터(EC2)"가 아니라 **"컨테이너(Fargate)"** 로 뜹니다. 서버 관리가 필요 없습니다.
-2.  **RDS**: 데이터베이스는 컨테이너 안에 있지 않고, 안전한 **AWS RDS**에 따로 저장됩니다. (서버가 죽어도 데이터는 안전!)
+1.  **ECS Fargate**: 프론트/백엔드/AI 서비스는 관리 편의성을 위해 **서버리스 컨테이너(Fargate)**로 운영됩니다.
+2.  **EC2**: 벡터 검색 엔진(Milvus)은 고성능 연산이 필요하여 **전용 EC2 인스턴스**를 사용합니다.
+3.  **RDS**: 주 데이터베이스는 **AWS RDS**를 사용하여 안전하게 관리됩니다.
 3.  **Nginx**: 프론트엔드 안에 있는 Nginx가 사용자의 요청을 받아서 보여줍니다.
 
 ---

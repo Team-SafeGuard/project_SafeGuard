@@ -8,8 +8,8 @@
 본 문서는 **SafeGuard** 프로젝트의 시스템 아키텍처, 기술 스택, 핵심 알고리즘 및 데이터 흐름을 코어 수준에서 상세히 기술한 **시스템 백서(System Whitepaper)**입니다. 현재 구축된 코드베이스(`v1.0`)를 기준으로 작성되었습니다.
 
 - **대상 독자**: 시스템 아키텍트, 백엔드/AI 엔지니어, 프로젝트 이해관계자
-- **문서 버전**: v2.0 (Codebase Synchronization Complete)
-- **최종 수정일**: 2026-01-17
+- **문서 버전**: v2.1 (Infra Update: Fargate & EC2 Hybrid)
+- **최종 수정일**: 2026-01-18
 
 ---
 
@@ -69,38 +69,40 @@ AI-YOLO 시각 지능이 즉시 탐지하는 객체 유형입니다.
 
 ## 2️⃣ 시스템 아키텍처 (System Architecture)
 
-본 시스템은 **Docker Compose** 기반의 **On-Premises Microservices Architecture**로 설계되었습니다. 모든 서비스는 `safeguard-network` 내부 브리지 네트워크를 통해 격리된 통신을 수행합니다.
+본 시스템은 **AWS Hybrid Cloud Architecture**로 설계되었습니다.
+메인 애플리케이션(Frontend, Backend, Stateless AI)은 유연한 확장을 위해 **AWS ECS Fargate** 서버리스 환경에서 구동되며, 고성능 벡터 연산과 데이터 지속성이 필요한 **Milvus DB**는 **AWS EC2** 전용 인스턴스에서 실행됩니다. 모든 서비스는 `safeguard-network` 내부 브리지 네트워크(VPC)를 통해 격리된 통신을 수행합니다.
 
 ### 2.1 아키텍처 다이어그램 (Logical View)
 
 ```mermaid
 graph TD
-    User["👱 User (Web/Mobile)"] -->|HTTP/REST| Nginx[Ingress / Frontend Reverse Proxy]
+    User["👱 User (Web/Mobile)"] -->|HTTP/REST| ALB[AWS Application Load Balancer]
+    ALB --> Nginx[Ingress / Frontend Reverse Proxy]
     
-    subgraph "Frontend Layer (React 19)"
+    subgraph "AWS ECS Fargate (Serverless Compute)"
         Nginx --> |Static Files| ReactApp[Client SPA]
         ReactApp --> |API Calls| Backend
-    end
-    
-    subgraph "Backend Layer (Spring Boot 3.4)"
+        
         Backend["🛡️ Safeguard Backend (Port: 8080)"]
-        Backend <--JDBC--> PostGIS[(PostgreSQL + PostGIS)]
         Backend --S3 Protocol--> MinIO[MinIO Object Storage]
-    end
-    
-    subgraph "AI Service Mesh (FastAPI - Python 3.9+)"
+        
         Backend --HTTP--> STT["🎙️ AI-STT (Port: 8000)"]
         Backend --HTTP--> YOLO["📷 AI-YOLO (Port: 5000)"]
         Backend --HTTP--> RAG["⚖️ AI-RAG (Port: 8001)"]
         
         STT --Noise Reduction--> FFmpeg
         STT --Inference--> Whisper
-        
         YOLO --Detection--> YOLOv8
-        
+    end
+    
+    subgraph "AWS EC2 (Stateful Instance)"
         RAG --Hybrid Search--> Milvus[(Milvus Vector DB)]
         Milvus <--> Etcd
         Milvus <--> MinIO
+    end
+
+    subgraph "AWS RDS"
+        Backend <--JDBC--> PostGIS[(PostgreSQL + PostGIS)]
     end
     
     subgraph "Monitoring"
@@ -113,16 +115,53 @@ graph TD
 ```
 
 ### 2.2 인프라 및 네트워크 구성 (Infrastructure)
-| 서비스명 | 컨테이너 명 (`container_name`) | 포트 (Host:Container) | 역할 및 설명 |
+| 서비스명 | 호스팅 환경 | 컨테이너 명 | 포트 (Host:Container) | 역할 및 설명 |
+| :--- | :--- | :--- | :--- | :--- |
+| **Frontend** | **AWS ECS Fargate** | `safeguard-frontend` | **80**:80 | React SPA 호스팅 (Nginx). `ai-yolo`, `backend` 의존성 보유. |
+| **Backend** | **AWS ECS Fargate** | `safeguard-backend` | **8080**:8080 | 핵심 비즈니스 로직, 인증, 데이터 관리. |
+| **AI-STT** | **AWS ECS Fargate** | `safeguard-ai-stt` | **8000**:8000 | 음성 -> 텍스트 변환 및 전처리 엔진 (Whisper). |
+| **AI-RAG** | **AWS ECS Fargate** | `safeguard-ai-rag` | **8001**:8001 | 민원 분류 및 법령 하이브리드 검색 엔진. |
+| **AI-YOLO** | **AWS ECS Fargate** | `safeguard-ai-yolo` | **5001**:5000 | 이미지 객체 탐지 및 민원 유형 분류 엔진. |
+| **Database** | **AWS RDS** | `safeguard-db` | **5433**:5432 | PostgreSQL 16 + PostGIS. 민원 및 위치 데이터 저장. |
+| **Milvus** | **AWS EC2** | `milvus-standalone` | **19530**:19530 | 벡터 데이터베이스. (Stateful 특성상 EC2 전용 인스턴스 사용) |
+| **MinIO** | **AWS EC2** | `milvus-minio` | **9001**:9001 | 객체 스토리지 (S3 호환 / 로컬용). |
+
+### 2.3 스토리지 구성 (Storage & Buckets)
+이미지, 음성, 로그 등 비정형 데이터는 **S3 호환 스토리지**를 통해 관리됩니다.
+
+| 환경 (Environment) | 스토리지 서비스 | 버킷 이름 (`bucket_name`) | 용도 |
 | :--- | :--- | :--- | :--- |
-| **Frontend** | `safeguard-frontend` | **80**:80 | React SPA 호스팅 (Nginx). `ai-yolo`, `backend` 의존성 보유. |
-| **Backend** | `safeguard-backend` | **8080**:8080 | 핵심 비즈니스 로직, 인증, 데이터 관리. |
-| **Database** | `safeguard-db` | **5433**:5432 | PostgreSQL 16 + PostGIS. 민원 및 위치 데이터 저장. |
-| **AI-STT** | `safeguard-ai-stt` | **8000**:8000 | 음성 -> 텍스트 변환 및 전처리 엔진. |
-| **AI-RAG** | `safeguard-ai-rag` | **8001**:8001 | 민원 분류 및 법령 하이브리드 검색 엔진. |
-| **AI-YOLO** | `safeguard-ai-yolo` | **5001**:5000 | 이미지 객체 탐지 및 민원 유형 분류 엔진. |
-| **Milvus** | `milvus-standalone` | **19530**:19530 | 벡터 데이터베이스 (Standalone Mode). |
-| **MinIO** | `milvus-minio` | **9001**:9001 | 객체 스토리지 (S3 호환). 이미지/오디오/벡터파일 저장. |
+| **Production** | **AWS S3** | `safeguard-bukket` | 실제 민원 첨부 파일(이미지/음성) 영구 저장 |
+| **Local / Dev** | **MinIO** (Self-hosted) | `safeguard-bukket` | 로컬 개발 시 S3 API 에뮬레이션 |
+
+- **저장 데이터**:
+  - `complaint-images/`: 민원인 업로드 현장 사진 (`.jpg`, `.png`)
+  - `voice-records/`: 민원 접수된 음성 녹음 파일 (`.webm`, `.wav`)
+  - `milvus-vectors/`: 벡터 DB 스냅샷 및 로그
+
+### 2.4 컨테이너 오케스트레이션 (Docker Composition)
+`docker-compose.yml`을 통해 정의된 8개 컨테이너의 상호작용 및 설정입니다.
+
+#### A. 네트워크 토폴로지 (Network Topology)
+- **Network Name**: `safeguard-network` (Bridge Driver)
+- **Isolation**: 외부와 격리된 내부망을 형성하여, 컨테이너 간에는 `http://backend:8080`, `http://ai-rag:8001` 등 **서비스 이름(Service Discovery)**으로 통신합니다.
+
+#### B. 볼륨 및 데이터 지속성 (Volumes)
+컨테이너가 재시작되어도 데이터가 유실되지 않도록 마운트된 볼륨입니다.
+1. **Database**: `postgres_data_16` -> Postgres 데이터 보존
+2. **Milvus Stack**:
+    - `./milvus-etcd-data` -> 메타데이터
+    - `./milvus-minio-data` -> 벡터/오브젝트 데이터
+    - `./milvus-data` -> Milvus 로그 및 설정
+3. **Shared Resources**:
+    - `./uploads` -> 사용자가 업로드한 파일을 Backend가 저장하고, Frontend(Nginx)가 서빙할 수 있도록 공유.
+
+#### C. 서비스 의존성 (Depends On)
+안정적인 부팅 순서를 보장하기 위한 `depends_on` 설정입니다.
+- `backend` waits for `db` (Health Check 통과 시까지 대기)
+- `milvus` waits for `etcd`, `minio`
+- `ai-rag` waits for `milvus`
+- `frontend` waits for `backend`, `ai-yolo`
 
 ---
 
@@ -186,6 +225,20 @@ graph TD
 | **Monitoring** | **Prometheus** | 매트릭 수집 (`http_requests_total` 등) |
 | **Storage** | **MinIO** | S3 호환 로컬 오브젝트 스토리지 |
 | **Vector DB** | **Milvus Standalone** | RAG용 벡터 검색 엔진 |
+
+| **Vector DB** | **Milvus Standalone** | RAG용 벡터 검색 엔진 |
+
+### 3.5 개발 환경 표준 (Development Standards)
+프로젝트 팀원들이 사용하는 표준 개발 환경 및 도구입니다.
+| Category | Tool | Detail |
+| :--- | :--- | :--- |
+| **OS** | **macOS** (Sonoma+) | 기준 운영체제 (Linux 호환성 확보). |
+| **IDE** | **VS Code** | Frontend/AI 개발용. (Extensions: ESLint, Prettier, Python). |
+| | **IntelliJ IDEA** | Backend (Spring Boot) 개발용. |
+| **API Test** | **Postman** | API 엔드포인트 테스트 및 문서화. |
+| **DB Client** | **DBeaver** | PostgreSQL 및 Milvus 데이터 확인. |
+| **Virtualization** | **Docker Desktop** | 로컬 컨테이너 구동 및 테스트. |
+| **Version Control** | **Git** (GitHub) | Feature Branch Flow 전략 사용. |
 
 ---
 
@@ -276,20 +329,21 @@ sequenceDiagram
 ## 6️⃣ API 인터페이스 (Internal API Specs)
 
 ### 6.1 AI-STT (`:8000`)
-- `POST /upload_voice`: 오디오 파일 업로드 → 텍스트 반환.
-- `POST /process_voice`: 텍스트 직접 입력 시 분석 수행.
+- `POST /upload_voice`: 오디오 파일 업로드 → 노이즈 제거 → Whisper STT → 텍스트 반환.
+- `POST /process_voice`: (텍스트 fallback) 직접 입력된 텍스트에 대한 환각 필터링 및 분석.
 
 ### 6.2 AI-RAG (`:8001`)
-- `POST /classify`: 텍스트 → 기관(Agency), 카테고리, 법령 근거 반환.
-
+- `POST /classify`: 질의 텍스트 → 하이브리드 검색 → 기관(Agency) 및 법령 근거 반환.
 
 ### 6.3 AI-YOLO (`:5000`)
-- `POST /api/analyze-image`: 이미지 업로드 → 민원 유형 및 기관 추천 (JSON).
+- `POST /analyze-image`: 이미지 업로드 → 객체 탐지(YOLOv8) → 민원 유형(JSON) 반환.
+  *(Frontend는 Backend Proxy `/api/yolo/analyze`를 통해 호출)*
 
 ### 6.4 Backend Main (`:8080`)
-- `GET /api/complaints/stats/dashboard`: 대시보드용 KPI 및 통계 데이터 집계 (MyBatis).
-- `POST /api/complaints`: 민원 접수 및 파이프라인 실행.
-- `GET /api/complaints/map`: 지도 마커용 경량 데이터 리스트 반환.
+- `GET /api/complaints/stats/dashboard`: 대시보드용 KPI 및 시계열 통계 집계.
+- `POST /api/complaints`: 멀티파트(이미지/오디오) 민원 접수 및 파이프라인 트리거.
+- `GET /api/gis/map-items`: 지도용 경량 마커 및 클러스터 데이터 반환.
+
 
 ---
 
@@ -299,7 +353,37 @@ sequenceDiagram
 - 각 AI 서비스는 `prometheus-client`를 통해 `/metrics` 엔드포인트를 노출하고 있습니다.
 - 수집 지표: `http_requests_total` (요청 수), `http_request_duration_seconds` (응답 속도).
 
-### 7.2 배포 (Deploy)
+### 7.2 배포 자동화 (CI/CD Pipeline)
+GitHub Actions를 통해 코드 푸시부터 서버 배포까지의 과정을 100% 자동화했습니다.
+
+```mermaid
+sequenceDiagram
+    participant Dev as 👩‍💻 Developer
+    participant GitHub as 🐙 GitHub Actions
+    participant ECR as 📦 AWS ECR
+    participant AWS as ☁️ AWS ECS / EC2
+
+    Dev->>GitHub: 1. Push to 'main'
+    
+    rect rgb(240, 255, 240)
+        Note over GitHub: [CI] Build & Test
+        GitHub->>GitHub: Build Java/React/Python App
+        GitHub->>GitHub: Create Docker Images
+    end
+    
+    rect rgb(255, 248, 240)
+        Note over GitHub: [CD] Deploy
+        GitHub->>ECR: 2. Push Images (v1.x)
+        GitHub->>AWS: 3. Update ECS Task Definition
+    end
+    
+    AWS->>ECR: 4. Pull Information
+    AWS->>AWS: 5. Rolling Update (Fargate)
+```
+
+### 7.3 로컬-운영 환경 차이
+- **Local**: `docker-compose up`으로 내 컴퓨터에서 즉시 실행 (가짜 DB 사용 가능).
+- **Production**: AWS Pipeline을 타고 **Fargate(App)**와 **EC2(DB)**로 배포됨.
 ```bash
 # 전체 시스템 빌드 및 실행 (Detached Mode)
 docker-compose up -d --build
