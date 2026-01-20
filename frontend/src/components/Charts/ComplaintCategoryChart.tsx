@@ -185,7 +185,7 @@ const ComplaintCategoryChart: React.FC<ChartTwoProps> = ({ selectedCategory, onS
 
             <div className="mt-4 pt-6 border-t border-slate-100 flex-1 flex flex-column">
                 <div className="flex items-center justify-center gap-2 mb-8">
-                    <h6 style={{ fontSize: '13px', fontWeight: '800', color: '#64748B', letterSpacing: '-0.02em' }}> ▼ 분류별 민원신청 건수 및 전일대비 증감률(%)</h6>
+                    <h6 style={{ fontSize: '13px', fontWeight: '800', color: '#64748B', letterSpacing: '-0.02em' }}> ▼ 분류별 민원신청 건수 및 전일대비 증감 (건수)</h6>
                 </div>
 
                 {/* 리스트 영역: 고정 높이(680px) 및 스크롤 적용으로 레이아웃 안정성 확보 */}
@@ -233,7 +233,7 @@ const ComplaintCategoryChart: React.FC<ChartTwoProps> = ({ selectedCategory, onS
                                     <span className="group-hover:text-blue-600 transition-colors">{item.name}</span>
                                 </div>
 
-                                {/* 접수 건수 및 증감율 (Value & Change) */}
+                                {/* 접수 건수 및 증감 (Value & Change) */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexShrink: 0 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: '100px', justifyContent: 'flex-end' }}>
                                         <span style={{ fontSize: '17px', fontWeight: '900', color: '#334155' }}>{item.value.toLocaleString()}</span>
@@ -244,10 +244,10 @@ const ComplaintCategoryChart: React.FC<ChartTwoProps> = ({ selectedCategory, onS
                                         textAlign: 'center',
                                         fontSize: '13.5px',
                                         fontWeight: '950',
-                                        color: item.change > 0 ? '#EF4444' : '#3B82F6',
+                                        color: item.change === 0 ? '#94A3B8' : item.change > 0 ? '#EF4444' : '#3B82F6',
                                         padding: '5px 10px',
                                         borderRadius: '8px',
-                                        backgroundColor: item.change > 0 ? '#FEF2F2' : '#EFF6FF',
+                                        backgroundColor: item.change === 0 ? '#F8FAFC' : item.change > 0 ? '#FEF2F2' : '#EFF6FF',
                                         border: '1px solid currentColor',
                                         whiteSpace: 'nowrap',
                                         display: 'flex',
@@ -256,8 +256,14 @@ const ComplaintCategoryChart: React.FC<ChartTwoProps> = ({ selectedCategory, onS
                                         gap: '2px',
                                         flexShrink: 0
                                     }}>
-                                        <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center' }}>{item.change > 0 ? '▲' : '▼'}</span>
-                                        <span style={{ letterSpacing: '-0.5px' }}>{Math.abs(item.change)}%</span>
+                                        {item.change !== 0 && (
+                                            <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center' }}>
+                                                {item.change > 0 ? '▲' : '▼'}
+                                            </span>
+                                        )}
+                                        <span style={{ letterSpacing: '-0.5px' }}>
+                                            {item.change === 0 ? '-' : `${Math.abs(item.change)}건`}
+                                        </span>
                                     </div>
                                 </div>
                             </div>

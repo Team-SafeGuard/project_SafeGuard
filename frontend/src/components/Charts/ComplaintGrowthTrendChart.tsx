@@ -52,19 +52,13 @@ const ComplaintGrowthTrendChart: React.FC<ChartProps> = ({ selectedCategory, tim
                     const current = trends[i];
                     const prev = i > 0 ? trends[i - 1] : null;
 
-                    // 전월 대비 증감율 계산 (전월 데이터 0일 경우 예외 처리)
-                    let growthRate = 0;
-                    if (prev && prev.received > 0) {
-                        const diff = current.received - prev.received;
-                        growthRate = (diff / prev.received) * 100;
-                    } else if (prev && prev.received === 0 && current.received > 0) {
-                        growthRate = 0; // 0에서 증가는 % 계산 불가 (0으로 처리하여 차트 튀는 것 방지)
-                    }
+                    // 전월 대비 증감 건수 계산 (퍼센트 대신 절대 건수 차이 사용)
+                    const growthCount = prev ? current.received - prev.received : 0;
 
                     processed.push({
                         date: current.month,
                         received: current.received ?? 0,
-                        growthRate: parseFloat(growthRate.toFixed(1))
+                        growthRate: growthCount // 변수명은 유지하되 값은 건수 차이로 변경 (TrendRow 타입 확장 고려 가능하나 간단히 처리)
                     });
                 }
                 setTrendData(processed);
@@ -92,7 +86,7 @@ const ComplaintGrowthTrendChart: React.FC<ChartProps> = ({ selectedCategory, tim
     const series = useMemo(
         () => [
             { name: '접수 건수', type: 'column', data: receivedData },
-            { name: '증감율', type: 'line', data: growthData }
+            { name: '증감 건수', type: 'line', data: growthData }
         ],
         [receivedData, growthData]
     );
@@ -140,18 +134,18 @@ const ComplaintGrowthTrendChart: React.FC<ChartProps> = ({ selectedCategory, tim
                     },
                 },
                 {
-                    seriesName: '증감율',
+                    seriesName: '증감 건수',
                     opposite: true,
                     show: false, // Y축 숨김 (깔끔한 UI를 위해)
                     title: {
-                        text: '증감율 (%)',
+                        text: '증감 (건)',
                         rotate: 0,
                         offsetX: -6,
                         style: { color: '#EF4444', fontWeight: 700 }
                     },
                     labels: {
                         style: { colors: '#EF4444', fontWeight: 600 },
-                        formatter: (val: number) => `${val.toFixed(0)}%`
+                        formatter: (val: number) => `${val.toFixed(0)}건`
                     },
                 }
             ],
@@ -174,7 +168,7 @@ const ComplaintGrowthTrendChart: React.FC<ChartProps> = ({ selectedCategory, tim
     return (
         <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 14, padding: 20, width: '100%', boxSizing: 'border-box' }}>
             <div style={{ fontSize: 16, fontWeight: 900, color: '#0F172A', marginBottom: 16 }}>
-                접수 및 증감율 추이
+                접수 및 증감 추이 (최근 6개월)
             </div>
 
             {/* Summary Bar: 주요 기간별 통계 및 증감율 요약 */}
@@ -218,16 +212,6 @@ const ComplaintGrowthTrendChart: React.FC<ChartProps> = ({ selectedCategory, tim
 // 하위 컴포넌트: 요약 아이템 (Summary Item)
 const SummaryItem = ({ label, count, prevCount }: { label: string; count: number; prevCount: number }) => {
     const diff = count - prevCount;
-    let growthRate: number | null = 0;
-
-    if (prevCount > 0) {
-        growthRate = (diff / prevCount) * 100;
-    } else if (prevCount === 0 && count > 0) {
-        growthRate = null; // 0 -> N 증가는 % 계산 불가 (신규)
-    } else {
-        growthRate = 0;
-    }
-
     const isPositive = diff > 0;
     const isZero = diff === 0;
 
@@ -236,7 +220,7 @@ const SummaryItem = ({ label, count, prevCount }: { label: string; count: number
             <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', marginBottom: '6px' }}>{label}</span>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
                 <span style={{ fontSize: '18px', fontWeight: 900, color: '#1E293B' }}>{count.toLocaleString()}건</span>
-                {!isZero && growthRate !== null && (
+                {!isZero ? (
                     <span style={{
                         fontSize: '11px',
                         fontWeight: 800,
@@ -244,22 +228,9 @@ const SummaryItem = ({ label, count, prevCount }: { label: string; count: number
                         display: 'flex',
                         alignItems: 'center'
                     }}>
-                        {isPositive ? '▲' : '▼'} {Math.abs(growthRate).toFixed(1)}%
+                        {isPositive ? '▲' : '▼'} {Math.abs(diff).toLocaleString()}건
                     </span>
-                )}
-                {/* 전 기간 0건에서 증가한 경우 (New) */}
-                {!isZero && growthRate === null && (
-                    <span style={{
-                        fontSize: '11px',
-                        fontWeight: 800,
-                        color: '#EF4444',
-                        display: 'flex',
-                        alignItems: 'center'
-                    }}>
-                        ▲ 신규
-                    </span>
-                )}
-                {isZero && (
+                ) : (
                     <span style={{ fontSize: '11px', fontWeight: 800, color: '#94A3B8' }}>-</span>
                 )}
             </div>

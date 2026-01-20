@@ -509,14 +509,10 @@
         SELECT 
             category AS name, 
             COUNT(DISTINCT c.complaint_no)::int AS value,
-            COALESCE(ROUND(
-                (
-                    (COUNT(DISTINCT CASE WHEN CAST(c.created_date AS DATE) = CURRENT_DATE THEN c.complaint_no END) - 
-                     COUNT(DISTINCT CASE WHEN CAST(c.created_date AS DATE) = CURRENT_DATE - INTERVAL '1 day' THEN c.complaint_no END))::numeric
-                    / 
-                    NULLIF(COUNT(DISTINCT CASE WHEN CAST(c.created_date AS DATE) = CURRENT_DATE - INTERVAL '1 day' THEN c.complaint_no END), 0)
-                ) * 100, 1
-            ), 0) AS change
+            (
+                COUNT(DISTINCT CASE WHEN CAST(c.created_date AS DATE) = CURRENT_DATE THEN c.complaint_no END) - 
+                COUNT(DISTINCT CASE WHEN CAST(c.created_date AS DATE) = CURRENT_DATE - INTERVAL '1 day' THEN c.complaint_no END)
+            )::int AS change
         FROM complaint c
         LEFT JOIN complaint_agency ca ON c.complaint_no = ca.complaint_no
         <where>
