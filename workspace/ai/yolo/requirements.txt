@@ -1,0 +1,10 @@
+ultralytics
+fastapi
+uvicorn
+python-multipart
+torch
+torchvision
+torchaudio
+opencv-python-headless
+prometheus-client
+

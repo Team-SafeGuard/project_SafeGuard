@@ -1,0 +1,11 @@
+{
+    "title": "Refactoring Check 2",
+    "content": "Verifying service refactoring with file payload.",
+    "category": "도로",
+    "isPublic": true,
+    "location": {
+        "address": "Seoul City Hall",
+        "lat": 37.5665,
+        "lng": 126.9780
+    }
+}
