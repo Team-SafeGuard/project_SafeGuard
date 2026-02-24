@@ -107,7 +107,7 @@ FastAPI로 구현되어 있으며, Docker 컨테이너 환경(`safeguard-ai-stt`
 flowchart TD
     start_node([1. 요청 수신]) --> CheckInput{입력 타입 확인}
     
-    CheckInput -- "Audio File" --> Preproc[2. Audio 전처리<br/>(FFmpeg Noise Reduction + Normalize)]
+    CheckInput -- "Audio File" --> Preproc["2. Audio 전처리<br/>(FFmpeg Noise Reduction + Normalize)"]
     Preproc --> Whisper[3. Whisper STT 변환]
     Whisper --> Filter{4. 환각 필터링}
     
@@ -116,7 +116,7 @@ flowchart TD
     
     CheckInput -- "Text" --> TextNorm
     
-    TextNorm --> RAG[6. RAG 검색 서버 호출<br/>(분류 요청)]
+    TextNorm --> RAG["6. RAG 검색 서버 호출<br/>(분류 요청)"]
     
     RAG -- "분류 실패 (Timeout/Error)" --> Fallback[7. 키워드 기반 단순 분류]
     RAG -- "분류 성공" --> Formatting[8. 결과 포맷팅]
